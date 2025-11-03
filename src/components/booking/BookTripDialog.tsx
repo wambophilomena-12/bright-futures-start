@@ -81,35 +81,26 @@ export const BookTripDialog = ({ open, onOpenChange, trip }: Props) => {
       return;
     }
 
-    if (!user) {
-      toast({
-        title: "Login required",
-        description: "Please login to complete your booking",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
-
     setLoading(true);
     try {
       const { error } = await supabase.from("bookings").insert({
-        user_id: user.id,
+        user_id: user?.id || null,
         booking_type: "trip",
         item_id: trip.id,
         total_amount: totalAmount,
         payment_method: paymentMethod,
         payment_phone: paymentPhone || null,
+        is_guest_booking: !user,
+        guest_name: !user ? guestName : null,
+        guest_email: !user ? guestEmail : null,
+        guest_phone: !user ? guestPhone : null,
         booking_details: {
           trip_name: trip.name,
           date: trip.date,
           adults,
           children,
-          guest_name: user ? undefined : guestName,
-          guest_phone: user ? undefined : guestPhone,
-          guest_email: user ? undefined : guestEmail,
         },
-      });
+      } as any);
 
       if (error) throw error;
 
@@ -119,7 +110,9 @@ export const BookTripDialog = ({ open, onOpenChange, trip }: Props) => {
       });
 
       onOpenChange(false);
-      navigate("/bookings");
+      if (user) {
+        navigate("/bookings");
+      }
     } catch (error) {
       console.error("Booking error:", error);
       toast({

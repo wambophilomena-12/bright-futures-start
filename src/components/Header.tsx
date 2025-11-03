@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Menu, User, Heart, Ticket, Video } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, User, Heart, Ticket, Video, Shield, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,31 @@ import { Link } from "react-router-dom";
 export const Header = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!user) {
+        setUserRole(null);
+        return;
+      }
+
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      if (data && data.length > 0) {
+        const roles = data.map(r => r.role);
+        if (roles.includes("admin")) setUserRole("admin");
+        else if (roles.includes("business")) setUserRole("business");
+        else setUserRole("user");
+      }
+    };
+
+    checkRole();
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -81,6 +106,22 @@ export const Header = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/profile" className="cursor-pointer">Profile</Link>
                 </DropdownMenuItem>
+                {userRole === "admin" && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin" className="cursor-pointer flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Admin Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {userRole === "business" && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/business" className="cursor-pointer flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" />
+                      Business Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
                   Sign Out
                 </DropdownMenuItem>

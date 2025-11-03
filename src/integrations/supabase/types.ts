@@ -17,8 +17,11 @@ export type Database = {
       adventure_places: {
         Row: {
           activities: Json | null
+          admin_notes: string | null
+          approval_status: string
           country: string
           created_at: string
+          created_by: string | null
           description: string | null
           email: string | null
           entry_fee: number | null
@@ -34,8 +37,11 @@ export type Database = {
         }
         Insert: {
           activities?: Json | null
+          admin_notes?: string | null
+          approval_status?: string
           country: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
           email?: string | null
           entry_fee?: number | null
@@ -51,8 +57,11 @@ export type Database = {
         }
         Update: {
           activities?: Json | null
+          admin_notes?: string | null
+          approval_status?: string
           country?: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
           email?: string | null
           entry_fee?: number | null
@@ -73,7 +82,11 @@ export type Database = {
           booking_details: Json
           booking_type: string
           created_at: string
+          guest_email: string | null
+          guest_name: string | null
+          guest_phone: string | null
           id: string
+          is_guest_booking: boolean | null
           item_id: string
           payment_method: string | null
           payment_phone: string | null
@@ -81,13 +94,17 @@ export type Database = {
           status: string
           total_amount: number
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           booking_details: Json
           booking_type: string
           created_at?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
+          is_guest_booking?: boolean | null
           item_id: string
           payment_method?: string | null
           payment_phone?: string | null
@@ -95,13 +112,17 @@ export type Database = {
           status?: string
           total_amount: number
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           booking_details?: Json
           booking_type?: string
           created_at?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
+          is_guest_booking?: boolean | null
           item_id?: string
           payment_method?: string | null
           payment_phone?: string | null
@@ -109,12 +130,16 @@ export type Database = {
           status?: string
           total_amount?: number
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
       business_accounts: {
         Row: {
+          admin_notes: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           business_name: string
           business_phone_number: string
           business_registration_number: string
@@ -124,6 +149,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_notes?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           business_name: string
           business_phone_number: string
           business_registration_number: string
@@ -133,6 +162,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_notes?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           business_name?: string
           business_phone_number?: string
           business_registration_number?: string
@@ -145,9 +178,12 @@ export type Database = {
       }
       events: {
         Row: {
+          admin_notes: string | null
+          approval_status: string
           available_tickets: number | null
           country: string
           created_at: string
+          created_by: string | null
           date: string
           description: string | null
           email: string | null
@@ -165,9 +201,12 @@ export type Database = {
           price_vvip: number | null
         }
         Insert: {
+          admin_notes?: string | null
+          approval_status?: string
           available_tickets?: number | null
           country: string
           created_at?: string
+          created_by?: string | null
           date: string
           description?: string | null
           email?: string | null
@@ -185,9 +224,12 @@ export type Database = {
           price_vvip?: number | null
         }
         Update: {
+          admin_notes?: string | null
+          approval_status?: string
           available_tickets?: number | null
           country?: string
           created_at?: string
+          created_by?: string | null
           date?: string
           description?: string | null
           email?: string | null
@@ -208,9 +250,12 @@ export type Database = {
       }
       hotels: {
         Row: {
+          admin_notes: string | null
           amenities: string[] | null
+          approval_status: string
           country: string
           created_at: string
+          created_by: string | null
           description: string | null
           email: string | null
           facilities: Json | null
@@ -223,9 +268,12 @@ export type Database = {
           place: string
         }
         Insert: {
+          admin_notes?: string | null
           amenities?: string[] | null
+          approval_status?: string
           country: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
           email?: string | null
           facilities?: Json | null
@@ -238,9 +286,12 @@ export type Database = {
           place: string
         }
         Update: {
+          admin_notes?: string | null
           amenities?: string[] | null
+          approval_status?: string
           country?: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
           email?: string | null
           facilities?: Json | null
@@ -310,9 +361,12 @@ export type Database = {
       }
       trips: {
         Row: {
+          admin_notes: string | null
+          approval_status: string
           available_tickets: number | null
           country: string
           created_at: string
+          created_by: string | null
           date: string
           description: string | null
           email: string | null
@@ -327,9 +381,12 @@ export type Database = {
           price_child: number | null
         }
         Insert: {
+          admin_notes?: string | null
+          approval_status?: string
           available_tickets?: number | null
           country: string
           created_at?: string
+          created_by?: string | null
           date: string
           description?: string | null
           email?: string | null
@@ -344,9 +401,12 @@ export type Database = {
           price_child?: number | null
         }
         Update: {
+          admin_notes?: string | null
+          approval_status?: string
           available_tickets?: number | null
           country?: string
           created_at?: string
+          created_by?: string | null
           date?: string
           description?: string | null
           email?: string | null
@@ -359,6 +419,27 @@ export type Database = {
           place?: string
           price?: number
           price_child?: number | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -394,9 +475,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "guest" | "user" | "business" | "admin"
       business_account_type:
         | "hotel_accommodation"
         | "trip_event"
@@ -529,6 +617,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["guest", "user", "business", "admin"],
       business_account_type: [
         "hotel_accommodation",
         "trip_event",
