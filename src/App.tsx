@@ -14,6 +14,10 @@ import CategoryDetail from "./pages/CategoryDetail";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import TripDetail from "./pages/TripDetail";
+import EventDetail from "./pages/EventDetail";
+import HotelDetail from "./pages/HotelDetail";
+import AdventurePlaceDetail from "./pages/AdventurePlaceDetail";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +36,10 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/vlog" element={<Vlog />} />
             <Route path="/category/:category" element={<CategoryDetail />} />
+            <Route path="/trip/:id" element={<TripDetail />} />
+            <Route path="/event/:id" element={<EventDetail />} />
+            <Route path="/hotel/:id" element={<HotelDetail />} />
+            <Route path="/adventure/:id" element={<AdventurePlaceDetail />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />

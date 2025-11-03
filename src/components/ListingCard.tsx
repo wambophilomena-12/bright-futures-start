@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface ListingCardProps {
   id: string;
@@ -33,14 +34,29 @@ export const ListingCard = ({
   amenities,
 }: ListingCardProps) => {
   const [saved, setSaved] = useState(isSaved);
+  const navigate = useNavigate();
 
-  const handleSave = () => {
+  const handleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setSaved(!saved);
     onSave?.(id, type.toLowerCase().replace(" ", "_"));
   };
 
+  const handleCardClick = () => {
+    const typeMap: Record<string, string> = {
+      "TRIP": "trip",
+      "EVENT": "event",
+      "HOTEL": "hotel",
+      "ADVENTURE PLACE": "adventure"
+    };
+    navigate(`/${typeMap[type]}/${id}`);
+  };
+
   return (
-    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-none">
+    <Card 
+      onClick={handleCardClick}
+      className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-none cursor-pointer"
+    >
       <div className="relative aspect-[4/3] overflow-hidden rounded-none">
         <img
           src={imageUrl}
