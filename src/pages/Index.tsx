@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { CategoryCard } from "@/components/CategoryCard";
-import { SearchBar } from "@/components/SearchBar";
+import { SearchBarWithSuggestions } from "@/components/SearchBarWithSuggestions";
 import { ListingCard } from "@/components/ListingCard";
 import { Footer } from "@/components/Footer";
 import { Calendar, Hotel, Mountain } from "lucide-react";
@@ -135,7 +135,7 @@ const Index = () => {
       <main className="container px-4 py-8 space-y-12">
         {/* Search */}
         <section>
-          <SearchBar
+          <SearchBarWithSuggestions
             value={searchQuery}
             onChange={setSearchQuery}
             onSubmit={handleSearch}

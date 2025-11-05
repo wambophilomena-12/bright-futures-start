@@ -49,6 +49,19 @@ export const BookEventDialog = ({ open, onOpenChange, event }: Props) => {
     (children * event.price_child);
 
   const handleStepOne = () => {
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (eventDate < today) {
+      toast({
+        title: "Event date has passed",
+        description: "Cannot book events with past dates",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (totalPeople === 0) {
       toast({
         title: "Select tickets",

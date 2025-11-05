@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { ApprovedTab } from "./AdminDashboard_approved_tab";
 
 const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -18,6 +19,7 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pendingListings, setPendingListings] = useState<any[]>([]);
+  const [approvedListings, setApprovedListings] = useState<any[]>([]);
   const [allBookings, setAllBookings] = useState<any[]>([]);
   const [adminNotes, setAdminNotes] = useState<{ [key: string]: string }>({});
 
@@ -49,6 +51,7 @@ const AdminDashboard = () => {
 
       setIsAdmin(true);
       fetchPendingListings();
+      fetchApprovedListings();
       fetchAllBookings();
     } catch (error) {
       navigate("/");
@@ -73,6 +76,24 @@ const AdminDashboard = () => {
     ];
 
     setPendingListings(allListings);
+  };
+
+  const fetchApprovedListings = async () => {
+    const [trips, events, hotels, places] = await Promise.all([
+      supabase.from("trips").select("*").eq("approval_status", "approved"),
+      supabase.from("events").select("*").eq("approval_status", "approved"),
+      supabase.from("hotels").select("*").eq("approval_status", "approved"),
+      supabase.from("adventure_places").select("*").eq("approval_status", "approved"),
+    ]);
+
+    const allListings = [
+      ...(trips.data || []).map((item) => ({ ...item, type: "trip" })),
+      ...(events.data || []).map((item) => ({ ...item, type: "event" })),
+      ...(hotels.data || []).map((item) => ({ ...item, type: "hotel" })),
+      ...(places.data || []).map((item) => ({ ...item, type: "adventure" })),
+    ];
+
+    setApprovedListings(allListings);
   };
 
   const fetchAllBookings = async () => {
@@ -104,6 +125,41 @@ const AdminDashboard = () => {
     } else {
       toast.success("Listing approved successfully");
       fetchPendingListings();
+      fetchApprovedListings();
+    }
+  };
+
+  const handleRemove = async (itemId: string, itemType: string) => {
+    const tableName = itemType === "adventure" ? "adventure_places" : `${itemType}s`;
+    
+    const { error } = await supabase
+      .from(tableName as any)
+      .update({ approval_status: "removed" })
+      .eq("id", itemId);
+
+    if (error) {
+      toast.error("Failed to remove listing");
+    } else {
+      toast.success("Listing removed from public view");
+      fetchApprovedListings();
+    }
+  };
+
+  const handleDelete = async (itemId: string, itemType: string) => {
+    if (!confirm("Are you sure you want to permanently delete this item?")) return;
+    
+    const tableName = itemType === "adventure" ? "adventure_places" : `${itemType}s`;
+    
+    const { error } = await supabase
+      .from(tableName as any)
+      .delete()
+      .eq("id", itemId);
+
+    if (error) {
+      toast.error("Failed to delete listing");
+    } else {
+      toast.success("Listing permanently deleted");
+      fetchApprovedListings();
     }
   };
 
@@ -172,6 +228,7 @@ const AdminDashboard = () => {
         <Tabs defaultValue="pending" className="space-y-6">
           <TabsList>
             <TabsTrigger value="pending">Pending Approvals ({pendingListings.length})</TabsTrigger>
+            <TabsTrigger value="approved">Approved Items</TabsTrigger>
             <TabsTrigger value="bookings">All Bookings ({allBookings.length})</TabsTrigger>
           </TabsList>
 
@@ -229,6 +286,14 @@ const AdminDashboard = () => {
                 </Card>
               ))
             )}
+          </TabsContent>
+
+          <TabsContent value="approved" className="space-y-4">
+            <ApprovedTab 
+              approvedListings={approvedListings}
+              handleRemove={handleRemove}
+              handleDelete={handleDelete}
+            />
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-4">

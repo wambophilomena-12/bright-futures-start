@@ -41,6 +41,19 @@ export const BookTripDialog = ({ open, onOpenChange, trip }: Props) => {
   const totalAmount = (adults * trip.price) + (children * (trip.price_child || 0));
 
   const handleStepOne = () => {
+    const tripDate = new Date(trip.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (tripDate < today) {
+      toast({
+        title: "Trip date has passed",
+        description: "Cannot book trips with past dates",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (totalPeople > trip.available_tickets) {
       toast({
         title: "Not enough tickets",

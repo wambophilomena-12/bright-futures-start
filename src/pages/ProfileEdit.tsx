@@ -18,7 +18,11 @@ const ProfileEdit = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [profileData, setProfileData] = useState({
+  const [profileData, setProfileData] = useState<{
+    name: string;
+    phone_number: string;
+    gender: "male" | "female" | "other" | "prefer_not_to_say" | "";
+  }>({
     name: "",
     phone_number: "",
     gender: ""
@@ -77,13 +81,20 @@ const ProfileEdit = () => {
         pictureUrl = publicUrl;
       }
 
-      const { error } = await supabase
-        .from("profiles")
-        .upsert({
-          id: user!.id,
-          ...profileData,
-          profile_picture_url: pictureUrl
-        });
+    const updateData: any = {
+      name: profileData.name,
+      phone_number: profileData.phone_number,
+      profile_picture_url: pictureUrl
+    };
+    
+    if (profileData.gender) {
+      updateData.gender = profileData.gender;
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update(updateData)
+      .eq("id", user!.id);
 
       if (error) throw error;
 
@@ -140,12 +151,13 @@ const ProfileEdit = () => {
                 id="gender"
                 className="w-full px-3 py-2 border rounded-md"
                 value={profileData.gender}
-                onChange={(e) => setProfileData({...profileData, gender: e.target.value})}
+                onChange={(e) => setProfileData({...profileData, gender: e.target.value as "male" | "female" | "other" | "prefer_not_to_say" | ""})}
               >
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
               </select>
             </div>
 

@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FilterBarProps {
   type: "trips-events" | "hotels" | "adventure";
@@ -19,8 +20,6 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
   const [location, setLocation] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
 
   const handleApply = () => {
     const validationError = validateFilters();
@@ -36,8 +35,6 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
       if (dateFrom) filters.dateFrom = dateFrom;
       if (dateTo) filters.dateTo = dateTo;
       if (location) filters.location = location;
-      if (minPrice) filters.minPrice = parseFloat(minPrice);
-      if (maxPrice) filters.maxPrice = parseFloat(maxPrice);
     } else if (type === "hotels") {
       if (checkIn) filters.checkIn = checkIn;
       if (checkOut) filters.checkOut = checkOut;
@@ -55,32 +52,54 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
     }
   };
 
-  // Get unique locations from items for autocomplete
+  // Get unique locations from database
   const [locations, setLocations] = useState<string[]>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   
   useEffect(() => {
-    // This would ideally come from your database
-    // For now, we'll use a placeholder list
-    setLocations([
-      "Paris", "London", "New York", "Tokyo", "Dubai", 
-      "Singapore", "Barcelona", "Rome", "Amsterdam", "Berlin"
-    ]);
-  }, []);
+    fetchLocations();
+  }, [type]);
+
+  const fetchLocations = async () => {
+    const uniqueLocations = new Set<string>();
+    
+    try {
+      if (type === "trips-events") {
+        const [trips, events] = await Promise.all([
+          supabase.from("trips").select("location, place, country").eq("approval_status", "approved"),
+          supabase.from("events").select("location, place, country").eq("approval_status", "approved")
+        ]);
+        [...(trips.data || []), ...(events.data || [])].forEach(item => {
+          if (item.location) uniqueLocations.add(item.location);
+          if (item.place) uniqueLocations.add(item.place);
+          if (item.country) uniqueLocations.add(item.country);
+        });
+      } else if (type === "hotels") {
+        const { data } = await supabase.from("hotels").select("location, place, country").eq("approval_status", "approved");
+        (data || []).forEach(item => {
+          if (item.location) uniqueLocations.add(item.location);
+          if (item.place) uniqueLocations.add(item.place);
+          if (item.country) uniqueLocations.add(item.country);
+        });
+      } else if (type === "adventure") {
+        const { data } = await supabase.from("adventure_places").select("location, place, country").eq("approval_status", "approved");
+        (data || []).forEach(item => {
+          if (item.location) uniqueLocations.add(item.location);
+          if (item.place) uniqueLocations.add(item.place);
+          if (item.country) uniqueLocations.add(item.country);
+        });
+      }
+      setLocations(Array.from(uniqueLocations).sort());
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+    }
+  };
 
   const filteredLocations = locations.filter(loc => 
     loc.toLowerCase().includes(location.toLowerCase())
   );
 
   const validateFilters = () => {
-    // Validate price is not negative or zero
-    if (minPrice && parseFloat(minPrice) <= 0) {
-      return "Price must be greater than zero";
-    }
-    if (maxPrice && parseFloat(maxPrice) <= 0) {
-      return "Price must be greater than zero";
-    }
-    
     // Validate dates are not in the past
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -107,7 +126,7 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
         <h3 className="font-bold text-sm md:text-base">Filters</h3>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
         {type === "trips-events" && (
           <>
             <div className="space-y-2">
@@ -138,35 +157,7 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
               </Popover>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs md:text-sm">Date To</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal text-xs md:text-sm h-8 md:h-10",
-                      !dateTo && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
-                    {dateTo ? format(dateTo, "PP") : <span>Date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2 relative">
+            <div className="space-y-2 relative col-span-1">
               <Label className="text-xs md:text-sm">Location</Label>
               <Input
                 placeholder="Enter location"
@@ -181,7 +172,7 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
                 className="text-xs md:text-sm h-8 md:h-10"
               />
               {showLocationSuggestions && location && filteredLocations.length > 0 && (
-                <div className="absolute z-10 w-full bg-background border rounded-md mt-1 max-h-40 overflow-y-auto">
+                <div className="absolute z-10 w-full bg-background border rounded-md mt-1 max-h-40 overflow-y-auto shadow-lg">
                   {filteredLocations.map((loc) => (
                     <button
                       key={loc}
@@ -197,32 +188,6 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
                   ))}
                 </div>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs md:text-sm">Min Price</Label>
-              <Input
-                type="number"
-                placeholder="Min"
-                min="1"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="text-xs md:text-sm h-8 md:h-10"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs md:text-sm">Max Price</Label>
-              <Input
-                type="number"
-                placeholder="Max"
-                min="1"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="text-xs md:text-sm h-8 md:h-10"
-              />
             </div>
           </>
         )}
@@ -257,34 +222,6 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
               </Popover>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs md:text-sm">Check-Out</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal text-xs md:text-sm h-8 md:h-10",
-                      !checkOut && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
-                    {checkOut ? format(checkOut, "PP") : <span>Check-out</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={checkOut}
-                    onSelect={setCheckOut}
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
             <div className="space-y-2 relative">
               <Label className="text-xs md:text-sm">Location</Label>
               <Input
@@ -300,7 +237,7 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
                 className="text-xs md:text-sm h-8 md:h-10"
               />
               {showLocationSuggestions && location && filteredLocations.length > 0 && (
-                <div className="absolute z-10 w-full bg-background border rounded-md mt-1 max-h-40 overflow-y-auto">
+                <div className="absolute z-10 w-full bg-background border rounded-md mt-1 max-h-40 overflow-y-auto shadow-lg">
                   {filteredLocations.map((loc) => (
                     <button
                       key={loc}
@@ -335,23 +272,23 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
               onKeyPress={handleKeyPress}
               className="text-xs md:text-sm h-8 md:h-10"
             />
-            {showLocationSuggestions && location && filteredLocations.length > 0 && (
-              <div className="absolute z-10 w-full bg-background border rounded-md mt-1 max-h-40 overflow-y-auto">
-                {filteredLocations.map((loc) => (
-                  <button
-                    key={loc}
-                    type="button"
-                    className="w-full text-left px-3 py-2 hover:bg-accent text-xs md:text-sm"
-                    onClick={() => {
-                      setLocation(loc);
-                      setShowLocationSuggestions(false);
-                    }}
-                  >
-                    {loc}
-                  </button>
-                ))}
-              </div>
-            )}
+              {showLocationSuggestions && location && filteredLocations.length > 0 && (
+                <div className="absolute z-10 w-full bg-background border rounded-md mt-1 max-h-40 overflow-y-auto shadow-lg">
+                  {filteredLocations.map((loc) => (
+                    <button
+                      key={loc}
+                      type="button"
+                      className="w-full text-left px-3 py-2 hover:bg-accent text-xs md:text-sm"
+                      onClick={() => {
+                        setLocation(loc);
+                        setShowLocationSuggestions(false);
+                      }}
+                    >
+                      {loc}
+                    </button>
+                  ))}
+                </div>
+              )}
           </div>
         )}
       </div>
@@ -368,8 +305,6 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
             setCheckIn(undefined);
             setCheckOut(undefined);
             setLocation("");
-            setMinPrice("");
-            setMaxPrice("");
             onApplyFilters({});
           }}
           className="text-xs md:text-sm h-8 md:h-10"

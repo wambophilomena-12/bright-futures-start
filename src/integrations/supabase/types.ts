@@ -19,6 +19,8 @@ export type Database = {
           activities: Json | null
           admin_notes: string | null
           approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           country: string
           created_at: string
           created_by: string | null
@@ -41,6 +43,8 @@ export type Database = {
           activities?: Json | null
           admin_notes?: string | null
           approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           country: string
           created_at?: string
           created_by?: string | null
@@ -63,6 +67,8 @@ export type Database = {
           activities?: Json | null
           admin_notes?: string | null
           approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           country?: string
           created_at?: string
           created_by?: string | null
@@ -147,6 +153,8 @@ export type Database = {
         Row: {
           admin_notes: string | null
           approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           available_tickets: number | null
           country: string
           created_at: string
@@ -172,6 +180,8 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           available_tickets?: number | null
           country: string
           created_at?: string
@@ -197,6 +207,8 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           available_tickets?: number | null
           country?: string
           created_at?: string
@@ -226,6 +238,8 @@ export type Database = {
           admin_notes: string | null
           amenities: string[] | null
           approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           country: string
           created_at: string
           created_by: string | null
@@ -246,6 +260,8 @@ export type Database = {
           admin_notes?: string | null
           amenities?: string[] | null
           approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           country: string
           created_at?: string
           created_by?: string | null
@@ -266,6 +282,8 @@ export type Database = {
           admin_notes?: string | null
           amenities?: string[] | null
           approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           country?: string
           created_at?: string
           created_by?: string | null
@@ -342,6 +360,8 @@ export type Database = {
         Row: {
           admin_notes: string | null
           approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           available_tickets: number | null
           country: string
           created_at: string
@@ -365,6 +385,8 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           available_tickets?: number | null
           country: string
           created_at?: string
@@ -388,6 +410,8 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           available_tickets?: number | null
           country?: string
           created_at?: string

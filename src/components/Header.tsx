@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, Heart, Ticket, Video, Shield, Plus, Edit } from "lucide-react";
+import { Menu, Heart, Ticket, Video, Shield, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,12 +23,14 @@ export const Header = () => {
   const { user, signOut } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
     const checkRole = async () => {
       if (!user) {
         setUserRole(null);
         setProfilePicture(null);
+        setUserName("");
         return;
       }
 
@@ -43,15 +45,22 @@ export const Header = () => {
         else setUserRole("user");
       }
 
-      // Fetch profile picture
+      // Fetch profile picture and name
       const { data: profile } = await supabase
         .from("profiles")
-        .select("profile_picture_url")
+        .select("profile_picture_url, name")
         .eq("id", user.id)
         .single();
 
-      if (profile?.profile_picture_url) {
-        setProfilePicture(profile.profile_picture_url);
+      if (profile) {
+        if (profile.profile_picture_url) {
+          setProfilePicture(profile.profile_picture_url);
+        }
+        if (profile.name) {
+          // Extract first name (text before first space)
+          const firstName = profile.name.split(" ")[0];
+          setUserName(firstName);
+        }
       }
     };
 
@@ -84,27 +93,10 @@ export const Header = () => {
         </div>
 
         <nav className="hidden md:flex items-center gap-6">
-          {user && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="default" className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Create
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center">
-                <DropdownMenuItem asChild>
-                  <Link to="/create/trip-event" className="cursor-pointer">Trip & Event</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/create/hotel" className="cursor-pointer">Hotel & Accommodation</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/create/adventure" className="cursor-pointer">Place to Adventure</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <Link to="/" className="flex items-center gap-2 font-bold hover:text-primary transition-colors">
+            <Home className="h-4 w-4" />
+            Home
+          </Link>
           <Link to="/bookings" className="flex items-center gap-2 font-bold hover:text-primary transition-colors">
             <Ticket className="h-4 w-4" />
             My Bookings
@@ -125,12 +117,12 @@ export const Header = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 h-auto px-2">
               <span className="hidden md:inline text-sm font-medium">
-                {user?.user_metadata?.name || user?.email || "Guest"}
+                {userName || user?.user_metadata?.name || user?.email || "Guest"}
               </span>
               <Avatar className="h-8 w-8">
                 <AvatarImage src={profilePicture || user?.user_metadata?.profile_picture_url} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                  {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0) || "G"}
+                  {userName?.[0]?.toUpperCase() || user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0) || "G"}
                 </AvatarFallback>
               </Avatar>
             </Button>

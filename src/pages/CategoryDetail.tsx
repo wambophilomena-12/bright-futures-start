@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Footer } from "@/components/Footer";
-import { SearchBar } from "@/components/SearchBar";
+import { SearchBarWithSuggestions } from "@/components/SearchBarWithSuggestions";
 import { ListingCard } from "@/components/ListingCard";
 import { FilterBar } from "@/components/FilterBar";
 import { supabase } from "@/integrations/supabase/client";
@@ -189,7 +189,7 @@ const CategoryDetail = () => {
       <main className="container px-4 py-8 space-y-4">
         <h1 className="text-3xl font-bold">{config.title}</h1>
 
-        <SearchBar
+        <SearchBarWithSuggestions
           value={searchQuery}
           onChange={setSearchQuery}
           onSubmit={handleSearch}
