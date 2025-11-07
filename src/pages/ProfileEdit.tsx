@@ -18,6 +18,7 @@ const ProfileEdit = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [fetchingProfile, setFetchingProfile] = useState(true);
   const [profileData, setProfileData] = useState<{
     name: string;
     phone_number: string;
@@ -37,6 +38,7 @@ const ProfileEdit = () => {
     }
 
     const fetchProfile = async () => {
+      setFetchingProfile(true);
       const { data } = await supabase
         .from("profiles")
         .select("*")
@@ -51,6 +53,7 @@ const ProfileEdit = () => {
         });
         setCurrentPictureUrl(data.profile_picture_url || "");
       }
+      setFetchingProfile(false);
     };
 
     fetchProfile();
@@ -124,16 +127,36 @@ const ProfileEdit = () => {
         <h1 className="text-3xl font-bold mb-8">Edit Profile</h1>
 
         <Card className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={profileData.name}
-                onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                placeholder="Your name"
-              />
+          {fetchingProfile ? (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="h-4 w-16 bg-muted animate-pulse rounded" />
+                <div className="h-10 bg-muted animate-pulse rounded" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                <div className="h-10 bg-muted animate-pulse rounded" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-20 bg-muted animate-pulse rounded" />
+                <div className="h-10 bg-muted animate-pulse rounded" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-28 bg-muted animate-pulse rounded" />
+                <div className="h-24 w-24 bg-muted animate-pulse rounded-full" />
+              </div>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={profileData.name}
+                  onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                  placeholder="Your name"
+                />
+              </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone_number">Phone Number</Label>
@@ -176,15 +199,16 @@ const ProfileEdit = () => {
               />
             </div>
 
-            <div className="flex gap-4">
-              <Button type="submit" disabled={loading || uploading} className="flex-1">
-                {uploading ? "Uploading..." : loading ? "Saving..." : "Save Changes"}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-                Cancel
-              </Button>
-            </div>
-          </form>
+              <div className="flex gap-4">
+                <Button type="submit" disabled={loading || uploading} className="flex-1">
+                  {uploading ? "Uploading..." : loading ? "Saving..." : "Save Changes"}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          )}
         </Card>
       </main>
 

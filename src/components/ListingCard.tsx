@@ -43,7 +43,7 @@ export const ListingCard = ({
     // Check if user is logged in
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      // Redirect to login
+      // Redirect to login with a message
       navigate("/auth");
       return;
     }

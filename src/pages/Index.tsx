@@ -18,6 +18,7 @@ const Index = () => {
   const [hotels, setHotels] = useState<any[]>([]);
   const [adventurePlaces, setAdventurePlaces] = useState<any[]>([]);
   const [savedItems, setSavedItems] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const sessionId = localStorage.getItem("sessionId") || (() => {
@@ -32,6 +33,7 @@ const Index = () => {
   }, []);
 
   const fetchAllData = async () => {
+    setLoading(true);
     const [tripsData, eventsData, hotelsData, adventurePlacesData] = await Promise.all([
       supabase.from("trips").select("*").limit(6),
       supabase.from("events").select("*").limit(6),
@@ -43,6 +45,7 @@ const Index = () => {
     if (eventsData.data) setEvents(eventsData.data);
     if (hotelsData.data) setHotels(hotelsData.data);
     if (adventurePlacesData.data) setAdventurePlaces(adventurePlacesData.data);
+    setLoading(false);
   };
 
   const fetchSavedItems = async () => {
@@ -163,11 +166,25 @@ const Index = () => {
         </section>
 
         {/* Trips */}
-        {trips.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold mb-6">Featured Trips</h2>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {trips.map((trip) => (
+        <section>
+          <h2 className="text-2xl font-bold mb-6">Featured Trips</h2>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {loading ? (
+              <>
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="border rounded-lg overflow-hidden">
+                    <div className="aspect-[4/3] bg-muted animate-pulse" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-5 bg-muted animate-pulse rounded w-3/4" />
+                      <div className="h-4 bg-muted animate-pulse rounded w-1/2" />
+                      <div className="h-4 bg-muted animate-pulse rounded w-2/3" />
+                      <div className="h-6 bg-muted animate-pulse rounded w-1/3 mt-2" />
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : trips.length > 0 ? (
+              trips.map((trip) => (
                 <ListingCard
                   key={trip.id}
                   id={trip.id}
@@ -181,17 +198,31 @@ const Index = () => {
                   onSave={handleSave}
                   isSaved={savedItems.has(trip.id)}
                 />
-              ))}
-            </div>
-          </section>
-        )}
+              ))
+            ) : null}
+          </div>
+        </section>
 
         {/* Events */}
-        {events.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {events.map((event) => (
+        <section>
+          <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {loading ? (
+              <>
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="border rounded-lg overflow-hidden">
+                    <div className="aspect-[4/3] bg-muted animate-pulse" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-5 bg-muted animate-pulse rounded w-3/4" />
+                      <div className="h-4 bg-muted animate-pulse rounded w-1/2" />
+                      <div className="h-4 bg-muted animate-pulse rounded w-2/3" />
+                      <div className="h-6 bg-muted animate-pulse rounded w-1/3 mt-2" />
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : events.length > 0 ? (
+              events.map((event) => (
                 <ListingCard
                   key={event.id}
                   id={event.id}
@@ -205,17 +236,30 @@ const Index = () => {
                   onSave={handleSave}
                   isSaved={savedItems.has(event.id)}
                 />
-              ))}
-            </div>
-          </section>
-        )}
+              ))
+            ) : null}
+          </div>
+        </section>
 
         {/* Hotels */}
-        {hotels.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold mb-6">Amazing Hotels</h2>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {hotels.map((hotel) => (
+        <section>
+          <h2 className="text-2xl font-bold mb-6">Amazing Hotels</h2>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {loading ? (
+              <>
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="border rounded-lg overflow-hidden">
+                    <div className="aspect-[4/3] bg-muted animate-pulse" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-5 bg-muted animate-pulse rounded w-3/4" />
+                      <div className="h-4 bg-muted animate-pulse rounded w-1/2" />
+                      <div className="h-4 bg-muted animate-pulse rounded w-2/3" />
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : hotels.length > 0 ? (
+              hotels.map((hotel) => (
                 <ListingCard
                   key={hotel.id}
                   id={hotel.id}
@@ -227,17 +271,30 @@ const Index = () => {
                   onSave={handleSave}
                   isSaved={savedItems.has(hotel.id)}
                 />
-              ))}
-            </div>
-          </section>
-        )}
+              ))
+            ) : null}
+          </div>
+        </section>
 
         {/* Adventure Places */}
-        {adventurePlaces.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold mb-6">Adventure Awaits</h2>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {adventurePlaces.map((place) => (
+        <section>
+          <h2 className="text-2xl font-bold mb-6">Adventure Awaits</h2>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {loading ? (
+              <>
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="border rounded-lg overflow-hidden">
+                    <div className="aspect-[4/3] bg-muted animate-pulse" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-5 bg-muted animate-pulse rounded w-3/4" />
+                      <div className="h-4 bg-muted animate-pulse rounded w-1/2" />
+                      <div className="h-4 bg-muted animate-pulse rounded w-2/3" />
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : adventurePlaces.length > 0 ? (
+              adventurePlaces.map((place) => (
                 <ListingCard
                   key={place.id}
                   id={place.id}
@@ -249,10 +306,10 @@ const Index = () => {
                   onSave={handleSave}
                   isSaved={savedItems.has(place.id)}
                 />
-              ))}
-            </div>
-          </section>
-        )}
+              ))
+            ) : null}
+          </div>
+        </section>
 
       </main>
 

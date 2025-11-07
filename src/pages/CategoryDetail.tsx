@@ -15,6 +15,7 @@ const CategoryDetail = () => {
   const [items, setItems] = useState<any[]>([]);
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
   const [savedItems, setSavedItems] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const sessionId = localStorage.getItem("sessionId") || (() => {
@@ -66,6 +67,7 @@ const CategoryDetail = () => {
   const fetchData = async () => {
     if (!config) return;
 
+    setLoading(true);
     const allData: any[] = [];
     
     for (const table of config.tables) {
@@ -80,6 +82,7 @@ const CategoryDetail = () => {
     }
     
     setItems(allData);
+    setLoading(false);
   };
 
   const fetchSavedItems = async () => {
@@ -210,31 +213,47 @@ const CategoryDetail = () => {
         />
 
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {filteredItems.map((item) => (
-            <ListingCard
-              key={item.id}
-              id={item.id}
-              type={item.table === "trips" ? "TRIP" : item.table === "events" ? "EVENT" : item.table === "hotels" ? "HOTEL" : "ADVENTURE PLACE"}
-              name={item.name}
-              imageUrl={item.image_url}
-              location={item.location}
-              country={item.country}
-              price={item.price}
-              date={item.date}
-              onSave={handleSave}
-              isSaved={savedItems.has(item.id)}
-              amenities={item.amenities}
-            />
-          ))}
+          {loading ? (
+            <>
+              {[...Array(12)].map((_, i) => (
+                <div key={i} className="border rounded-lg overflow-hidden">
+                  <div className="aspect-[4/3] bg-muted animate-pulse" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-5 bg-muted animate-pulse rounded w-3/4" />
+                    <div className="h-4 bg-muted animate-pulse rounded w-1/2" />
+                    <div className="h-4 bg-muted animate-pulse rounded w-2/3" />
+                    <div className="h-6 bg-muted animate-pulse rounded w-1/3 mt-2" />
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            filteredItems.map((item) => (
+              <ListingCard
+                key={item.id}
+                id={item.id}
+                type={item.table === "trips" ? "TRIP" : item.table === "events" ? "EVENT" : item.table === "hotels" ? "HOTEL" : "ADVENTURE PLACE"}
+                name={item.name}
+                imageUrl={item.image_url}
+                location={item.location}
+                country={item.country}
+                price={item.price}
+                date={item.date}
+                onSave={handleSave}
+                isSaved={savedItems.has(item.id)}
+                amenities={item.amenities}
+              />
+            ))
+          )}
         </div>
 
-        {filteredItems.length === 0 && items.length > 0 && (
+        {!loading && filteredItems.length === 0 && items.length > 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No items match your filters. Try adjusting the criteria.</p>
           </div>
         )}
 
-        {items.length === 0 && (
+        {!loading && items.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No items found. Try a different search.</p>
           </div>
