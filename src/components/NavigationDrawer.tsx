@@ -8,38 +8,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import React from 'react'; // Added React import
-
-// --- Page Components (for demonstration of full code in one file) ---
-
-const CreateTripEvent: React.FC = () => {
-  return (
-    <div>
-      <h1>Create Trip & Event</h1>
-      <p>This is the page for creating a new trip or event.</p>
-    </div>
-  );
-};
-
-const CreateHotel: React.FC = () => {
-  return (
-    <div>
-      <h1>Create Hotel & Accommodation</h1>
-      <p>This is the page for creating a new hotel or accommodation listing.</p>
-    </div>
-  );
-};
-
-const CreateAdventure: React.FC = () => {
-  return (
-    <div>
-      <h1>Create Place to Adventure</h1>
-      <p>This is the page for creating a new adventure location.</p>
-    </div>
-  );
-};
-
-// --- Navigation Drawer Component ---
 
 interface NavigationDrawerProps {
   onClose: () => void;
@@ -88,7 +56,7 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
                 <DropdownMenuContent align="start" className="w-56">
                   <DropdownMenuItem asChild>
                     <Link 
-                      to="/create/trip-event" // Updated path
+                      to="/create-trip-event" 
                       onClick={onClose} 
                       className="cursor-pointer"
                     >
@@ -97,7 +65,7 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link 
-                      to="/create/hotel" // Updated path
+                      to="/create-hotel" 
                       onClick={onClose} 
                       className="cursor-pointer"
                     >
@@ -106,7 +74,7 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link 
-                      to="/create/adventure" // Updated path
+                      to="/create-adventure" 
                       onClick={onClose} 
                       className="cursor-pointer"
                     >
@@ -171,6 +139,3 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
     </div>
   );
 };
-
-// Export the page components as well, for use in your routing file
-export { CreateTripEvent, CreateHotel, CreateAdventure };
