@@ -68,12 +68,14 @@ export const Header = () => {
   }, [user]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    // 1. Changed background to orange-500 and text to white
+    <header className="sticky top-0 z-50 w-full border-b bg-orange-500 text-white">
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="hover:bg-muted">
+              {/* 2. Adjusted Menu button to be white/orange-600 on hover */}
+              <Button variant="ghost" size="icon" className="text-white hover:bg-orange-600">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -83,31 +85,34 @@ export const Header = () => {
           </Sheet>
           
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground font-bold text-lg">
+            {/* 3. Changed logo background and text to solid white (or use a contrasting color) */}
+            <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center text-orange-500 font-bold text-lg">
               T
             </div>
-            <span className="font-bold text-base md:text-lg bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            {/* 4. Removed gradient text for TripTrac name and set to white */}
+            <span className="font-bold text-base md:text-lg text-white">
               TripTrac
             </span>
           </Link>
         </div>
 
+        {/* 5. Updated navigation links for white text and orange hover */}
         <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2 font-bold hover:text-primary transition-colors">
+          <Link to="/" className="flex items-center gap-2 font-bold hover:text-orange-200 transition-colors">
             <Home className="h-4 w-4" />
             Home
           </Link>
-          <Link to="/bookings" className="flex items-center gap-2 font-bold hover:text-primary transition-colors">
+          <Link to="/bookings" className="flex items-center gap-2 font-bold hover:text-orange-200 transition-colors">
             <Ticket className="h-4 w-4" />
             My Bookings
           </Link>
           {user && (
-            <Link to="/saved" className="flex items-center gap-2 font-bold hover:text-primary transition-colors">
+            <Link to="/saved" className="flex items-center gap-2 font-bold hover:text-orange-200 transition-colors">
               <Heart className="h-4 w-4" />
               Saved
             </Link>
           )}
-          <Link to="/vlog" className="flex items-center gap-2 font-bold hover:text-primary transition-colors">
+          <Link to="/vlog" className="flex items-center gap-2 font-bold hover:text-orange-200 transition-colors">
             <Video className="h-4 w-4" />
             Vlog
           </Link>
@@ -115,18 +120,21 @@ export const Header = () => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 h-auto px-2">
+            {/* 6. Adjusted user name display color and hover */}
+            <Button variant="ghost" className="flex items-center gap-2 h-auto px-2 text-white hover:bg-orange-600">
               <span className="hidden md:inline text-sm font-medium">
                 {userName || user?.user_metadata?.name || user?.email || "Guest"}
               </span>
               <Avatar className="h-8 w-8">
                 <AvatarImage src={profilePicture || user?.user_metadata?.profile_picture_url} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                {/* Avatar Fallback kept its original style which should be fine */}
+                <AvatarFallback className="bg-white text-orange-500 text-xs"> 
                   {userName?.[0]?.toUpperCase() || user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0) || "G"}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
+          {/* Dropdown Menu Content styling remains default (white background) for accessibility */}
           <DropdownMenuContent align="end" className="w-48 bg-popover">
             {user ? (
               <>
