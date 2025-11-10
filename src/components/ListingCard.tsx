@@ -41,7 +41,7 @@ export const ListingCard = ({
     e.stopPropagation();
     
     // Check if user is logged in
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } = {} } = await supabase.auth.getSession();
     if (!session) {
       // Redirect to login with a message
       navigate("/auth");
@@ -86,68 +86,53 @@ export const ListingCard = ({
         />
         
         {/* Top Overlay for Name and Location */}
-        <div className="absolute inset-x-0 top-0 p-3 bg-gradient-to-b from-black/60 to-transparent text-white">
-          <h3 className="font-bold text-lg mb-0 line-clamp-1">{name}</h3>
+        <div className="absolute inset-x-0 top-0 p-3 pb-8 bg-gradient-to-b from-black/60 to-transparent text-white">
+          <h3 className="font-bold text-xl mb-0 line-clamp-1">{name}</h3>
           <p className="text-sm line-clamp-1">{location}, {country}</p>
         </div>
 
-        {/* Category Badge - now with rgba black background */}
-        <div className="absolute top-3 left-3 mt-14"> {/* Adjusted margin-top to clear name/location overlay */}
-          <Badge className="bg-[rgba(0,0,0,0.6)] text-white backdrop-blur">
-            {type}
-          </Badge>
-        </div>
-        
         {/* Save Button - no background, red heart when saved */}
         <Button
           variant="ghost"
           size="icon"
           onClick={handleSave}
           className={cn(
-            "absolute top-3 right-3 h-9 w-9 rounded-full transition-all", // Removed bg-background/80
+            "absolute top-3 right-3 h-9 w-9 rounded-full transition-all z-10",
           )}
         >
           <Heart
             className={cn(
               "h-5 w-5 transition-all",
-              saved ? "fill-red-500 text-red-500" : "text-white" // Changed to red-500
+              saved ? "fill-red-500 text-red-500" : "text-white"
             )}
           />
         </Button>
 
-        {/* Price and Date Overlay - positioned at the bottom */}
-        {(price !== undefined || date) && (
-          <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-end">
-            {price !== undefined && (
-              <p className="font-bold text-xl text-white">
-                ${price}
-              </p>
-            )}
-            {date && (
-              <p className="font-bold text-base text-white">
-                {formatDate(date)}
-              </p>
-            )}
-          </div>
-        )}
+        {/* Bottom Overlay for Price, Date, and Category Badge */}
+        <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-end">
+            
+            {/* Price and Date on the left (combined for space) */}
+            <div className="flex flex-col items-start space-y-1">
+                {price !== undefined && (
+                <p className="font-bold text-xl text-white">
+                    ${price}
+                </p>
+                )}
+                {date && (
+                <p className="font-bold text-sm text-white/90">
+                    {formatDate(date)}
+                </p>
+                )}
+            </div>
+
+            {/* Category Badge - now at bottom-right with red background */}
+            <Badge className="bg-red-600 text-white backdrop-blur">
+                {type}
+            </Badge>
+        </div>
       </div>
       
-      {/* Removed name and location from here as they are now in the top overlay */}
-      <div className="p-4 hidden"> 
-        {amenities && amenities.length > 0 && (
-          <div className="hidden md:flex flex-wrap gap-1 mt-2">
-            {amenities.slice(0, 4).map((amenity, index) => (
-              <span key={index} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                {amenity}
-              </span>
-            ))}
-            {amenities.length > 4 && (
-              <span className="text-xs text-muted-foreground px-2 py-1">+{amenities.length - 4} more</span>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Removed the entire section below the image as requested */}
     </Card>
   );
-  
 };
