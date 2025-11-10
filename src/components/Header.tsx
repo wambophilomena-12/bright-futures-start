@@ -134,7 +134,11 @@ export const Header = () => {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-popover">
+<DropdownMenuContent 
+            align="end" 
+            // MODIFIED: Changed width to 50vw and added rounded-none to remove the border radius
+            className="w-[50vw] rounded-none bg-popover"
+          >
             {user ? (
               <>
                 <DropdownMenuItem asChild>
@@ -163,5 +167,5 @@ export const Header = () => {
         </DropdownMenu>
       </div>
     </header>
-  );
+  ); 
 };
