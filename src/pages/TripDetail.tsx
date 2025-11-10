@@ -103,11 +103,13 @@ const TripDetail = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-background">Loading...</div>;
+    // MODIFICATION: Changed loading background
+    return <div className="min-h-screen **bg-orange-50**">Loading...</div>;
   }
 
   if (!trip) {
-    return <div className="min-h-screen bg-background">Trip not found</div>;
+    // MODIFICATION: Changed not found background
+    return <div className="min-h-screen **bg-orange-50**">Trip not found</div>;
   }
 
   const displayImages = trip.gallery_images?.length > 0 
@@ -117,7 +119,8 @@ const TripDetail = () => {
     : [trip.image_url];
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    // MODIFICATION: Changed the main background class to bg-orange-50 (light orange)
+    <div className="min-h-screen **bg-orange-50** pb-20 md:pb-0">
       <Header />
       
       <main className="container px-4 py-6 max-w-6xl mx-auto">
@@ -273,5 +276,4 @@ const TripDetail = () => {
     </div>
   );
 };
-
 export default TripDetail;
