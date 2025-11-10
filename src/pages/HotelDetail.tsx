@@ -295,5 +295,4 @@ const HotelDetail = () => {
     </div>
   );
 };
-
 export default HotelDetail;
