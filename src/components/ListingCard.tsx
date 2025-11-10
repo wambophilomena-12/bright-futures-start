@@ -153,4 +153,4 @@ export const ListingCard = ({
       </div>
     </Card>
   );
-}; 
+};
