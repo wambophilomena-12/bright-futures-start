@@ -34,9 +34,7 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
 
           {/* Changed logo background to white, text to orange */}
           <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center text-orange-500 font-bold text-xl">
-
             T
-
           </div>
 
           <div>
