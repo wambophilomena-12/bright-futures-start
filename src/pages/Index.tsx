@@ -61,12 +61,7 @@ const ImageSlideshow = () => {
         <p className="text-lg text-blue-200 mb-4">
           {slide.description}
         </p>
-        <button 
-            onClick={() => { /* Navigate to the slide's detail page */ }}
-            className="w-fit px-5 py-2 text-sm font-semibold rounded-full bg-white text-blue-900 hover:bg-gray-100 transition-colors"
-        >
-            View Deal
-        </button>
+
       </div>
 
       {/* Navigation Dots (Optional: for a full implementation) */}
