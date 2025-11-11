@@ -174,5 +174,5 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
         </p>
       </div>
     </div>
-  );
+   );
 };
