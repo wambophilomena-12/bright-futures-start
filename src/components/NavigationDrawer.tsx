@@ -88,8 +88,9 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
                       // Increased padding/size for better tap target
                       className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-primary/10 transition-all duration-200 group"
                     >
-                      <item.icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                      {/* UPDATED: Changed from font-bold text-primary to font-medium text-foreground with hover effect */}
+                      {/* UPDATED: Icon is now black (text-foreground) by default */}
+                      <item.icon className="h-5 w-5 text-foreground group-hover:text-primary transition-colors" />
+                      {/* UPDATED: Font is font-medium and black (text-foreground) */}
                       <span className="font-medium text-foreground group-hover:text-primary transition-colors"> 
                         {item.label}
                       </span>
@@ -150,7 +151,7 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
               <Link
                 to="/auth" // Links to Auth.tsx
                 onClick={onClose}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200"
               >
                 <LogIn className="h-5 w-5" />
                 <span className="font-medium">Login</span>
@@ -168,5 +169,5 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
       </div>
     </div>
    );
-   
+
 };
