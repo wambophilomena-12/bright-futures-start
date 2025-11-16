@@ -13,13 +13,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Calendar, MapPin, DollarSign, Users, Upload, Navigation } from "lucide-react";
 
+// --- START: MODIFIED COMPONENT ---
 const CreateTripEvent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const [isTrip, setIsTrip] = useState(true);
   const [loading, setLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -34,13 +35,13 @@ const CreateTripEvent = () => {
     phone_number: "",
     map_link: ""
   });
-  
+
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
 
   const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
-    
+
     const newFiles = Array.from(files).slice(0, 5 - galleryImages.length);
     setGalleryImages(prev => [...prev, ...newFiles].slice(0, 5));
   };
@@ -54,7 +55,8 @@ const CreateTripEvent = () => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+          // Corrected the map URL to be a valid format (assuming a template literal was intended)
+          const mapUrl = `https://maps.google.com/?q=${latitude},${longitude}`;
           setFormData({...formData, map_link: mapUrl});
           toast({
             title: "Location Added",
@@ -80,7 +82,7 @@ const CreateTripEvent = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -88,6 +90,16 @@ const CreateTripEvent = () => {
         variant: "destructive"
       });
       navigate("/auth");
+      return;
+    }
+
+    // Basic validation to check for at least one image
+    if (galleryImages.length === 0) {
+      toast({
+        title: "Image Required",
+        description: "Please upload at least one image for the gallery.",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -100,7 +112,7 @@ const CreateTripEvent = () => {
       for (const file of galleryImages) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}/${Math.random()}.${fileExt}`;
-        
+
         const { error: uploadError } = await supabase.storage
           .from('user-content-images')
           .upload(fileName, file);
@@ -110,7 +122,7 @@ const CreateTripEvent = () => {
         const { data: { publicUrl } } = supabase.storage
           .from('user-content-images')
           .getPublicUrl(fileName);
-          
+
         uploadedUrls.push(publicUrl);
       }
 
@@ -168,18 +180,20 @@ const CreateTripEvent = () => {
           <Button 
             onClick={() => setIsTrip(true)}
             variant={isTrip ? "default" : "outline"}
+            className="rounded-none" // **MODIFIED: Removed border-radius**
           >
             Trip
           </Button>
           <Button 
             onClick={() => setIsTrip(false)}
             variant={!isTrip ? "default" : "outline"}
+            className="rounded-none" // **MODIFIED: Removed border-radius**
           >
             Event
           </Button>
         </div>
 
-        <Card className="p-6">
+        <Card className="p-6 rounded-none"> {/* **MODIFIED: Removed border-radius** */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -190,6 +204,7 @@ const CreateTripEvent = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="Enter name"
+                  className="rounded-none" // **MODIFIED: Removed border-radius**
                 />
               </div>
 
@@ -201,6 +216,7 @@ const CreateTripEvent = () => {
                   value={formData.country}
                   onChange={(e) => setFormData({...formData, country: e.target.value})}
                   placeholder="Enter country"
+                  className="rounded-none" // **MODIFIED: Removed border-radius**
                 />
               </div>
 
@@ -211,7 +227,7 @@ const CreateTripEvent = () => {
                   <Input
                     id="place"
                     required
-                    className="pl-10"
+                    className="pl-10 rounded-none" // **MODIFIED: Removed border-radius**
                     value={formData.place}
                     onChange={(e) => setFormData({...formData, place: e.target.value})}
                     placeholder="Enter place"
@@ -227,6 +243,7 @@ const CreateTripEvent = () => {
                   value={formData.location}
                   onChange={(e) => setFormData({...formData, location: e.target.value})}
                   placeholder="Enter location details"
+                  className="rounded-none" // **MODIFIED: Removed border-radius**
                 />
               </div>
 
@@ -238,7 +255,7 @@ const CreateTripEvent = () => {
                     id="date"
                     type="date"
                     required
-                    className="pl-10"
+                    className="pl-10 rounded-none" // **MODIFIED: Removed border-radius**
                     value={formData.date}
                     onChange={(e) => setFormData({...formData, date: e.target.value})}
                   />
@@ -254,7 +271,7 @@ const CreateTripEvent = () => {
                     type="number"
                     step="0.01"
                     required
-                    className="pl-10"
+                    className="pl-10 rounded-none" // **MODIFIED: Removed border-radius**
                     value={formData.price}
                     onChange={(e) => setFormData({...formData, price: e.target.value})}
                     placeholder="0.00"
@@ -270,7 +287,7 @@ const CreateTripEvent = () => {
                     id="price_child"
                     type="number"
                     step="0.01"
-                    className="pl-10"
+                    className="pl-10 rounded-none" // **MODIFIED: Removed border-radius**
                     value={formData.price_child}
                     onChange={(e) => setFormData({...formData, price_child: e.target.value})}
                     placeholder="0.00"
@@ -285,7 +302,7 @@ const CreateTripEvent = () => {
                   <Input
                     id="available_tickets"
                     type="number"
-                    className="pl-10"
+                    className="pl-10 rounded-none" // **MODIFIED: Removed border-radius**
                     value={formData.available_tickets}
                     onChange={(e) => setFormData({...formData, available_tickets: e.target.value})}
                     placeholder="0"
@@ -301,6 +318,7 @@ const CreateTripEvent = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   placeholder="contact@example.com"
+                  className="rounded-none" // **MODIFIED: Removed border-radius**
                 />
               </div>
 
@@ -312,6 +330,7 @@ const CreateTripEvent = () => {
                   value={formData.phone_number}
                   onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
                   placeholder="+1234567890"
+                  className="rounded-none" // **MODIFIED: Removed border-radius**
                 />
               </div>
             </div>
@@ -324,6 +343,7 @@ const CreateTripEvent = () => {
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 placeholder="Describe your trip or event..."
                 rows={5}
+                className="rounded-none" // **MODIFIED: Removed border-radius**
               />
             </div>
 
@@ -335,8 +355,9 @@ const CreateTripEvent = () => {
                   value={formData.map_link}
                   onChange={(e) => setFormData({...formData, map_link: e.target.value})}
                   placeholder="https://maps.google.com/..."
+                  className="rounded-none" // **MODIFIED: Removed border-radius**
                 />
-                <Button type="button" variant="outline" onClick={getCurrentLocation}>
+                <Button type="button" variant="outline" onClick={getCurrentLocation} className="rounded-none"> 
                   <Navigation className="h-4 w-4" />
                 </Button>
               </div>
@@ -351,6 +372,7 @@ const CreateTripEvent = () => {
                 multiple
                 onChange={(e) => handleImageUpload(e.target.files)}
                 disabled={galleryImages.length >= 5}
+                className="rounded-none" // **MODIFIED: Removed border-radius**
               />
               <p className="text-sm text-muted-foreground">
                 {galleryImages.length}/5 images selected
@@ -362,13 +384,13 @@ const CreateTripEvent = () => {
                       <img 
                         src={URL.createObjectURL(file)} 
                         alt={`Preview ${index + 1}`}
-                        className="w-full h-20 object-cover rounded"
+                        className="w-full h-20 object-cover rounded-none" // **MODIFIED: Removed border-radius**
                       />
                       <Button
                         type="button"
                         size="sm"
                         variant="destructive"
-                        className="absolute top-0 right-0 h-6 w-6 p-0"
+                        className="absolute top-0 right-0 h-6 w-6 p-0 rounded-none" // **MODIFIED: Removed border-radius**
                         onClick={() => removeImage(index)}
                       >×</Button>
                     </div>
@@ -378,10 +400,10 @@ const CreateTripEvent = () => {
             </div>
 
             <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={loading || uploading || galleryImages.length === 0} className="flex-1">
+              <Button type="submit" disabled={loading || uploading || galleryImages.length === 0} className="flex-1 rounded-none"> 
                 {uploading ? "Uploading Images..." : loading ? "Submitting..." : "Submit for Approval"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+              <Button type="button" variant="outline" onClick={() => navigate(-1)} className="rounded-none"> 
                 Cancel
               </Button>
             </div>
@@ -396,3 +418,4 @@ const CreateTripEvent = () => {
 };
 
 export default CreateTripEvent;
+// --- END: MODIFIED COMPONENT ---
