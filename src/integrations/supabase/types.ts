@@ -520,7 +520,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      creator_booking_summary: {
+        Row: {
+          booking_details: Json | null
+          booking_type: string | null
+          created_at: string | null
+          guest_email_limited: string | null
+          guest_name_masked: string | null
+          guest_phone_limited: string | null
+          id: string | null
+          is_guest_booking: boolean | null
+          item_id: string | null
+          payment_method: string | null
+          payment_status: string | null
+          slots_booked: number | null
+          status: string | null
+          total_amount: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          booking_details?: Json | null
+          booking_type?: string | null
+          created_at?: string | null
+          guest_email_limited?: never
+          guest_name_masked?: never
+          guest_phone_limited?: never
+          id?: string | null
+          is_guest_booking?: boolean | null
+          item_id?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          slots_booked?: number | null
+          status?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          booking_details?: Json | null
+          booking_type?: string | null
+          created_at?: string | null
+          guest_email_limited?: never
+          guest_name_masked?: never
+          guest_phone_limited?: never
+          id?: string | null
+          is_guest_booking?: boolean | null
+          item_id?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          slots_booked?: number | null
+          status?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

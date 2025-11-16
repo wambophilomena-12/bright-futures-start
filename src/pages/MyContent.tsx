@@ -59,7 +59,12 @@ const MyContent = () => {
 
       const allIds = allContent.map(c => c.id);
       if (allIds.length > 0) {
-        const { data } = await supabase.from("bookings").select("*").in("item_id", allIds).order("created_at", { ascending: false });
+        // Use privacy-protected view for content creators
+        const { data } = await supabase
+          .from("creator_booking_summary")
+          .select("*")
+          .in("item_id", allIds)
+          .order("created_at", { ascending: false });
         setBookings(data || []);
       }
       
@@ -234,9 +239,10 @@ const MyContent = () => {
                       <Badge className="capitalize">{booking.booking_type}</Badge>
                       <Badge variant={booking.status === "confirmed" ? "default" : booking.status === "pending" ? "secondary" : "destructive"}>{booking.status}</Badge>
                     </div>
-                    {booking.guest_name && <p className="text-sm">Guest: {booking.guest_name}</p>}
-                    {booking.guest_email && <p className="text-sm">Email: {booking.guest_email}</p>}
-                    {booking.guest_phone && <p className="text-sm">Phone: {booking.guest_phone}</p>}
+                    {booking.guest_name_masked && <p className="text-sm">Guest: {booking.guest_name_masked}</p>}
+                    {booking.guest_email_limited && <p className="text-sm">Email: {booking.guest_email_limited}</p>}
+                    {booking.guest_phone_limited && <p className="text-sm">Phone: {booking.guest_phone_limited}</p>}
+                    {booking.status !== 'confirmed' && <p className="text-xs text-muted-foreground italic">Contact details available after confirmation</p>}
                     <p className="text-sm font-semibold">Amount: ${booking.total_amount}</p>
                     <p className="text-sm">Slots: {booking.slots_booked || 1}</p>
                     <p className="text-sm text-muted-foreground">Booked: {new Date(booking.created_at).toLocaleDateString()}</p>
