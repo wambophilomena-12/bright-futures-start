@@ -2,18 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
-import { CategoryCard } from "@/components/CategoryCard";
 import { SearchBarWithSuggestions } from "@/components/SearchBarWithSuggestions";
 import { ListingCard } from "@/components/ListingCard";
 import { Footer } from "@/components/Footer";
-import { Calendar, Hotel, Mountain } from "lucide-react";
+import { Calendar, Hotel, Mountain, PartyPopper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getUserId } from "@/lib/sessionManager";
 
-// MOCK Slideshow Component (Replace with your actual implementation)
 const ImageSlideshow = () => {
-  // Mock data for the slideshow
   const slides = [
     {
       name: "Bali's Sunrise Temples",
@@ -37,343 +34,169 @@ const ImageSlideshow = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000); // Change slide every 5 seconds
-
+    }, 5000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, []);
 
   const slide = slides[currentSlide];
 
   return (
-    // **CHANGE 1 & 2: Removed border radius, and reduced height by 50% on large screens (using lg:aspect-[2/1])**
-    <div className="relative w-full aspect-video lg:aspect-[2/1] shadow-2xl overflow-hidden bg-gray-200">
-      {/* Background Image */}
-      <img
-        src={slide.imageUrl}
-        alt={slide.name}
-        className="w-full h-full object-cover transition-opacity duration-1000"
-      />
-      
-      {/* Overlay Content (Dark Navy theme style) */}
+    <div className="relative w-full aspect-video lg:aspect-[2/1] overflow-hidden bg-gray-200">
+      <img src={slide.imageUrl} alt={slide.name} className="w-full h-full object-cover" />
       <div className="absolute inset-0 bg-blue-900/60 flex flex-col justify-end p-6 md:p-8">
-        <h3 className="text-3xl font-extrabold text-white mb-2 leading-tight">
-          {slide.name}
-        </h3>
-        <p className="text-lg text-blue-200 mb-4">
-          {slide.description}
-        </p>
+        <h3 className="text-3xl font-extrabold text-white mb-2">{slide.name}</h3>
+        <p className="text-lg text-blue-200 mb-4">{slide.description}</p>
       </div>
-
-      {/* Navigation Dots (Optional: for a full implementation) */}
       <div className="absolute bottom-4 right-4 flex space-x-2">
         {slides.map((_, index) => (
           <div
             key={index}
-            className={`h-2 w-2 rounded-full transition-all duration-300 ${
-              index === currentSlide ? "bg-white scale-125" : "bg-white/50 hover:bg-white"
-            }`}
+            className={`h-2 w-2 rounded-full transition-all ${index === currentSlide ? "bg-white scale-125" : "bg-white/50"}`}
             onClick={() => setCurrentSlide(index)}
-          ></div>
+          />
         ))}
       </div>
     </div>
   );
 };
 
-// **NEW TYPE/INTERFACE for a combined listing item**
-interface ListingItem {
-  id: string;
-  name: string;
-  image_url: string;
-  location: string;
-  country: string;
-  price: number;
-  date?: string; // Optional for Hotels/Adventure
-  created_at: string; // Crucial for sorting
-  type: "TRIP" | "EVENT" | "HOTEL" | "ADVENTURE PLACE"; // The item type
-}
-
 const Index = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  // **CHANGE 1: Use a single state for all combined listings**
-  const [listings, setListings] = useState<ListingItem[]>([]);
+  const [listings, setListings] = useState<any[]>([]);
   const [savedItems, setSavedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const initializeData = async () => {
-      const uid = await getUserId();
-      setUserId(uid);
-      fetchAllData();
-      if (uid) {
-        fetchSavedItems(uid);
+    fetchAllData();
+    const initUserId = async () => {
+      const id = await getUserId();
+      setUserId(id);
+      if (id) {
+        const { data } = await supabase.from("saved_items").select("item_id").eq("user_id", id);
+        if (data) setSavedItems(new Set(data.map(item => item.item_id)));
       }
     };
-    initializeData();
+    initUserId();
   }, []);
-  
-  // Helper to fetch and tag data from a single table
-  const fetchTableData = async (tableName: 'trips' | 'events' | 'hotels' | 'adventure_places', type: ListingItem['type'], query?: string) => {
-    let selectQuery = supabase.from(tableName).select("*");
-    
-    if (query) {
-      // Assuming 'name', 'location', 'country', 'place' are common search fields
-      selectQuery = selectQuery.or(`name.ilike.${query},location.ilike.${query},country.ilike.${query},place.ilike.${query}`);
-    } else {
-      // Limit results for the initial load if no query is present
-      selectQuery = selectQuery.limit(6); 
-    }
-    
-    const { data, error } = await selectQuery;
-    
-    if (error) {
-      console.error(`Error fetching ${tableName}:`, error);
-      return [];
-    }
-    
-    if (data) {
-      // Add the 'type' to each item for rendering
-      return data.map(item => ({
-        ...item,
-        type: type,
-      })) as ListingItem[];
-    }
-    return [];
-  };
 
-  // **CHANGE 2: Refactor fetchAllData to combine and sort results**
-  const fetchAllData = async () => {
+  const fetchAllData = async (query?: string) => {
     setLoading(true);
-
-    const [tripsData, eventsData, hotelsData, adventurePlacesData] = await Promise.all([
-      fetchTableData("trips", "TRIP"),
-      fetchTableData("events", "EVENT"),
-      fetchTableData("hotels", "HOTEL"),
-      fetchTableData("adventure_places", "ADVENTURE PLACE"),
-    ]);
-
-    // Combine all arrays
-    let combinedListings = [
-      ...tripsData,
-      ...eventsData,
-      ...hotelsData,
-      ...adventurePlacesData,
+    const tables = [
+      { name: "trips", type: "TRIP" },
+      { name: "events", type: "EVENT" },
+      { name: "hotels", type: "HOTEL" },
+      { name: "adventure_places", type: "ADVENTURE PLACE" }
     ];
 
-    // **Sorting Logic: Sort by 'created_at' in descending order (newest first)**
-    combinedListings.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    const results = await Promise.all(
+      tables.map(async ({ name, type }) => {
+        let dbQuery = supabase.from(name).select("*").eq("approval_status", "approved").eq("is_hidden", false);
+        if (query) {
+          dbQuery = dbQuery.or(`name.ilike.%${query}%,location.ilike.%${query}%,country.ilike.%${query}%`);
+        }
+        const { data } = await dbQuery;
+        return (data || []).map((item: any) => ({ ...item, type }));
+      })
     );
 
-    setListings(combinedListings);
+    const combined = results.flat().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    setListings(combined);
     setLoading(false);
-  };
-
-  const fetchSavedItems = async (uid: string) => {
-    const { data } = await supabase
-      .from("saved_items")
-      .select("item_id")
-      .eq("user_id", uid);
-
-    if (data) {
-      setSavedItems(new Set(data.map(item => String(item.item_id))));
-    }
-  };
-
-  // **CHANGE 3: Refactor handleSearch to combine and sort results from search queries**
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      fetchAllData();
-      return;
-    }
-
-    // Sanitize search query to prevent SQL injection
-    const sanitizedQuery = searchQuery.toLowerCase().replace(/[%_]/g, '\\$&');
-    const query = `%${sanitizedQuery}%`;
-
-    const [tripsData, eventsData, hotelsData, adventurePlacesData] = await Promise.all([
-      fetchTableData("trips", "TRIP", query),
-      fetchTableData("events", "EVENT", query),
-      fetchTableData("hotels", "HOTEL", query),
-      fetchTableData("adventure_places", "ADVENTURE PLACE", query),
-    ]);
-
-    // Combine all arrays
-    let combinedListings = [
-      ...tripsData,
-      ...eventsData,
-      ...hotelsData,
-      ...adventurePlacesData,
-    ];
-    
-    // Sort by 'created_at' in descending order
-    combinedListings.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-
-    setListings(combinedListings);
   };
 
   const handleSave = async (itemId: string, itemType: string) => {
     if (!userId) {
-      toast({
-        title: "Login required",
-        description: "Please log in to save items",
-        variant: "destructive",
-      });
+      toast({ title: "Login required", variant: "destructive" });
       return;
     }
-
     const isSaved = savedItems.has(itemId);
-
     if (isSaved) {
-      const { error } = await supabase
-        .from("saved_items")
-        .delete()
-        .eq("item_id", itemId)
-        .eq("user_id", userId);
-
-      if (!error) {
-        setSavedItems(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(itemId);
-          return newSet;
-        });
-        toast({ title: "Removed from saved" });
-      }
+      await supabase.from("saved_items").delete().eq("item_id", itemId).eq("user_id", userId);
+      setSavedItems(prev => { const newSet = new Set(prev); newSet.delete(itemId); return newSet; });
     } else {
-      await supabase.from("saved_items").insert([{
-        user_id: userId,
-        item_id: itemId,
-        item_type: itemType,
-        session_id: null
-      }]);
-
+      await supabase.from("saved_items").insert([{ user_id: userId, item_id: itemId, item_type: itemType }]);
       setSavedItems(prev => new Set([...prev, itemId]));
-      toast({ title: "Added to saved!" });
     }
   };
 
   const categories = [
-    {
-      icon: Calendar,
-      title: "Events & Trips",
-      description: "Discover exciting experiences",
-      path: "/category/trips",
-    },
-    {
-      icon: Hotel,
-      title: "Hotels & Accommodation",
-      description: "Find your perfect stay",
-      path: "/category/hotels",
-    },
-    {
-      icon: Mountain,
-      title: "Adventure Places",
-      description: "Explore thrilling destinations",
-      path: "/category/adventure",
-    },
+    { icon: Calendar, title: "Trips", path: "/category/trips", bgImage: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800" },
+    { icon: PartyPopper, title: "Events", path: "/category/events", bgImage: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800" },
+    { icon: Hotel, title: "Hotels", path: "/category/hotels", bgImage: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800" },
+    { icon: Mountain, title: "Adventure", path: "/category/adventure", bgImage: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800" },
   ];
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
-
-      <main className="container px-4 py-8 space-y-8 md:space-y-12">
-        {/* Search */}
-        <section>
-          <SearchBarWithSuggestions
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onSubmit={handleSearch}
-          />
-        </section>
-
-        {/* Categories & Slideshow Section */}
-        <section className="flex flex-col md:flex-row gap-8 md:gap-12">
-          
-          {/* Slideshow (Takes up remaining space on the left) */}
-          <div className="w-full md:w-2/3 lg:w-3/4 order-1 md:order-1">
+      <div className="sticky top-0 md:top-16 z-40 bg-background border-b shadow-sm">
+        <div className="container px-4 py-4">
+          <SearchBarWithSuggestions value={searchQuery} onChange={setSearchQuery} onSubmit={() => fetchAllData(searchQuery)} />
+        </div>
+      </div>
+      <main className="container px-0 md:px-4 py-0 md:py-8">
+        <section className="flex flex-col lg:flex-row gap-0">
+          <div className="w-full lg:w-1/3 order-2 lg:order-1">
+            <div className="grid grid-cols-2 gap-0">
+              {categories.map((cat) => (
+                <div
+                  key={cat.title}
+                  onClick={() => navigate(cat.path)}
+                  className="relative aspect-square cursor-pointer overflow-hidden group"
+                  style={{ backgroundImage: `url(${cat.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                >
+                  <div className="absolute inset-0 bg-black/50 group-hover:bg-black/40 transition-all flex flex-col items-center justify-center p-4">
+                    <cat.icon className="h-8 w-8 md:h-12 md:w-12 text-white mb-2" />
+                    <h3 className="font-bold text-white text-sm md:text-lg">{cat.title}</h3>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="w-full lg:w-2/3 order-1 lg:order-2">
             <ImageSlideshow />
           </div>
-
-          {/* Categories (Must match height of the slideshow) */}
-          {/* **CHANGE 3: Use 'h-full' on the parent container (lg:h-auto) and 'flex-grow' on CategoryCard to match the slideshow height** */}
-          <div className="w-full md:w-1/3 lg:w-1/4 order-2 md:order-2 flex flex-col justify-between">
-             
-             {/* Use h-full to occupy the full height of the parent flex container */}
-             <div className="grid grid-cols-3 md:grid-cols-1 gap-3 md:gap-4 flex-grow">
-               {categories.map((category) => (
-                 <CategoryCard
-                   key={category.title}
-                   icon={category.icon}
-                   title={category.title}
-                   description={category.description}
-                   onClick={() => navigate(category.path)}
-                   // **CHANGE 4: Use flex-grow on the card itself on medium screens to proportionally share the height**
-                   className="p-3 md:p-4 text-center md:text-left md:flex-grow" 
-                 />
-               ))}
-             </div>
-          </div>
-
         </section>
-
-        <hr className="border-t border-gray-200 mt-8 mb-0" />  
-        
-        {/* COMBINED LISTINGS: Trips, Events, Hotels, and Adventure Places */}
-        <section>
-        <div className="bg-blue-950 text-white w-full flex items-center py-1 lg:py-3">
-            <h2 className="font-bold px-4 lg:text-2xl lg:px-4">Popular Picks and Recent Finds</h2>
-        </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-6">
-            {loading ? (
-              <>
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="group relative rounded-xl overflow-hidden shadow-lg border-2 border-transparent transition-all duration-300 hover:shadow-xl"
-                  >
+        <div className="px-4">
+          <hr className="border-t border-gray-200 my-8" />
+          <section>
+            <div className="bg-blue-950 text-white w-full py-3 mb-6 px-4">
+              <h2 className="font-bold text-xl lg:text-2xl">Popular Picks and Recent Finds</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {loading ? (
+                [...Array(10)].map((_, i) => (
+                  <div key={i} className="shadow-lg">
                     <div className="aspect-[4/3] bg-muted animate-pulse" />
-                    <div className="p-2 md:p-4 space-y-2 md:space-y-3">
+                    <div className="p-4 space-y-2">
                       <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
-                      <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
-                      <div className="h-3 bg-muted animate-pulse rounded w-2/3" />
-                      <div className="h-4 bg-muted animate-pulse rounded w-1/3 mt-1" />
                     </div>
                   </div>
-                ))}
-              </>
-            ) : (
-              // **CHANGE 4: Render from the single 'listings' array**
-              <>
-                {listings.map((item) => (
+                ))
+              ) : (
+                listings.map((item) => (
                   <ListingCard
-                    key={`${item.type}-${item.id}`} // Use type and id for a unique key
+                    key={item.id}
                     id={item.id}
-                    // The type is now correctly passed from the combined object
-                    type={item.type} 
+                    type={item.type}
                     name={item.name}
                     imageUrl={item.image_url}
                     location={item.location}
                     country={item.country}
-                    price={item.price} 
-                    // date is only defined for TRIP and EVENT, but ListingCard handles its absence
-                    date={item.date} 
+                    price={item.price || item.entry_fee || 0}
+                    date={item.date}
                     onSave={handleSave}
                     isSaved={savedItems.has(item.id)}
                   />
-                ))}
-              </>
-            )}
-          </div>
-        </section>
-
+                ))
+              )}
+            </div>
+          </section>
+        </div>
       </main>
-
       <Footer />
       <MobileBottomBar />
     </div>

@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ApprovedTab } from "./AdminDashboard_approved_tab";
 
 const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -69,10 +68,10 @@ const AdminDashboard = () => {
     ]);
 
     const all = [
-      ...(trips.data?.map(t => ({ ...t, type: "trip", created_at: t.created_at })) || []),
-      ...(events.data?.map(e => ({ ...e, type: "event", created_at: e.created_at })) || []),
-      ...(hotels.data?.map(h => ({ ...h, type: "hotel", created_at: h.created_at })) || []),
-      ...(adventures.data?.map(a => ({ ...a, type: "adventure", created_at: a.created_at })) || [])
+      ...(trips.data?.map(t => ({ ...t, type: "trip" })) || []),
+      ...(events.data?.map(e => ({ ...e, type: "event" })) || []),
+      ...(hotels.data?.map(h => ({ ...h, type: "hotel" })) || []),
+      ...(adventures.data?.map(a => ({ ...a, type: "adventure" })) || [])
     ];
 
     setPendingListings(all);
@@ -97,265 +96,296 @@ const AdminDashboard = () => {
   };
 
   const fetchAllBookings = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("bookings")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
+    if (data) {
       setAllBookings(data);
     }
   };
 
   const handleApprove = async (itemId: string, itemType: string) => {
-    const tableName = itemType === "adventure" ? "adventure_places" : `${itemType}s`;
+    const table = itemType === "trip" ? "trips" : itemType === "event" ? "events" : itemType === "hotel" ? "hotels" : "adventure_places";
     
     const { error } = await supabase
-      .from(tableName as any)
+      .from(table)
       .update({ 
         approval_status: "approved",
-        admin_notes: adminNotes[itemId] || null,
+        approved_by: user?.id,
         approved_at: new Date().toISOString(),
-        approved_by: user?.id
+        admin_notes: adminNotes[itemId] || null
       })
       .eq("id", itemId);
 
-    if (error) {
-      toast.error("Failed to approve listing");
-    } else {
+    if (!error) {
       toast.success("Listing approved successfully");
       fetchPendingListings();
       fetchApprovedListings();
-    }
-  };
-
-  const handleToggleVisibility = async (itemId: string, itemType: string) => {
-    const tableName = itemType === "adventure" ? "adventure_places" : `${itemType}s`;
-    
-    const { data: current } = await supabase
-      .from(tableName as any)
-      .select("is_hidden")
-      .eq("id", itemId)
-      .single();
-    
-    const newHiddenStatus = !(current as any)?.is_hidden;
-    
-    const { error } = await supabase
-      .from(tableName as any)
-      .update({ is_hidden: newHiddenStatus })
-      .eq("id", itemId);
-
-    if (error) {
-      toast.error(`Failed to ${newHiddenStatus ? "hide" : "publish"} listing`);
     } else {
-      toast.success(newHiddenStatus ? "Listing hidden from public view" : "Listing published to public");
-      fetchApprovedListings();
+      toast.error("Failed to approve listing");
     }
   };
 
   const handleReject = async (itemId: string, itemType: string) => {
-    const tableName = itemType === "adventure" ? "adventure_places" : `${itemType}s`;
+    const table = itemType === "trip" ? "trips" : itemType === "event" ? "events" : itemType === "hotel" ? "hotels" : "adventure_places";
     
     const { error } = await supabase
-      .from(tableName as any)
+      .from(table)
       .update({ 
         approval_status: "rejected",
-        admin_notes: adminNotes[itemId] || "Rejected by admin"
+        admin_notes: adminNotes[itemId] || null
       })
       .eq("id", itemId);
 
-    if (error) {
-      toast.error("Failed to reject listing");
-    } else {
+    if (!error) {
       toast.success("Listing rejected");
       fetchPendingListings();
+    } else {
+      toast.error("Failed to reject listing");
     }
   };
 
-  const handleBan = async (itemId: string, itemType: string) => {
-    const tableName = itemType === "adventure" ? "adventure_places" : `${itemType}s`;
+  const handleToggleVisibility = async (itemId: string, itemType: string, currentlyHidden: boolean) => {
+    const table = itemType === "trip" ? "trips" : itemType === "event" ? "events" : itemType === "hotel" ? "hotels" : "adventure_places";
     
     const { error } = await supabase
-      .from(tableName as any)
-      .update({ 
-        approval_status: "banned",
-        admin_notes: adminNotes[itemId] || "Banned by admin"
-      })
+      .from(table)
+      .update({ is_hidden: !currentlyHidden })
       .eq("id", itemId);
 
-    if (error) {
-      toast.error("Failed to ban listing");
+    if (!error) {
+      toast.success(currentlyHidden ? "Listing is now visible" : "Listing is now hidden");
+      fetchApprovedListings();
     } else {
-      toast.success("Listing banned");
-      fetchPendingListings();
+      toast.error("Failed to update visibility");
     }
   };
 
-  if (authLoading || loading) {
+  const getCategoryCount = (category: string, status: 'pending' | 'approved') => {
+    const list = status === 'pending' ? pendingListings : approvedListings;
+    return list.filter(item => item.type === category).length;
+  };
+
+  const getBookingCount = (category: string) => {
+    return allBookings.filter(b => b.booking_type === category).length;
+  };
+
+  const renderListings = (category: string, status: 'pending' | 'approved') => {
+    const items = status === 'pending' 
+      ? pendingListings.filter(item => item.type === category)
+      : approvedListings.filter(item => item.type === category);
+    
+    if (items.length === 0) {
+      return <p className="text-muted-foreground">No {status} {category}s</p>;
+    }
+
     return (
-      <div className="min-h-screen bg-background pb-20 md:pb-0">
-        <Header />
-        <main className="container px-4 py-8">
-          <p>Loading...</p>
-        </main>
-        <Footer />
-        <MobileBottomBar />
+      <div className="grid gap-4">
+        {items.map((item) => (
+          <Card key={item.id} className="p-4 border-0">
+            <div className="flex gap-4">
+              <img
+                src={item.image_url}
+                alt={item.name}
+                className="w-32 h-32 object-cover rounded-lg"
+              />
+              <div className="flex-1">
+                <h3 className="font-bold text-lg">{item.name}</h3>
+                <p className="text-sm text-muted-foreground">{item.location}, {item.country}</p>
+                {item.date && <p className="text-sm">Date: {new Date(item.date).toLocaleDateString()}</p>}
+                {item.price && <p className="text-sm font-semibold">${item.price}</p>}
+                
+                {status === 'pending' && (
+                  <>
+                    <Textarea
+                      placeholder="Admin notes..."
+                      value={adminNotes[item.id] || ""}
+                      onChange={(e) => setAdminNotes({ ...adminNotes, [item.id]: e.target.value })}
+                      className="mt-2"
+                    />
+                    <div className="flex gap-2 mt-3">
+                      <Button onClick={() => handleApprove(item.id, item.type)} size="sm">
+                        Approve
+                      </Button>
+                      <Button onClick={() => handleReject(item.id, item.type)} variant="destructive" size="sm">
+                        Reject
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {status === 'approved' && (
+                  <Button 
+                    onClick={() => handleToggleVisibility(item.id, item.type, item.is_hidden)}
+                    size="sm"
+                    variant={item.is_hidden ? "default" : "outline"}
+                    className="mt-3"
+                  >
+                    {item.is_hidden ? "Publish" : "Hide"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
+  const renderBookings = (category: string) => {
+    const items = allBookings.filter(b => b.booking_type === category);
+    
+    if (items.length === 0) {
+      return <p className="text-muted-foreground">No {category} bookings</p>;
+    }
+
+    return (
+      <div className="grid gap-4">
+        {items.map((booking) => (
+          <Card key={booking.id} className="p-4 border-0">
+            <div className="flex justify-between">
+              <div>
+                <p className="font-semibold">Booking #{booking.id.slice(0, 8)}</p>
+                <p className="text-sm">Amount: ${booking.total_amount}</p>
+                <p className="text-sm">Status: {booking.status}</p>
+                <p className="text-sm">Date: {new Date(booking.created_at).toLocaleDateString()}</p>
+              </div>
+              <Badge>{booking.payment_status}</Badge>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
+  if (loading || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  if (!isAdmin) {
-    return null;
-  }
+  if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      
-      <main className="container px-4 py-8 max-w-6xl mx-auto">
+      <main className="flex-1 container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
-        <Tabs defaultValue="pending" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="pending">Pending Approvals ({pendingListings.length})</TabsTrigger>
-            <TabsTrigger value="approved">Approved Items</TabsTrigger>
-            <TabsTrigger value="bookings">All Bookings ({allBookings.length})</TabsTrigger>
+        <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pending">Pending Approval</TabsTrigger>
+            <TabsTrigger value="approved">Approved</TabsTrigger>
+            <TabsTrigger value="bookings">All Bookings</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pending" className="space-y-4">
-            {pendingListings.length === 0 ? (
-              <p className="text-muted-foreground">No pending listings</p>
-            ) : (
-              pendingListings.map((item) => (
-                <Card key={item.id} className="p-6">
-                  <div className="flex gap-4">
-                    <img 
-                      src={item.image_url} 
-                      alt={item.name}
-                      className="w-32 h-32 object-cover rounded"
-                    />
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-xl font-semibold">{item.name}</h3>
-                        <Badge className="capitalize">{item.type}</Badge>
-                        {item.establishment_type && (
-                          <Badge variant="outline" className="capitalize">{item.establishment_type}</Badge>
-                        )}
-                      </div>
-                      
-                      <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
-                      
-                      <div className="grid md:grid-cols-2 gap-2 text-sm">
-                        <p><span className="font-medium">Location:</span> {item.location}, {item.place}, {item.country}</p>
-                        <p><span className="font-medium">Created:</span> {new Date(item.created_at).toLocaleDateString()}</p>
-                        
-                        {item.registration_number && (
-                          <p><span className="font-medium">Registration #:</span> {item.registration_number}</p>
-                        )}
-                        
-                        {item.email && (
-                          <p><span className="font-medium">Creator Email:</span> {item.email}</p>
-                        )}
-                        
-                        {item.phone_number && (
-                          <p><span className="font-medium">Creator Phone:</span> {item.phone_number}</p>
-                        )}
-                        
-                        {item.phone_numbers && item.phone_numbers.length > 0 && (
-                          <p><span className="font-medium">Creator Phone:</span> {item.phone_numbers.join(', ')}</p>
-                        )}
-                      </div>
+          <TabsContent value="pending" className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Pending Trips</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('trip', 'pending')}</Badge>
+              </div>
+              {renderListings('trip', 'pending')}
+            </div>
 
-                      <Textarea
-                        placeholder="Admin notes (optional)"
-                        value={adminNotes[item.id] || ""}
-                        onChange={(e) => setAdminNotes({ ...adminNotes, [item.id]: e.target.value })}
-                        className="mt-2"
-                      />
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Pending Events</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('event', 'pending')}</Badge>
+              </div>
+              {renderListings('event', 'pending')}
+            </div>
 
-                      <div className="flex gap-2 mt-4">
-                        <Button 
-                          onClick={() => handleApprove(item.id, item.type)}
-                          variant="default"
-                        >
-                          Approve
-                        </Button>
-                        <Button 
-                          onClick={() => handleReject(item.id, item.type)}
-                          variant="outline"
-                        >
-                          Reject
-                        </Button>
-                        <Button 
-                          onClick={() => handleBan(item.id, item.type)}
-                          variant="destructive"
-                        >
-                          Ban
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))
-            )}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Pending Hotels</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('hotel', 'pending')}</Badge>
+              </div>
+              {renderListings('hotel', 'pending')}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Pending Adventure Places</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('adventure', 'pending')}</Badge>
+              </div>
+              {renderListings('adventure', 'pending')}
+            </div>
           </TabsContent>
 
-          <TabsContent value="approved" className="space-y-4">
-            <ApprovedTab 
-              approvedListings={approvedListings}
-              handleToggleVisibility={handleToggleVisibility}
-            />
+          <TabsContent value="approved" className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Approved Trips</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('trip', 'approved')}</Badge>
+              </div>
+              {renderListings('trip', 'approved')}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Approved Events</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('event', 'approved')}</Badge>
+              </div>
+              {renderListings('event', 'approved')}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Approved Hotels</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('hotel', 'approved')}</Badge>
+              </div>
+              {renderListings('hotel', 'approved')}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Approved Adventure Places</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('adventure', 'approved')}</Badge>
+              </div>
+              {renderListings('adventure', 'approved')}
+            </div>
           </TabsContent>
 
-          <TabsContent value="bookings" className="space-y-4">
-            {allBookings.length === 0 ? (
-              <p className="text-muted-foreground">No bookings yet</p>
-            ) : (
-              allBookings.map((booking) => (
-                <Card key={booking.id} className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Booking ID</p>
-                      <p className="font-mono text-sm">{booking.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Type</p>
-                      <Badge>{booking.booking_type}</Badge>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Customer Name</p>
-                      <p>{booking.guest_name || "Registered User"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p>{booking.guest_email || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Phone</p>
-                      <p>{booking.guest_phone || booking.payment_phone || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Amount</p>
-                      <p className="text-lg font-bold">${booking.total_amount}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Status</p>
-                      <Badge variant={booking.status === "confirmed" ? "default" : "secondary"}>
-                        {booking.status}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Booking Date</p>
-                      <p>{new Date(booking.created_at).toLocaleString()}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))
-            )}
+          <TabsContent value="bookings" className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Trip Bookings</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getBookingCount('trip')}</Badge>
+              </div>
+              {renderBookings('trip')}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Event Bookings</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getBookingCount('event')}</Badge>
+              </div>
+              {renderBookings('event')}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Hotel Bookings</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getBookingCount('hotel')}</Badge>
+              </div>
+              {renderBookings('hotel')}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Adventure Place Bookings</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getBookingCount('adventure_place')}</Badge>
+              </div>
+              {renderBookings('adventure_place')}
+            </div>
           </TabsContent>
         </Tabs>
       </main>
-
       <Footer />
       <MobileBottomBar />
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, Heart, Ticket, Video, Shield, Home, FolderOpen } from "lucide-react";
+import { Menu, Heart, Ticket, Video, Shield, Home, FolderOpen, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,8 +68,8 @@ export const Header = () => {
   }, [user]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-blue-950 text-white">
-      <div className="container flex h-16 items-center justify-between px-4">
+    <header className="sticky top-0 z-50 w-full border-b bg-blue-950 text-white h-16">
+      <div className="container flex h-full items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>
@@ -101,9 +101,9 @@ export const Header = () => {
             <Home className="h-4 w-4" />
             Home
           </Link>
-          <Link to="/my-content" className="flex items-center gap-2 font-bold hover:text-blue-200 transition-colors">
+          <Link to="/my-listing" className="flex items-center gap-2 font-bold hover:text-blue-200 transition-colors">
             <FolderOpen className="h-4 w-4" />
-            My Content
+            My Listing
           </Link>
           <Link to="/bookings" className="flex items-center gap-2 font-bold hover:text-blue-200 transition-colors">
             <Ticket className="h-4 w-4" />
@@ -121,25 +121,37 @@ export const Header = () => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            {/* 6. Adjusted user name display color and hover */}
-            <Button variant="ghost" className="flex items-center gap-2 h-auto px-2 text-white hover:bg-blue-800">
+            <Button variant="ghost" className="flex items-center gap-2 h-auto px-2 text-white hover:bg-blue-800 md:hidden">
+              <User className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[50vw] rounded-none bg-popover md:hidden">
+            {user ? (
+              <DropdownMenuItem asChild>
+                <Link to="/profile/edit" className="cursor-pointer">Account</Link>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem asChild>
+                <Link to="/auth" className="w-full">Login</Link>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="hidden md:flex items-center gap-2 h-auto px-2 text-white hover:bg-blue-800">
               <span className="hidden md:inline text-sm font-medium">
                 {userName || user?.user_metadata?.name || user?.email || "Guest"}
               </span>
               <Avatar className="h-8 w-8">
-                <AvatarImage src={profilePicture || user?.user_metadata?.profile_picture_url} />
-                {/* Avatar Fallback now uses blue-900 text color */}
                 <AvatarFallback className="bg-white text-blue-900 text-xs"> 
                   {userName?.[0]?.toUpperCase() || user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0) || "G"}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-<DropdownMenuContent 
-            align="end" 
-            // MODIFIED: Changed width to 50vw and added rounded-none to remove the border radius
-            className="w-[20vw] rounded-none bg-popover"
-          >
+          <DropdownMenuContent align="end" className="w-[20vw] rounded-none bg-popover">
             {user ? (
               <>
                 <DropdownMenuItem asChild>

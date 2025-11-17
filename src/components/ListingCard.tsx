@@ -76,8 +76,7 @@ export const ListingCard = ({
   return (
     <Card 
       onClick={handleCardClick}
-      // ADDED: mt-4 (margin-top of 1rem/16px) to create a gap above the card
-      className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-lg cursor-pointer mt-4" 
+      className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-lg cursor-pointer border-0"
     >
       <div className="relative aspect-[4/3] overflow-hidden rounded-t-lg">
         <img

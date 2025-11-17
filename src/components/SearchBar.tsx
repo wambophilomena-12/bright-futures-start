@@ -23,7 +23,7 @@ export const SearchBar = ({ value, onChange, onSubmit }: SearchBarProps) => {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyPress={handleKeyPress}
-        className="pl-10 md:pl-12 pr-3 md:pr-4 h-10 md:h-14 text-sm md:text-lg rounded-xl md:rounded-2xl border-2 focus-visible:border-primary shadow-md"
+        className="pl-10 md:pl-12 pr-3 md:pr-4 h-10 md:h-14 text-sm md:text-lg rounded-none border-2 focus-visible:border-primary shadow-md"
       />
     </div>
   );
