@@ -185,5 +185,4 @@ export const Header = () => {
       </div>
     </header>
   );
-  
 };
