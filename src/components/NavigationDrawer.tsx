@@ -49,7 +49,7 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
 
   const myContentItems = [
     { icon: Ticket, label: "My Bookings", path: "/bookings", protected: true },
-    { icon: Heart, label: "Saved", path: "/saved", protected: true },
+    { icon: Heart, label: "Wishlist", path: "/saved", protected: true }, // Changed Saved to Wishlist
     { icon: Package, label: "My Content", path: "/mycontent", protected: true },
   ];
 
@@ -78,6 +78,10 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
     </Link>
   );
 
+  // --- Filter navItems to separate Home from Vlog, Contact, About ---
+  const topNavItems = navItems.filter(item => item.label !== "Home");
+  const homeItem = navItems.find(item => item.label === "Home");
+
 
   return (
     <div className="flex flex-col h-full bg-white text-gray-800">
@@ -105,7 +109,23 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
       >
         <ul className="space-y-2">
           
-          {/* PARTNER LINKS */}
+          {/* VLOG, CONTACT, ABOUT (Top of the main navigation area) */}
+          {topNavItems.map((item) => (
+            <li key={item.path}>
+              <Link
+                to={item.path}
+                onClick={onClose}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 group"
+              >
+                <item.icon className="h-5 w-5 text-gray-500 group-hover:text-blue-600 transition-colors" />
+                <span className="font-medium">
+                  {item.label}
+                </span>
+              </Link>
+            </li>
+          ))}
+
+          {/* PARTNER LINKS (Below Vlog, Contact, About) */}
           <li className="mb-4 pt-2 border-t border-gray-200">
             <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Partner</p>
             <ul className="space-y-1">
@@ -125,22 +145,7 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
             </ul>
           </li>
           
-          {/* MAIN NAVIGATION ITEMS */}
-          {navItems.map((item) => (
-            <li key={item.path}>
-              <Link
-                to={item.path}
-                onClick={onClose}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 group"
-              >
-                <item.icon className="h-5 w-5 text-gray-500 group-hover:text-blue-600 transition-colors" />
-                <span className="font-medium">
-                  {item.label}
-                </span>
-              </Link>
-            </li>
-          ))}
-          {/* MY CONTENT LINKS - Visible to all, protected */}
+          {/* MY CONTENT LINKS (Above Home, Wishlist, My Bookings) */}
           <li className="mb-4 border-t border-gray-200 pt-2">
             <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">My Content</p>
             <ul className="space-y-1">
@@ -160,6 +165,22 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
             </ul>
           </li>
 
+          {/* HOME LINK (At the very bottom of the navigation links) */}
+          {homeItem && (
+            <li>
+              <Link
+                to={homeItem.path}
+                onClick={onClose}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 group"
+              >
+                <homeItem.icon className="h-5 w-5 text-gray-500 group-hover:text-blue-600 transition-colors" />
+                <span className="font-medium">
+                  {homeItem.label}
+                </span>
+              </Link>
+            </li>
+          )}
+
           {/* EDIT PROFILE LINK (User Only) */}
           {user && (
             <li>
@@ -176,10 +197,12 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
             </li>
           )}
           
-          {/* LOGIN/LOGOUT BUTTON */}
         </ul>
       </nav>
+      {/* LOGIN/LOGOUT BUTTON (Always at the absolute bottom of the drawer content) */}
+      <div className="p-4 border-t border-gray-200">
+        {AuthButton}
+      </div>
     </div>
    ); 
-
 };
