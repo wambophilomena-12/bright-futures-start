@@ -45,7 +45,7 @@ export const Header = () => {
         else setUserRole("user");
       }
 
-      // Fetch profile name
+      // Fetch only profile name (not email)
       const { data: profile } = await supabase
         .from("profiles")
         .select("name")
@@ -82,15 +82,22 @@ export const Header = () => {
     return () => window.removeEventListener("scroll", controlHeader);
   }, [lastScrollY]);
 
-  // Function to get the display name for the icon
-  const getDisplayName = () => {
-    if (userName) return userName;
-    // If userName is empty, fall back to email's local part
-    return user?.email?.split("@")[0] || "Account";
-  };
+  // Function to get the display name for the icon (name only, no email)
+  const getDisplayName = () => {
+    return userName || "Account";
+  };
 
-  // Determine the correct link for the account icon
-  const accountLink = user ? "/profile/edit" : "/auth";
+  // Mobile account icon tap handler
+  const [showMobileAccountDialog, setShowMobileAccountDialog] = useState(false);
+  
+  const handleMobileAccountTap = () => {
+    if (!user) {
+      // Redirect to login
+      window.location.href = "/auth";
+    } else {
+      setShowMobileAccountDialog(!showMobileAccountDialog);
+    }
+  };
 
   return (
     <header className={`sticky top-0 z-50 w-full border-b bg-blue-950 text-white h-16 transition-transform duration-300 ${!isVisible ? '-translate-y-full' : 'translate-y-0'}`}>
@@ -143,70 +150,77 @@ export const Header = () => {
           </Link>
         </nav>
 
-        {/* Account Controls (Right Side) */}
-        <div className="flex items-center gap-2">
-            
-            {/* Mobile Account Icon with Name (Visible on small screens) */}
-            <Link 
-              to={accountLink} 
-              className="lg:hidden flex flex-col items-center justify-center text-white p-2 rounded-md hover:bg-blue-800 transition-colors"
-            >
-              <User className="h-5 w-5" />
-              {user && (
-                <span className="text-[10px] font-medium mt-0.5 truncate max-w-[50px] leading-none">
-                  {getDisplayName()}
-                </span>
-              )}
-              {!user && (
-                <span className="text-[10px] font-medium mt-0.5 leading-none">
-                  Login
-                </span>
-              )}
-            </Link>
+        {/* Account Controls (Right Side) */}
+        <div className="flex items-center gap-2">
+            
+        {/* Mobile: Account Icon with Name (Right Side) */}
+        <div className="md:hidden flex items-center gap-2 relative">
+          <button 
+            onClick={handleMobileAccountTap}
+            className="flex items-center gap-2 text-white hover:text-blue-200"
+          >
+            <User className="h-5 w-5" />
+            <span className="text-sm font-medium">{getDisplayName()}</span>
+          </button>
+          
+          {/* Mobile account dropdown */}
+          {showMobileAccountDialog && user && (
+            <div className="absolute top-full right-0 mt-2 w-48 bg-background border rounded-lg shadow-lg z-50">
+              <Link 
+                to="/profile/edit" 
+                className="block px-4 py-3 hover:bg-accent text-foreground"
+                onClick={() => setShowMobileAccountDialog(false)}
+              >
+                Profile
+              </Link>
+              <button 
+                onClick={() => {
+                  setShowMobileAccountDialog(false);
+                  signOut();
+                }}
+                className="block w-full text-left px-4 py-3 hover:bg-accent text-foreground border-t"
+              >
+                Log out
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Desktop Auth Actions (Right Side) */}
-        <div className="hidden lg:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4">
           <ThemeToggle />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-blue-800">
-                  <User className="h-6 w-6" /> {/* Account Icon */}
-                  <span className="text-sm font-bold">
-                    {getDisplayName()}
-                  </span>
+                <Button variant="ghost" className="text-white hover:bg-blue-800 gap-2">
+                  <User className="h-5 w-5" />
+                  <span>{getDisplayName()}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link to="/profile/edit" className="cursor-pointer">
-                    Profile Edit
-                  </Link>
+                  <Link to="/profile/edit">Profile Edit</Link>
                 </DropdownMenuItem>
                 {userRole === "admin" && (
                   <DropdownMenuItem asChild>
-                    <Link to="/admin/dashboard" className="cursor-pointer">
-                      <Shield className="mr-2 h-4 w-4" />
-                      Admin Dashboard
-                    </Link>
+                    <Link to="/admin/dashboard">Admin Dashboard</Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={signOut} className="cursor-pointer">
+                <DropdownMenuItem onClick={signOut} className="text-red-600">
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Link to="/auth">
-              <Button variant="ghost" className="text-white hover:bg-blue-800">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                 Login / Sign Up
               </Button>
             </Link>
           )}
         </div>
         </div>
-
-      </div>
-    </header>
-  );
+      </div>
+    </header>
+  );
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
@@ -19,6 +19,9 @@ const CategoryDetail = () => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
+  const [isSticky, setIsSticky] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   const categoryConfig: {
     [key: string]: {
@@ -67,6 +70,21 @@ const CategoryDetail = () => {
     setFilteredItems(items);
   }, [items]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > 200) {
+        setIsSticky(true);
+      } else {
+        setIsSticky(false);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
   const fetchData = async () => {
     if (!config) return;
 
@@ -84,7 +102,24 @@ const CategoryDetail = () => {
       }
     }
     
-    setItems(allData);
+    // Sort: past events/trips last
+    const sortedData = allData.sort((a, b) => {
+      const aDate = a.date ? new Date(a.date) : null;
+      const bDate = b.date ? new Date(b.date) : null;
+      const now = new Date();
+      
+      if (aDate && bDate) {
+        const aIsPast = aDate < now;
+        const bIsPast = bDate < now;
+        
+        if (aIsPast && !bIsPast) return 1;
+        if (!aIsPast && bIsPast) return -1;
+      }
+      
+      return 0;
+    });
+    
+    setItems(sortedData);
     setLoading(false);
   };
 
@@ -207,22 +242,33 @@ const CategoryDetail = () => {
       <main className="container px-4 py-8 space-y-4">
         <h1 className="text-3xl font-bold">{config.title}</h1>
 
-        <SearchBarWithSuggestions
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSubmit={handleSearch}
-        />
+        <div 
+          ref={filterRef}
+          className={`sticky top-16 z-40 bg-background transition-all duration-300 ${
+            isSticky ? 'py-2' : 'py-0'
+          }`}
+        >
+          <div className={`space-y-3 transition-all duration-300 ${
+            isSticky ? 'scale-95' : ''
+          }`}>
+            <SearchBarWithSuggestions
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onSubmit={handleSearch}
+            />
 
-        <FilterBar
-          type={
-            category === "trips" || category === "events"
-              ? "trips-events"
-              : category === "hotels"
-              ? "hotels"
-              : "adventure"
-          }
-          onApplyFilters={handleApplyFilters}
-        />
+            <FilterBar
+              type={
+                category === "trips" || category === "events"
+                  ? "trips-events"
+                  : category === "hotels"
+                  ? "hotels"
+                  : "adventure"
+              }
+              onApplyFilters={handleApplyFilters}
+            />
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {loading || filteredItems.length === 0 ? (

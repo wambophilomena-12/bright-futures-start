@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NavigationDrawerProps {
   onClose: () => void;
@@ -35,16 +37,49 @@ const MobileThemeToggle = () => {
 };
 
 export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
-  const { user, signOut } = useAuth();
-  
-  const handleProtectedNavigation = (path: string) => {
-    if (!user) {
-      window.location.href = "/auth";
-    } else {
-      window.location.href = path;
-    }
-    onClose();
-  };
+  const { user, signOut } = useAuth();
+  const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+
+      // Fetch user role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      if (roleData && roleData.length > 0) {
+        const roles = roleData.map((r) => r.role);
+        if (roles.includes("admin")) setUserRole("admin");
+        else setUserRole("user");
+      }
+
+      // Fetch only user profile name (not email)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", user.id)
+        .single();
+
+      if (profile && profile.name) {
+        setUserName(profile.name);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
+  
+  const handleProtectedNavigation = (path: string) => {
+    if (!user) {
+      window.location.href = "/auth";
+    } else {
+      window.location.href = path;
+    }
+    onClose();
+  };
 
   const partnerItems = [
     { 
@@ -82,34 +117,34 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
     signOut();
     onClose();
   };
-  
-  // Reworked Auth Display to be a list item
-  const AuthDisplay = user ? (
-    <li className="mt-4 pt-4 border-t border-gray-200">
-      <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Account</p>
-      {/* User Name/Icon Link (New) */}
+  
+  // Reworked Auth Display to be a list item
+  const AuthDisplay = user ? (
+    <li className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <p className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Account</p>
+      {/* User Name/Icon Link (New) */}
       <Link
         to="/profile"
         onClick={onClose}
-        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 group"
+        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group"
       >
         <User className="h-5 w-5 text-blue-600 group-hover:text-blue-700 transition-colors" />
         <span className="font-medium truncate">
-          {user.email?.split('@')[0] || "My Profile"}
+          {userName || "My Profile"}
         </span>
       </Link>
-      {/* Logout Button (New) */}
-      <button
-        onClick={handleLogout}
-        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-all duration-200 group"
-      >
-        <LogOut className="h-5 w-5 group-hover:text-red-700 transition-colors" />
-        <span className="font-medium">Logout</span>
-      </button>
-    </li>
-  ) : (
-    // Login/Register Link (New)
-    <li className="mt-4 pt-4 border-t border-gray-200">
+      {/* Logout Button (New) */}
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 group"
+      >
+        <LogOut className="h-5 w-5 group-hover:text-red-700 transition-colors" />
+        <span className="font-medium">Logout</span>
+      </button>
+    </li>
+  ) : (
+    // Login/Register Link (New)
+    <li className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
       <Link
         to="/auth"
         onClick={onClose}
