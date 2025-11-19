@@ -192,12 +192,10 @@ export const Header = () => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-white hover:bg-blue-800 gap-2">
-                  <>
-                    <User className="h-5 w-5" />
-                    <span>{getDisplayName()}</span>
-                  </>
-                </Button>
+                <button className="flex items-center gap-2 px-3 py-2 rounded-md text-white hover:bg-blue-800 transition-colors">
+                  <User className="h-5 w-5" />
+                  <span>{getDisplayName()}</span>
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
