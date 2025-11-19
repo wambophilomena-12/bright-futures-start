@@ -73,7 +73,7 @@ const CategoryDetail = () => {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      if (currentScrollY > 200) {
+      if (currentScrollY > 100) {
         setIsSticky(true);
       } else {
         setIsSticky(false);
@@ -244,12 +244,12 @@ const CategoryDetail = () => {
 
         <div 
           ref={filterRef}
-          className={`sticky top-16 z-40 bg-background transition-all duration-300 ${
-            isSticky ? 'py-2' : 'py-0'
+          className={`sticky top-0 mt-0 z-40 bg-background shadow-md transition-all duration-300 ${
+            isSticky ? 'py-3 px-2' : 'py-0'
           }`}
         >
           <div className={`space-y-3 transition-all duration-300 ${
-            isSticky ? 'scale-95' : ''
+            isSticky ? '' : ''
           }`}>
             <SearchBarWithSuggestions
               value={searchQuery}
