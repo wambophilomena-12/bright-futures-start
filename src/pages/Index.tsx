@@ -260,11 +260,10 @@ style={{ backgroundImage: `url(${cat.bgImage})`, backgroundSize: 'cover', backgr
 <ImageSlideshow />
 </div>
 </section>
-<h2 className="text-2xl font-bold mb-4">Featured trips and Events</h2>
 <div className="px-4">
-{/* Main Listings - First - MODIFIED: Removed h2 and replaced with spacing */}
+{/* Main Listings - First - MODIFIED FOR HORIZONTAL SCROLLING */}
 <section className="mb-8">
-<div className="mt-6" /> {/* This replaces the h2 with a vertical space gap */}
+<h2 className="text-2xl font-bold mb-4">Featured Trips & Events</h2> {/* Added a title for context */}
 <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
 {loading ? (
 [...Array(10)].map((_, i) => (
@@ -327,7 +326,7 @@ nearbyPlacesHotels.filter((item) => item.table === "adventure_places").slice(0, 
 
 {/* Featured Hotels */}
 <section className="mb-8">
-<h2 className="text-2xl font-bold mb-4">Featured Hotels & Accommodations</h2>
+<h2 className="text-2xl font-bold mb-4">Featured Hotels</h2>
 <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
 {loadingScrollable ? (
 [...Array(5)].map((_, i) => (
