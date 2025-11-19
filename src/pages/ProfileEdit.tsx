@@ -10,14 +10,20 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Upload } from "lucide-react";
+import { Edit2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const ProfileEdit = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [fetchingProfile, setFetchingProfile] = useState(true);
   const [profileData, setProfileData] = useState<{
     name: string;
@@ -28,8 +34,6 @@ const ProfileEdit = () => {
     phone_number: "",
     gender: ""
   });
-  const [profilePicture, setProfilePicture] = useState<File | null>(null);
-  const [currentPictureUrl, setCurrentPictureUrl] = useState<string>("");
 
   useEffect(() => {
     if (!user) {
@@ -51,7 +55,6 @@ const ProfileEdit = () => {
           phone_number: data.phone_number || "",
           gender: data.gender || ""
         });
-        setCurrentPictureUrl(data.profile_picture_url || "");
       }
       setFetchingProfile(false);
     };
@@ -62,42 +65,21 @@ const ProfileEdit = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setUploading(true);
 
     try {
-      let pictureUrl = currentPictureUrl;
-
-      if (profilePicture) {
-        const fileExt = profilePicture.name.split('.').pop();
-        const fileName = `${user!.id}/profile.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('profile-photos')
-          .upload(fileName, profilePicture, { upsert: true });
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('profile-photos')
-          .getPublicUrl(fileName);
-          
-        pictureUrl = publicUrl;
+      const updateData: any = {
+        name: profileData.name,
+        phone_number: profileData.phone_number,
+      };
+      
+      if (profileData.gender) {
+        updateData.gender = profileData.gender;
       }
 
-    const updateData: any = {
-      name: profileData.name,
-      phone_number: profileData.phone_number,
-      profile_picture_url: pictureUrl
-    };
-    
-    if (profileData.gender) {
-      updateData.gender = profileData.gender;
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update(updateData)
-      .eq("id", user!.id);
+      const { error } = await supabase
+        .from("profiles")
+        .update(updateData)
+        .eq("id", user!.id);
 
       if (error) throw error;
 
@@ -115,7 +97,6 @@ const ProfileEdit = () => {
       });
     } finally {
       setLoading(false);
-      setUploading(false);
     }
   };
 
@@ -149,61 +130,64 @@ const ProfileEdit = () => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name" className="flex items-center gap-2">
+                  Name <Edit2 className="h-4 w-4 text-muted-foreground" />
+                </Label>
                 <Input
                   id="name"
+                  type="text"
                   value={profileData.name}
-                  onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                  placeholder="Your name"
+                  onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                  required
                 />
               </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone_number">Phone Number</Label>
-              <Input
-                id="phone_number"
-                value={profileData.phone_number}
-                onChange={(e) => setProfileData({...profileData, phone_number: e.target.value})}
-                placeholder="+1234567890"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="flex items-center gap-2">
+                  Phone Number <Edit2 className="h-4 w-4 text-muted-foreground" />
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={profileData.phone_number}
+                  onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
-              <select
-                id="gender"
-                className="w-full px-3 py-2 border rounded-md"
-                value={profileData.gender}
-                onChange={(e) => setProfileData({...profileData, gender: e.target.value as "male" | "female" | "other" | "prefer_not_to_say" | ""})}
-              >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-                <option value="prefer_not_to_say">Prefer not to say</option>
-              </select>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select
+                  value={profileData.gender}
+                  onValueChange={(value: any) =>
+                    setProfileData({ ...profileData, gender: value })
+                  }
+                >
+                  <SelectTrigger id="gender">
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label>Profile Picture</Label>
-              {currentPictureUrl && !profilePicture && (
-                <img src={currentPictureUrl} alt="Current profile" className="w-24 h-24 rounded-full object-cover mb-2" />
-              )}
-              {profilePicture && (
-                <img src={URL.createObjectURL(profilePicture)} alt="New profile" className="w-24 h-24 rounded-full object-cover mb-2" />
-              )}
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
-              />
-            </div>
-
-              <div className="flex gap-4">
-                <Button type="submit" disabled={loading || uploading} className="flex-1">
-                  {uploading ? "Uploading..." : loading ? "Saving..." : "Save Changes"}
+              <div className="flex gap-4 pt-4">
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={loading}
+                >
+                  {loading ? "Saving..." : "Save Changes"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/profile")}
+                  disabled={loading}
+                >
                   Cancel
                 </Button>
               </div>

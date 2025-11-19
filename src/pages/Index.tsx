@@ -92,8 +92,8 @@ const Index = () => {
       const currentScrollY = window.scrollY;
       
       if (window.innerWidth >= 768) {
-        // Desktop: hide search bar on scroll down
-        if (currentScrollY > lastScrollY && currentScrollY > 200) {
+        // Desktop: shrink search bar on scroll down
+        if (currentScrollY > 200) {
           setIsSearchVisible(false);
         } else {
           setIsSearchVisible(true);
