@@ -20,7 +20,6 @@ export const StandardUserProfile = () => {
   const [name, setName] = useState("");
   const [gender, setGender] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [phoneCountryCode, setPhoneCountryCode] = useState("+254");
   const [country, setCountry] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>();
 
@@ -45,7 +44,6 @@ export const StandardUserProfile = () => {
       setName(data.name || "");
       setGender(data.gender || "");
       setPhoneNumber(data.phone_number || "");
-      setPhoneCountryCode(data.phone_country_code || "+254");
       setCountry(data.country || "");
       if (data.date_of_birth) {
         setDateOfBirth(new Date(data.date_of_birth));
@@ -166,32 +164,14 @@ export const StandardUserProfile = () => {
 
       <div className="space-y-2">
         <Label htmlFor="phoneNumber">Phone Number</Label>
-        <div className="flex gap-2">
-          <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="+254">🇰🇪 +254</SelectItem>
-              <SelectItem value="+256">🇺🇬 +256</SelectItem>
-              <SelectItem value="+255">🇹🇿 +255</SelectItem>
-              <SelectItem value="+250">🇷🇼 +250</SelectItem>
-              <SelectItem value="+257">🇧🇮 +257</SelectItem>
-              <SelectItem value="+211">🇸🇸 +211</SelectItem>
-              <SelectItem value="+251">🇪🇹 +251</SelectItem>
-              <SelectItem value="+252">🇸🇴 +252</SelectItem>
-              <SelectItem value="+253">🇩🇯 +253</SelectItem>
-            </SelectContent>
-          </Select>
-          <Input
-            id="phoneNumber"
-            type="tel"
-            placeholder="712345678"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            className="flex-1"
-          />
-        </div>
+        <Input
+          id="phoneNumber"
+          type="tel"
+          placeholder="+254712345678"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          className="w-full"
+        />
       </div>
 
       <Button type="submit" className="w-full" disabled={loading}>

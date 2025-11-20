@@ -30,14 +30,12 @@ const ProfileEdit = () => {
   const [profileData, setProfileData] = useState<{
     name: string;
     phone_number: string;
-    phone_country_code: string;
     gender: "male" | "female" | "other" | "prefer_not_to_say" | "";
     date_of_birth: string;
     country: string;
   }>({
     name: "",
     phone_number: "",
-    phone_country_code: "+1",
     gender: "",
     date_of_birth: "",
     country: ""
@@ -61,7 +59,6 @@ const ProfileEdit = () => {
         setProfileData({
           name: data.name || "",
           phone_number: data.phone_number || "",
-          phone_country_code: data.phone_country_code || "+1",
           gender: data.gender || "",
           date_of_birth: data.date_of_birth || "",
           country: data.country || ""
@@ -216,29 +213,6 @@ const ProfileEdit = () => {
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </div>
 
-                {/* Phone Country Code */}
-                <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer group">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Phone className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <Label htmlFor="country-code" className="text-sm text-muted-foreground cursor-pointer">
-                        Country Code
-                      </Label>
-                      <Input
-                        id="country-code"
-                        type="text"
-                        value={profileData.phone_country_code}
-                        onChange={(e) => setProfileData({ ...profileData, phone_country_code: e.target.value })}
-                        className="border-0 shadow-none p-0 h-8 focus-visible:ring-0 font-medium"
-                        placeholder="+1"
-                      />
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-
                 {/* Phone Number Field */}
                 <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer group">
                   <div className="flex items-center gap-4 flex-1">
@@ -255,7 +229,7 @@ const ProfileEdit = () => {
                         value={profileData.phone_number}
                         onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
                         className="border-0 shadow-none p-0 h-8 focus-visible:ring-0 font-medium"
-                        placeholder="Tap to add phone"
+                        placeholder="+254712345678"
                       />
                     </div>
                   </div>
