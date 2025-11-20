@@ -37,6 +37,15 @@ const MyListing = () => {
       const { data: hotelsAsAdmin } = await supabase.from("hotels").select("*").contains("allowed_admin_emails", userEmail ? [userEmail] : []);
       const { data: adventuresAsAdmin } = await supabase.from("adventure_places").select("*").contains("allowed_admin_emails", userEmail ? [userEmail] : []);
 
+      console.log("Fetched user content:", { 
+        trips: trips?.length, 
+        events: events?.length, 
+        hotels: hotels?.length, 
+        adventures: adventures?.length,
+        hotelsAsAdmin: hotelsAsAdmin?.length,
+        adventuresAsAdmin: adventuresAsAdmin?.length
+      });
+
       const allContent = [
         ...(trips?.map(t => ({ ...t, type: "trip", isCreator: true })) || []),
         ...(events?.map(e => ({ ...e, type: "event", isCreator: true })) || []),

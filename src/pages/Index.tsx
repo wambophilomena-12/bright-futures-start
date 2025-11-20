@@ -42,7 +42,7 @@ const ImageSlideshow = () => {
     const slide = slides[currentSlide];
 
     return (
-        <div className="relative w-full aspect-[4/3] md:aspect-video lg:aspect-[2/1] overflow-hidden bg-gray-200">
+        <div className="relative w-full aspect-[16/9] md:aspect-video lg:aspect-[2/1] overflow-hidden bg-gray-200">
             <img src={slide.imageUrl} alt={slide.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-blue-900/60 flex flex-col justify-end p-4 md:p-6 lg:p-8">
                 <h3 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-white mb-1 md:mb-2">{slide.name}</h3>

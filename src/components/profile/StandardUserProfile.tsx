@@ -76,7 +76,6 @@ export const StandardUserProfile = () => {
           name,
           gender: gender as any,
           phone_number: phoneNumber,
-          phone_country_code: phoneCountryCode,
           country,
           date_of_birth: dateOfBirth ? format(dateOfBirth, "yyyy-MM-dd") : null,
         })

@@ -81,7 +81,6 @@ const ProfileEdit = () => {
       const updateData: any = {
         name: profileData.name,
         phone_number: profileData.phone_number,
-        phone_country_code: profileData.phone_country_code,
         date_of_birth: profileData.date_of_birth || null,
         country: profileData.country || null,
       };

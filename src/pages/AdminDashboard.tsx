@@ -323,70 +323,78 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="pending" className="space-y-6">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">Pending Trips</h2>
-                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('trip', 'pending')}</Badge>
-              </div>
-              {renderListings('trip', 'pending')}
-            </div>
+            <div className="overflow-x-auto">
+              <div className="flex gap-4 pb-4 min-w-max">
+                <div className="min-w-[400px] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Pending Trips</h2>
+                    <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('trip', 'pending')}</Badge>
+                  </div>
+                  {renderListings('trip', 'pending')}
+                </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">Pending Events</h2>
-                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('event', 'pending')}</Badge>
-              </div>
-              {renderListings('event', 'pending')}
-            </div>
+                <div className="min-w-[400px] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Pending Events</h2>
+                    <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('event', 'pending')}</Badge>
+                  </div>
+                  {renderListings('event', 'pending')}
+                </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">Pending Hotels</h2>
-                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('hotel', 'pending')}</Badge>
-              </div>
-              {renderListings('hotel', 'pending')}
-            </div>
+                <div className="min-w-[400px] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Pending Hotels</h2>
+                    <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('hotel', 'pending')}</Badge>
+                  </div>
+                  {renderListings('hotel', 'pending')}
+                </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">Pending Adventure Places</h2>
-                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('adventure', 'pending')}</Badge>
+                <div className="min-w-[400px] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Pending Adventure Places</h2>
+                    <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('adventure', 'pending')}</Badge>
+                  </div>
+                  {renderListings('adventure', 'pending')}
+                </div>
               </div>
-              {renderListings('adventure', 'pending')}
             </div>
           </TabsContent>
 
           <TabsContent value="approved" className="space-y-6">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">Approved Trips</h2>
-                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('trip', 'approved')}</Badge>
-              </div>
-              {renderListings('trip', 'approved')}
-            </div>
+            <div className="overflow-x-auto">
+              <div className="flex gap-4 pb-4 min-w-max">
+                <div className="min-w-[400px] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Approved Trips</h2>
+                    <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('trip', 'approved')}</Badge>
+                  </div>
+                  {renderListings('trip', 'approved')}
+                </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">Approved Events</h2>
-                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('event', 'approved')}</Badge>
-              </div>
-              {renderListings('event', 'approved')}
-            </div>
+                <div className="min-w-[400px] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Approved Events</h2>
+                    <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('event', 'approved')}</Badge>
+                  </div>
+                  {renderListings('event', 'approved')}
+                </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">Approved Hotels</h2>
-                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('hotel', 'approved')}</Badge>
-              </div>
-              {renderListings('hotel', 'approved')}
-            </div>
+                <div className="min-w-[400px] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Approved Hotels</h2>
+                    <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('hotel', 'approved')}</Badge>
+                  </div>
+                  {renderListings('hotel', 'approved')}
+                </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">Approved Adventure Places</h2>
-                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('adventure', 'approved')}</Badge>
+                <div className="min-w-[400px] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Approved Adventure Places</h2>
+                    <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('adventure', 'approved')}</Badge>
+                  </div>
+                  {renderListings('adventure', 'approved')}
+                </div>
               </div>
-              {renderListings('adventure', 'approved')}
             </div>
           </TabsContent>
 
