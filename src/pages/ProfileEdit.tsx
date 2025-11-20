@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ChevronRight, User, Calendar, Phone, Globe } from "lucide-react";
+import { ChevronRight, User, Calendar, Phone } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CountrySelector } from "@/components/creation/CountrySelector";
 import { Separator } from "@/components/ui/separator";
 
 const ProfileEdit = () => {
@@ -32,13 +31,11 @@ const ProfileEdit = () => {
     phone_number: string;
     gender: "male" | "female" | "other" | "prefer_not_to_say" | "";
     date_of_birth: string;
-    country: string;
   }>({
     name: "",
     phone_number: "",
     gender: "",
-    date_of_birth: "",
-    country: ""
+    date_of_birth: ""
   });
 
   useEffect(() => {
@@ -60,8 +57,7 @@ const ProfileEdit = () => {
           name: data.name || "",
           phone_number: data.phone_number || "",
           gender: data.gender || "",
-          date_of_birth: data.date_of_birth || "",
-          country: data.country || ""
+          date_of_birth: data.date_of_birth || ""
         });
       }
       setFetchingProfile(false);
@@ -79,7 +75,6 @@ const ProfileEdit = () => {
         name: profileData.name,
         phone_number: profileData.phone_number,
         date_of_birth: profileData.date_of_birth || null,
-        country: profileData.country || null,
       };
       
       if (profileData.gender) {
@@ -234,25 +229,6 @@ const ProfileEdit = () => {
                     </div>
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-
-                {/* Country Field */}
-                <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Globe className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <Label className="text-sm text-muted-foreground">
-                        Country
-                      </Label>
-                      <CountrySelector
-                        value={profileData.country}
-                        onChange={(value) => setProfileData({ ...profileData, country: value })}
-                      />
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
 

@@ -11,7 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { CountrySelector } from "@/components/creation/CountrySelector";
+
 
 export const StandardUserProfile = () => {
   const { user } = useAuth();
@@ -20,7 +20,6 @@ export const StandardUserProfile = () => {
   const [name, setName] = useState("");
   const [gender, setGender] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [country, setCountry] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>();
 
   useEffect(() => {
@@ -44,7 +43,6 @@ export const StandardUserProfile = () => {
       setName(data.name || "");
       setGender(data.gender || "");
       setPhoneNumber(data.phone_number || "");
-      setCountry(data.country || "");
       if (data.date_of_birth) {
         setDateOfBirth(new Date(data.date_of_birth));
       }
@@ -74,7 +72,6 @@ export const StandardUserProfile = () => {
           name,
           gender: gender as any,
           phone_number: phoneNumber,
-          country,
           date_of_birth: dateOfBirth ? format(dateOfBirth, "yyyy-MM-dd") : null,
         })
         .eq("id", user?.id);
@@ -155,11 +152,6 @@ export const StandardUserProfile = () => {
             />
           </PopoverContent>
         </Popover>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="country">Country</Label>
-        <CountrySelector value={country} onChange={setCountry} />
       </div>
 
       <div className="space-y-2">
