@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
 
 type FormErrors = {
   email?: string;
@@ -111,51 +110,19 @@ export const LoginForm = () => {
         )}
       </div>
 
-      <div className="text-right">
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Logging in..." : "Login"}
+      </Button>
+
+      <div className="text-center">
         <button
           type="button"
           onClick={() => navigate("/forgot-password")}
           className="text-sm text-primary hover:underline"
         >
-          Forgot Password?
+          Forgot password?
         </button>
       </div>
-
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Logging in..." : "Login"}
-      </Button>
-
-      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-        <DialogTrigger asChild>
-          <Button type="button" variant="link" className="w-full text-sm">
-            Forgot password?
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
-            <DialogDescription>
-              Enter your email address and we'll send you a link to reset your password.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handlePasswordReset} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-email">Email</Label>
-              <Input
-                id="reset-email"
-                type="email"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={resetLoading}>
-              {resetLoading ? "Sending..." : "Send Reset Link"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
