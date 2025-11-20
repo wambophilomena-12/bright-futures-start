@@ -9,12 +9,15 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Phone, Mail, Users, Home, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BookAccommodationDialog } from "@/components/booking/BookAccommodationDialog";
+import { SimilarItems } from "@/components/SimilarItems";
 
 const AccommodationDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [accommodation, setAccommodation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   useEffect(() => {
     const fetchAccommodation = async () => {
@@ -147,7 +150,7 @@ const AccommodationDetail = () => {
                 )}
               </Card>
 
-              <Button className="w-full" size="lg">
+              <Button className="w-full" size="lg" onClick={() => setBookingOpen(true)}>
                 Book Now
               </Button>
             </div>
@@ -159,11 +162,31 @@ const AccommodationDetail = () => {
               <p className="text-muted-foreground whitespace-pre-wrap">{accommodation.description}</p>
             </Card>
           )}
+
+          <SimilarItems
+            currentItemId={accommodation.id}
+            itemType={"accommodation" as any}
+            location={accommodation.location}
+            country={accommodation.country}
+          />
         </div>
       </main>
 
       <Footer />
       <MobileBottomBar />
+      
+      {accommodation && (
+        <BookAccommodationDialog
+          open={bookingOpen}
+          onOpenChange={setBookingOpen}
+          accommodation={{
+            id: accommodation.id,
+            name: accommodation.name,
+            price: accommodation.price,
+            capacity: accommodation.capacity,
+          }}
+        />
+      )}
     </div>
   );
 };

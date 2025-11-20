@@ -157,13 +157,16 @@ const AdminDashboard = () => {
   };
 
   const handleReject = async (itemId: string, itemType: string) => {
-    const table = itemType === "trip" ? "trips" : itemType === "event" ? "events" : itemType === "hotel" ? "hotels" : "adventure_places";
+    const table = itemType === "trip" ? "trips" 
+      : itemType === "event" ? "events" 
+      : itemType === "hotel" ? "hotels" 
+      : itemType === "adventure" ? "adventure_places"
+      : "accommodations";
     
     const { error } = await supabase
-      .from(table)
+      .from(table as any)
       .update({ 
-        approval_status: "rejected",
-        admin_notes: adminNotes[itemId] || null
+        approval_status: "rejected"
       })
       .eq("id", itemId);
 
@@ -176,10 +179,14 @@ const AdminDashboard = () => {
   };
 
   const handleToggleVisibility = async (itemId: string, itemType: string, currentlyHidden: boolean) => {
-    const table = itemType === "trip" ? "trips" : itemType === "event" ? "events" : itemType === "hotel" ? "hotels" : "adventure_places";
+    const table = itemType === "trip" ? "trips" 
+      : itemType === "event" ? "events" 
+      : itemType === "hotel" ? "hotels" 
+      : itemType === "adventure" ? "adventure_places"
+      : "accommodations";
     
     const { error } = await supabase
-      .from(table)
+      .from(table as any)
       .update({ is_hidden: !currentlyHidden })
       .eq("id", itemId);
 
@@ -362,6 +369,14 @@ const AdminDashboard = () => {
                   </div>
                   {renderListings('adventure', 'pending')}
                 </div>
+
+                <div className="min-w-[400px] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Pending Accommodations</h2>
+                    <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('accommodation', 'pending')}</Badge>
+                  </div>
+                  {renderListings('accommodation', 'pending')}
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -399,6 +414,14 @@ const AdminDashboard = () => {
                     <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('adventure', 'approved')}</Badge>
                   </div>
                   {renderListings('adventure', 'approved')}
+                </div>
+
+                <div className="min-w-[400px] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Approved Accommodations</h2>
+                    <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('accommodation', 'approved')}</Badge>
+                  </div>
+                  {renderListings('accommodation', 'approved')}
                 </div>
               </div>
             </div>

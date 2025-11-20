@@ -42,6 +42,15 @@ const EditListing = () => {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [newImages, setNewImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  
+  // Fields for trips/events
+  const [date, setDate] = useState("");
+  const [availableSlots, setAvailableSlots] = useState(0);
+  
+  // Fields for accommodations
+  const [price, setPrice] = useState(0);
+  const [numberOfRooms, setNumberOfRooms] = useState(1);
+  const [capacity, setCapacity] = useState(2);
 
   useEffect(() => {
     if (!user || !id || !type) {
@@ -53,11 +62,12 @@ const EditListing = () => {
 
   const fetchListing = async () => {
     try {
-      let table: "hotels" | "adventure_places" | "trips" | "events" = "hotels";
+      let table: "hotels" | "adventure_places" | "trips" | "events" | "accommodations" = "hotels";
       if (type === "hotel") table = "hotels";
       else if (type === "adventure") table = "adventure_places";
       else if (type === "trip") table = "trips";
       else if (type === "event") table = "events";
+      else if (type === "accommodation") table = "accommodations";
 
       const { data, error } = await supabase
         .from(table)
@@ -75,6 +85,19 @@ const EditListing = () => {
         setFacilities((data.facilities as any) || []);
       }
       setExistingImages((data.gallery_images as string[]) || []);
+      
+      // Load trip/event specific fields
+      if (type === 'trip' || type === 'event') {
+        setDate((data as any).date || '');
+        setAvailableSlots((data as any).available_tickets || 0);
+      }
+      
+      // Load accommodation specific fields
+      if (type === 'accommodation') {
+        setPrice((data as any).price || 0);
+        setNumberOfRooms((data as any).number_of_rooms || 1);
+        setCapacity((data as any).capacity || 2);
+      }
     } catch (error) {
       console.error("Error fetching listing:", error);
       toast({
@@ -144,21 +167,38 @@ const EditListing = () => {
 
       const allImages = [...existingImages, ...uploadedImageUrls];
 
-      let table: "hotels" | "adventure_places" | "trips" | "events" = "hotels";
+      let table: "hotels" | "adventure_places" | "trips" | "events" | "accommodations" = "hotels";
       if (type === "hotel") table = "hotels";
       else if (type === "adventure") table = "adventure_places";
       else if (type === "trip") table = "trips";
       else if (type === "event") table = "events";
+      else if (type === "accommodation") table = "accommodations";
+
+      const updateData: any = {
+        name,
+        description,
+        gallery_images: allImages,
+        image_url: allImages[0] || existingImages[0],
+      };
+
+      if (type === 'hotel' || type === 'adventure') {
+        updateData.facilities = facilities;
+      }
+      
+      if (type === 'trip' || type === 'event') {
+        updateData.date = date;
+        updateData.available_tickets = availableSlots;
+      }
+      
+      if (type === 'accommodation') {
+        updateData.price = price;
+        updateData.number_of_rooms = numberOfRooms;
+        updateData.capacity = capacity;
+      }
 
       const { error } = await supabase
         .from(table)
-        .update({
-          name,
-          description,
-          facilities: facilities as any,
-          gallery_images: allImages,
-          image_url: allImages[0] || existingImages[0],
-        } as any)
+        .update(updateData)
         .eq("id", id!)
         .eq("created_by", user?.id!);
 
@@ -183,12 +223,21 @@ const EditListing = () => {
   };
 
   const handleDelete = async () => {
+    // Prevent deletion of trips and events
+    if (type === 'trip' || type === 'event') {
+      toast({
+        title: "Cannot delete",
+        description: "Trips and events cannot be deleted. You can only edit them.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
-      let table: "hotels" | "adventure_places" | "trips" | "events" = "hotels";
+      let table: "hotels" | "adventure_places" | "accommodations" = "hotels";
       if (type === "hotel") table = "hotels";
       else if (type === "adventure") table = "adventure_places";
-      else if (type === "trip") table = "trips";
-      else if (type === "event") table = "events";
+      else if (type === "accommodation") table = "accommodations";
 
       const { error } = await supabase
         .from(table)
@@ -243,13 +292,15 @@ const EditListing = () => {
       <main className="container px-4 py-8 max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Edit Listing</h1>
-          <Button
-            variant="destructive"
-            onClick={() => setShowDeleteDialog(true)}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
+          {type !== 'trip' && type !== 'event' && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -319,6 +370,69 @@ const EditListing = () => {
               )}
             </div>
           </div>
+
+          {(type === 'trip' || type === 'event') && (
+            <>
+              <div>
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="availableSlots">Available Slots/Tickets</Label>
+                <Input
+                  id="availableSlots"
+                  type="number"
+                  value={availableSlots}
+                  onChange={(e) => setAvailableSlots(parseInt(e.target.value) || 0)}
+                  min={0}
+                />
+              </div>
+            </>
+          )}
+
+          {type === 'accommodation' && (
+            <>
+              <div>
+                <Label htmlFor="price">Price per Night (KSh)</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                  min={0}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="numberOfRooms">Number of Rooms</Label>
+                <Input
+                  id="numberOfRooms"
+                  type="number"
+                  value={numberOfRooms}
+                  onChange={(e) => setNumberOfRooms(parseInt(e.target.value) || 1)}
+                  min={1}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="capacity">Capacity (Maximum Guests)</Label>
+                <Input
+                  id="capacity"
+                  type="number"
+                  value={capacity}
+                  onChange={(e) => setCapacity(parseInt(e.target.value) || 2)}
+                  min={1}
+                />
+              </div>
+            </>
+          )}
 
           {(type === "hotel" || type === "adventure") && (
             <div>
