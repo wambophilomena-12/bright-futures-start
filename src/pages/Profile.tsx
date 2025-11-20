@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, User, Calendar, Phone } from "lucide-react";
+import { ChevronRight, User, Calendar, Phone, Globe } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { CountrySelector } from "@/components/creation/CountrySelector";
+import { PhoneInput } from "@/components/profile/PhoneInput";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -31,11 +33,13 @@ const Profile = () => {
     phone_number: string;
     gender: "male" | "female" | "other" | "prefer_not_to_say" | "";
     date_of_birth: string;
+    country: string;
   }>({
     name: "",
     phone_number: "",
     gender: "",
-    date_of_birth: ""
+    date_of_birth: "",
+    country: ""
   });
 
   useEffect(() => {
@@ -58,7 +62,8 @@ const Profile = () => {
             name: data.name || "",
             phone_number: data.phone_number || "",
             gender: data.gender || "",
-            date_of_birth: data.date_of_birth || ""
+            date_of_birth: data.date_of_birth || "",
+            country: data.country || ""
           });
         }
         setFetchingProfile(false);
@@ -77,6 +82,7 @@ const Profile = () => {
         name: profileData.name,
         phone_number: profileData.phone_number,
         date_of_birth: profileData.date_of_birth || null,
+        country: profileData.country || null,
       };
       
       if (profileData.gender) {
@@ -212,6 +218,25 @@ const Profile = () => {
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </div>
 
+                {/* Country Field */}
+                <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Globe className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-sm text-muted-foreground">
+                        Country
+                      </Label>
+                      <CountrySelector
+                        value={profileData.country}
+                        onChange={(value) => setProfileData({ ...profileData, country: value })}
+                      />
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+
                 {/* Phone Number Field */}
                 <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer group">
                   <div className="flex items-center gap-4 flex-1">
@@ -222,13 +247,12 @@ const Profile = () => {
                       <Label htmlFor="phone" className="text-sm text-muted-foreground cursor-pointer">
                         Phone Number
                       </Label>
-                      <Input
+                      <PhoneInput
                         id="phone"
-                        type="tel"
+                        country={profileData.country}
                         value={profileData.phone_number}
-                        onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
+                        onChange={(value) => setProfileData({ ...profileData, phone_number: value })}
                         className="border-0 shadow-none p-0 h-8 focus-visible:ring-0 font-medium"
-                        placeholder="+254712345678"
                       />
                     </div>
                   </div>

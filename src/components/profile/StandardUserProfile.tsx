@@ -11,6 +11,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { CountrySelector } from "@/components/creation/CountrySelector";
+import { PhoneInput } from "@/components/profile/PhoneInput";
 
 
 export const StandardUserProfile = () => {
@@ -20,6 +22,7 @@ export const StandardUserProfile = () => {
   const [name, setName] = useState("");
   const [gender, setGender] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [country, setCountry] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>();
 
   useEffect(() => {
@@ -43,6 +46,7 @@ export const StandardUserProfile = () => {
       setName(data.name || "");
       setGender(data.gender || "");
       setPhoneNumber(data.phone_number || "");
+      setCountry(data.country || "");
       if (data.date_of_birth) {
         setDateOfBirth(new Date(data.date_of_birth));
       }
@@ -72,6 +76,7 @@ export const StandardUserProfile = () => {
           name,
           gender: gender as any,
           phone_number: phoneNumber,
+          country,
           date_of_birth: dateOfBirth ? format(dateOfBirth, "yyyy-MM-dd") : null,
         })
         .eq("id", user?.id);
@@ -155,13 +160,17 @@ export const StandardUserProfile = () => {
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="country">Country</Label>
+        <CountrySelector value={country} onChange={setCountry} />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="phoneNumber">Phone Number</Label>
-        <Input
+        <PhoneInput
           id="phoneNumber"
-          type="tel"
-          placeholder="+254712345678"
+          country={country}
           value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
+          onChange={setPhoneNumber}
           className="w-full"
         />
       </div>
