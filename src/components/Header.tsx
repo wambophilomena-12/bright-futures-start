@@ -49,7 +49,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
         else setUserRole("user");
       }
 
-      // Fetch only profile name (not email)
+      // Fetch profile name
       const { data: profile } = await supabase
         .from("profiles")
         .select("name")
@@ -57,9 +57,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
         .single();
 
       if (profile && profile.name) {
-        // Extract first name (text before first space)
-        const firstName = profile.name.split(" ")[0];
-        setUserName(firstName);
+        setUserName(profile.name);
       }
     };
 
@@ -69,6 +67,16 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
   // Function to get the display name for the icon (name only, no email)
   const getDisplayName = () => {
     return userName || "Account";
+  };
+
+  // Function to get initials from the user's name
+  const getUserInitials = () => {
+    if (!userName) return "U";
+    const nameParts = userName.split(" ");
+    if (nameParts.length >= 2) {
+      return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+    }
+    return userName.substring(0, 2).toUpperCase();
   };
 
   // Mobile account icon tap handler
@@ -163,7 +171,9 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
               onClick={handleMobileAccountTap}
               className="flex items-center gap-2 text-white hover:text-white/80 transition-colors"
             >
-              <User className="h-5 w-5" />
+              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold text-sm">
+                {user ? getUserInitials() : <User className="h-4 w-4" />}
+              </div>
               {user && <span className="text-sm font-medium">{userName}</span>}
             </button>
             
@@ -198,7 +208,9 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 transition-colors text-white">
-                    <User className="h-5 w-5" />
+                    <div className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold text-sm">
+                      {getUserInitials()}
+                    </div>
                     <span className="font-medium">{getDisplayName()}</span>
                   </button>
                 </DropdownMenuTrigger>

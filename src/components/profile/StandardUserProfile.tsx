@@ -12,7 +12,6 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CountrySelector } from "@/components/creation/CountrySelector";
-import { PhoneInput } from "@/components/profile/PhoneInput";
 
 
 export const StandardUserProfile = () => {
@@ -21,9 +20,9 @@ export const StandardUserProfile = () => {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [gender, setGender] = useState<string>("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [country, setCountry] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>();
+  const [isCountryLocked, setIsCountryLocked] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -45,8 +44,8 @@ export const StandardUserProfile = () => {
     } else if (data) {
       setName(data.name || "");
       setGender(data.gender || "");
-      setPhoneNumber(data.phone_number || "");
       setCountry(data.country || "");
+      setIsCountryLocked(!!data.country);
       if (data.date_of_birth) {
         setDateOfBirth(new Date(data.date_of_birth));
       }
@@ -70,15 +69,19 @@ export const StandardUserProfile = () => {
     setLoading(true);
 
     try {
+      const updateData: any = {
+        name,
+        gender: gender as any,
+        date_of_birth: dateOfBirth ? format(dateOfBirth, "yyyy-MM-dd") : null,
+      };
+      
+      if (!isCountryLocked && country) {
+        updateData.country = country;
+      }
+      
       const { error } = await supabase
         .from("profiles")
-        .update({
-          name,
-          gender: gender as any,
-          phone_number: phoneNumber,
-          country,
-          date_of_birth: dateOfBirth ? format(dateOfBirth, "yyyy-MM-dd") : null,
-        })
+        .update(updateData)
         .eq("id", user?.id);
 
       if (error) throw error;
@@ -160,18 +163,13 @@ export const StandardUserProfile = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="country">Country</Label>
-        <CountrySelector value={country} onChange={setCountry} />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="phoneNumber">Phone Number</Label>
-        <PhoneInput
-          id="phoneNumber"
-          country={country}
-          value={phoneNumber}
-          onChange={setPhoneNumber}
-          className="w-full"
+        <Label htmlFor="country">
+          Country {isCountryLocked && <span className="text-xs text-muted-foreground">(locked)</span>}
+        </Label>
+        <CountrySelector 
+          value={country} 
+          onChange={setCountry}
+          disabled={isCountryLocked}
         />
       </div>
 

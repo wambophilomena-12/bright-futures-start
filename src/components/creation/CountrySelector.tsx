@@ -15,12 +15,13 @@ const EAST_AFRICAN_COUNTRIES = [
 interface CountrySelectorProps {
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
-export const CountrySelector = ({ value, onChange }: CountrySelectorProps) => {
+export const CountrySelector = ({ value, onChange, disabled = false }: CountrySelectorProps) => {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full">
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger className="w-full" disabled={disabled}>
         <SelectValue placeholder="Select country" />
       </SelectTrigger>
       <SelectContent className="bg-popover z-50">

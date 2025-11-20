@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, User, Calendar, Phone, Globe } from "lucide-react";
+import { ChevronRight, User, Calendar, Globe } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { CountrySelector } from "@/components/creation/CountrySelector";
-import { PhoneInput } from "@/components/profile/PhoneInput";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -30,17 +29,16 @@ const Profile = () => {
   const [fetchingProfile, setFetchingProfile] = useState(true);
   const [profileData, setProfileData] = useState<{
     name: string;
-    phone_number: string;
     gender: "male" | "female" | "other" | "prefer_not_to_say" | "";
     date_of_birth: string;
     country: string;
   }>({
     name: "",
-    phone_number: "",
     gender: "",
     date_of_birth: "",
     country: ""
   });
+  const [isCountryLocked, setIsCountryLocked] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -60,11 +58,12 @@ const Profile = () => {
         if (data) {
           setProfileData({
             name: data.name || "",
-            phone_number: data.phone_number || "",
             gender: data.gender || "",
             date_of_birth: data.date_of_birth || "",
             country: data.country || ""
           });
+          // Lock country if it's already set
+          setIsCountryLocked(!!data.country);
         }
         setFetchingProfile(false);
       };
@@ -80,10 +79,13 @@ const Profile = () => {
     try {
       const updateData: any = {
         name: profileData.name,
-        phone_number: profileData.phone_number,
         date_of_birth: profileData.date_of_birth || null,
-        country: profileData.country || null,
       };
+      
+      // Only update country if it's not locked
+      if (!isCountryLocked && profileData.country) {
+        updateData.country = profileData.country;
+      }
       
       if (profileData.gender) {
         updateData.gender = profileData.gender;
@@ -219,44 +221,23 @@ const Profile = () => {
                 </div>
 
                 {/* Country Field */}
-                <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors">
+                <div className={`p-4 flex items-center justify-between ${!isCountryLocked ? 'hover:bg-accent/50' : ''} transition-colors`}>
                   <div className="flex items-center gap-4 flex-1">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <Globe className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1">
                       <Label className="text-sm text-muted-foreground">
-                        Country
+                        Country {isCountryLocked && <span className="text-xs">(locked)</span>}
                       </Label>
                       <CountrySelector
                         value={profileData.country}
                         onChange={(value) => setProfileData({ ...profileData, country: value })}
+                        disabled={isCountryLocked}
                       />
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-
-                {/* Phone Number Field */}
-                <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer group">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Phone className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <Label htmlFor="phone" className="text-sm text-muted-foreground cursor-pointer">
-                        Phone Number
-                      </Label>
-                      <PhoneInput
-                        id="phone"
-                        country={profileData.country}
-                        value={profileData.phone_number}
-                        onChange={(value) => setProfileData({ ...profileData, phone_number: value })}
-                        className="border-0 shadow-none p-0 h-8 focus-visible:ring-0 font-medium"
-                      />
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  {!isCountryLocked && <ChevronRight className="h-5 w-5 text-muted-foreground" />}
                 </div>
               </div>
 
