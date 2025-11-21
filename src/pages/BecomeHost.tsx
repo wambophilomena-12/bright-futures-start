@@ -24,22 +24,50 @@ const BecomeHost = () => {
       return;
     }
 
-    const fetchData = async () => {
-      const { data: trips } = await supabase.from("trips").select("*").eq("created_by", user.id);
-      const { data: hotels } = await supabase.from("hotels").select("id, name, location, place, country, image_url, description, email, phone_numbers, amenities, establishment_type, map_link, gallery_images, images, approval_status, admin_notes, created_at, created_by, approved_by, approved_at, is_hidden, registration_number, facilities").eq("created_by", user.id);
-      const { data: adventures } = await supabase.from("adventure_places").select("id, name, location, place, country, image_url, description, email, phone_numbers, amenities, activities, facilities, entry_fee, entry_fee_type, map_link, gallery_images, images, approval_status, admin_notes, created_at, created_by, approved_by, approved_at, is_hidden, registration_number").eq("created_by", user.id);
+    const checkVerificationAndFetchData = async () => {
+      // Check if user has verification
+      const { data: verification } = await supabase
+        .from("host_verifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
 
-      const allContent = [
-        ...(trips?.map(t => ({ ...t, type: "trip" })) || []),
-        ...(hotels?.map(h => ({ ...h, type: "hotel" })) || []),
-        ...(adventures?.map(a => ({ ...a, type: "adventure" })) || [])
-      ];
+      // If no verification exists, redirect to verification page
+      if (!verification) {
+        navigate("/host-verification");
+        return;
+      }
 
-      setMyContent(allContent);
-      setLoading(false);
+      // If verification is pending, redirect to status page
+      if (verification.status === "pending") {
+        navigate("/verification-status");
+        return;
+      }
+
+      // If verification is rejected, redirect to verification page
+      if (verification.status === "rejected") {
+        navigate("/host-verification");
+        return;
+      }
+
+      // If approved, fetch data
+      if (verification.status === "approved") {
+        const { data: trips } = await supabase.from("trips").select("*").eq("created_by", user.id);
+        const { data: hotels } = await supabase.from("hotels").select("id, name, location, place, country, image_url, description, email, phone_numbers, amenities, establishment_type, map_link, gallery_images, images, approval_status, admin_notes, created_at, created_by, approved_by, approved_at, is_hidden, registration_number, facilities").eq("created_by", user.id);
+        const { data: adventures } = await supabase.from("adventure_places").select("id, name, location, place, country, image_url, description, email, phone_numbers, amenities, activities, facilities, entry_fee, entry_fee_type, map_link, gallery_images, images, approval_status, admin_notes, created_at, created_by, approved_by, approved_at, is_hidden, registration_number").eq("created_by", user.id);
+
+        const allContent = [
+          ...(trips?.map(t => ({ ...t, type: "trip" })) || []),
+          ...(hotels?.map(h => ({ ...h, type: "hotel" })) || []),
+          ...(adventures?.map(a => ({ ...a, type: "adventure" })) || [])
+        ];
+
+        setMyContent(allContent);
+        setLoading(false);
+      }
     };
 
-    fetchData();
+    checkVerificationAndFetchData();
   }, [user, navigate]);
 
   const getStatusBadge = (status: string) => {

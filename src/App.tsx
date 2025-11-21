@@ -33,6 +33,9 @@ import EditListing from "./pages/EditListing";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
+import HostVerification from "./pages/HostVerification";
+import VerificationStatus from "./pages/VerificationStatus";
+import AdminVerification from "./pages/AdminVerification";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +74,9 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/host-verification" element={<HostVerification />} />
+              <Route path="/verification-status" element={<VerificationStatus />} />
+              <Route path="/admin/verification" element={<AdminVerification />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

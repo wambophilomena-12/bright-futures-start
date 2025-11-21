@@ -222,9 +222,14 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
                     <Link to="/profile/edit" className="text-foreground hover:bg-accent cursor-pointer">Profile</Link>
                   </DropdownMenuItem>
                   {userRole === "admin" && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/dashboard" className="text-foreground hover:bg-accent cursor-pointer">Admin Dashboard</Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="text-foreground hover:bg-accent cursor-pointer">Admin Dashboard</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/verification" className="text-foreground hover:bg-accent cursor-pointer">Host Verification</Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuItem onClick={signOut} className="text-foreground hover:bg-accent cursor-pointer">
                     Log out
