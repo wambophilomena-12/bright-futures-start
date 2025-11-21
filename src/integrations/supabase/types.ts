@@ -23,9 +23,11 @@ export type Database = {
           approval_status: string
           approved_at: string | null
           approved_by: string | null
+          closing_hours: string | null
           country: string
           created_at: string
           created_by: string | null
+          days_opened: string[] | null
           description: string | null
           email: string | null
           entry_fee: number | null
@@ -39,6 +41,7 @@ export type Database = {
           location: string
           map_link: string | null
           name: string
+          opening_hours: string | null
           phone_numbers: string[] | null
           place: string
           registration_number: string | null
@@ -52,9 +55,11 @@ export type Database = {
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
+          closing_hours?: string | null
           country: string
           created_at?: string
           created_by?: string | null
+          days_opened?: string[] | null
           description?: string | null
           email?: string | null
           entry_fee?: number | null
@@ -68,6 +73,7 @@ export type Database = {
           location: string
           map_link?: string | null
           name: string
+          opening_hours?: string | null
           phone_numbers?: string[] | null
           place: string
           registration_number?: string | null
@@ -81,9 +87,11 @@ export type Database = {
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
+          closing_hours?: string | null
           country?: string
           created_at?: string
           created_by?: string | null
+          days_opened?: string[] | null
           description?: string | null
           email?: string | null
           entry_fee?: number | null
@@ -97,6 +105,7 @@ export type Database = {
           location?: string
           map_link?: string | null
           name?: string
+          opening_hours?: string | null
           phone_numbers?: string[] | null
           place?: string
           registration_number?: string | null
@@ -339,15 +348,18 @@ export type Database = {
       }
       hotels: {
         Row: {
+          activities: Json | null
           admin_notes: string | null
           allowed_admin_emails: string[] | null
           amenities: string[] | null
           approval_status: string
           approved_at: string | null
           approved_by: string | null
+          closing_hours: string | null
           country: string
           created_at: string
           created_by: string | null
+          days_opened: string[] | null
           description: string | null
           email: string | null
           establishment_type: string | null
@@ -360,21 +372,25 @@ export type Database = {
           location: string
           map_link: string | null
           name: string
+          opening_hours: string | null
           phone_numbers: string[] | null
           place: string
           registration_number: string | null
           rejection_note: string | null
         }
         Insert: {
+          activities?: Json | null
           admin_notes?: string | null
           allowed_admin_emails?: string[] | null
           amenities?: string[] | null
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
+          closing_hours?: string | null
           country: string
           created_at?: string
           created_by?: string | null
+          days_opened?: string[] | null
           description?: string | null
           email?: string | null
           establishment_type?: string | null
@@ -387,21 +403,25 @@ export type Database = {
           location: string
           map_link?: string | null
           name: string
+          opening_hours?: string | null
           phone_numbers?: string[] | null
           place: string
           registration_number?: string | null
           rejection_note?: string | null
         }
         Update: {
+          activities?: Json | null
           admin_notes?: string | null
           allowed_admin_emails?: string[] | null
           amenities?: string[] | null
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
+          closing_hours?: string | null
           country?: string
           created_at?: string
           created_by?: string | null
+          days_opened?: string[] | null
           description?: string | null
           email?: string | null
           establishment_type?: string | null
@@ -414,6 +434,7 @@ export type Database = {
           location?: string
           map_link?: string | null
           name?: string
+          opening_hours?: string | null
           phone_numbers?: string[] | null
           place?: string
           registration_number?: string | null
@@ -486,6 +507,7 @@ export type Database = {
       }
       trips: {
         Row: {
+          activities: Json | null
           admin_notes: string | null
           approval_status: string
           approved_at: string | null
@@ -512,6 +534,7 @@ export type Database = {
           rejection_note: string | null
         }
         Insert: {
+          activities?: Json | null
           admin_notes?: string | null
           approval_status?: string
           approved_at?: string | null
@@ -538,6 +561,7 @@ export type Database = {
           rejection_note?: string | null
         }
         Update: {
+          activities?: Json | null
           admin_notes?: string | null
           approval_status?: string
           approved_at?: string | null

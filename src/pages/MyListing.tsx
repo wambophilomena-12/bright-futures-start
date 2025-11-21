@@ -179,10 +179,10 @@ const MyListing = () => {
 
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">Events</h2>
-                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('event')}</Badge>
+                <h2 className="text-2xl font-bold">Attractions</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getCategoryCount('attraction')}</Badge>
               </div>
-              {renderListings('event')}
+              {renderListings('attraction')}
             </div>
 
             <div>
@@ -213,10 +213,10 @@ const MyListing = () => {
 
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">Event Bookings</h2>
-                <Badge variant="outline" className="text-lg px-4 py-1">{getBookingCount('event')}</Badge>
+                <h2 className="text-2xl font-bold">Attraction Bookings</h2>
+                <Badge variant="outline" className="text-lg px-4 py-1">{getBookingCount('attraction')}</Badge>
               </div>
-              {renderBookings('event')}
+              {renderBookings('attraction')}
             </div>
 
             <div>
