@@ -161,6 +161,60 @@ export type Database = {
         }
         Relationships: []
       }
+      host_verifications: {
+        Row: {
+          created_at: string
+          document_back_url: string | null
+          document_front_url: string
+          document_type: string
+          id: string
+          legal_name: string
+          rejection_reason: string | null
+          residential_address: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          selfie_url: string
+          status: string
+          submitted_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_back_url?: string | null
+          document_front_url: string
+          document_type: string
+          id?: string
+          legal_name: string
+          rejection_reason?: string | null
+          residential_address: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selfie_url: string
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_back_url?: string | null
+          document_front_url?: string
+          document_type?: string
+          id?: string
+          legal_name?: string
+          rejection_reason?: string | null
+          residential_address?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selfie_url?: string
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       hotels: {
         Row: {
           admin_notes: string | null
