@@ -81,29 +81,42 @@ const Index = () => {
 
     const fetchScrollableRows = async () => {
         setLoadingScrollable(true);
-        const [hotelsData, attractionsData, campsitesData] = await Promise.all([
-            supabase.from("hotels").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(10),
-            supabase.from("attractions").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(10),
-            supabase.from("adventure_places").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(10)
-        ]);
+        try {
+            const [hotelsData, attractionsData, campsitesData] = await Promise.all([
+                supabase.from("hotels").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(10),
+                supabase.from("attractions").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(10),
+                supabase.from("adventure_places").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(10)
+            ]);
 
-        console.log("Fetched scrollable data:", {
-            hotels: hotelsData.data?.length,
-            hotelsError: hotelsData.error,
-            attractions: attractionsData.data?.length,
-            attractionsError: attractionsData.error,
-            campsites: campsitesData.data?.length,
-            campsitesError: campsitesData.error
-        });
+            console.log("Fetched scrollable data:", {
+                hotels: {
+                    count: hotelsData.data?.length || 0,
+                    error: hotelsData.error,
+                    data: hotelsData.data
+                },
+                attractions: {
+                    count: attractionsData.data?.length || 0,
+                    error: attractionsData.error,
+                    data: attractionsData.data
+                },
+                campsites: {
+                    count: campsitesData.data?.length || 0,
+                    error: campsitesData.error,
+                    data: campsitesData.data
+                }
+            });
 
-        setScrollableRows({
-            trips: [],
-            hotels: hotelsData.data || [],
-            attractions: attractionsData.data || [],
-            campsites: campsitesData.data || []
-        });
-        
-        setLoadingScrollable(false);
+            setScrollableRows({
+                trips: [],
+                hotels: hotelsData.data || [],
+                attractions: attractionsData.data || [],
+                campsites: campsitesData.data || []
+            });
+        } catch (error) {
+            console.error("Error fetching scrollable rows:", error);
+        } finally {
+            setLoadingScrollable(false);
+        }
     };
 
     const fetchNearbyPlacesAndHotels = async () => {
