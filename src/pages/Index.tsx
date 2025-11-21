@@ -292,13 +292,7 @@ const Index = () => {
                     <section className="mb-8">
                         <div className="flex justify-between items-center mb-4 mt-4 md:mt-0">
                             <h2 className="text-sm md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
-                                Featured Trips & Events
                             </h2>
-                            <Link to="/category/trips">
-                                <Button variant="outline" size="sm" className="text-xs md:text-sm">
-                                    View All
-                                </Button>
-                            </Link>
                         </div>
                         <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
                             {loading || listings.length === 0 ? (
