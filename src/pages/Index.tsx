@@ -74,22 +74,24 @@ const Index = () => {
     const [isSearchVisible, setIsSearchVisible] = useState(true);
     const [showSearchIcon, setShowSearchIcon] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
-    const [scrollableRows, setScrollableRows] = useState<{ trips: any[], hotels: any[], attractions: any[] }>({ trips: [], hotels: [], attractions: [] });
+    const [scrollableRows, setScrollableRows] = useState<{ trips: any[], hotels: any[], attractions: any[], campsites: any[] }>({ trips: [], hotels: [], attractions: [], campsites: [] });
     const [nearbyPlacesHotels, setNearbyPlacesHotels] = useState<any[]>([]);
     const [loadingScrollable, setLoadingScrollable] = useState(true);
     const [loadingNearby, setLoadingNearby] = useState(true);
 
     const fetchScrollableRows = async () => {
         setLoadingScrollable(true);
-        const [hotelsData, attractionsData] = await Promise.all([
+        const [hotelsData, attractionsData, campsitesData] = await Promise.all([
             supabase.from("hotels").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(10),
-            supabase.from("attractions").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(10)
+            supabase.from("attractions").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(10),
+            supabase.from("adventure_places").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(10)
         ]);
 
         setScrollableRows({
             trips: [],
             hotels: hotelsData.data || [],
-            attractions: attractionsData.data || []
+            attractions: attractionsData.data || [],
+            campsites: campsitesData.data || []
         });
         
         setLoadingScrollable(false);
@@ -319,7 +321,7 @@ const Index = () => {
                             </Link>
                         </div>
                         <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                            {loadingScrollable || nearbyPlacesHotels.filter((item) => item.table === "adventure_places").length === 0 ? (
+                            {loadingScrollable || scrollableRows.campsites.length === 0 ? (
                                 [...Array(10)].map((_, i) => (
                                     <div key={i} className="flex-shrink-0 w-64 rounded-lg overflow-hidden shadow-md">
                                         <div className="aspect-[4/3] bg-muted animate-pulse" />
@@ -331,7 +333,7 @@ const Index = () => {
                                     </div>
                                 ))
                             ) : (
-                                nearbyPlacesHotels.filter((item) => item.table === "adventure_places").slice(0, 10).map((place) => (
+                                scrollableRows.campsites.map((place) => (
                                     <div key={place.id} className="flex-shrink-0 w-64">
                                         <ListingCard
                                             id={place.id}
