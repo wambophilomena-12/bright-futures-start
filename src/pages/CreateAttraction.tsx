@@ -11,6 +11,10 @@ import { Card } from "@/components/ui/card";
 import { Loader2, MapPin, Upload, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Header } from "@/components/Header";
+import { MobileBottomBar } from "@/components/MobileBottomBar";
+import { Footer } from "@/components/Footer";
+import { PageHeader } from "@/components/creation/PageHeader";
 const EAST_AFRICAN_COUNTRIES = [
   { name: "Kenya", code: "KE", flag: "🇰🇪" },
   { name: "Uganda", code: "UG", flag: "🇺🇬" },
@@ -223,9 +227,14 @@ export default function CreateAttraction() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <Card className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Create New Attraction</h1>
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <Header />
+      
+      <main className="container px-4 py-8 max-w-4xl mx-auto">
+        <PageHeader title="Create Attraction" />
+        <h1 className="md:hidden text-3xl font-bold mb-6">Create New Attraction</h1>
+        
+        <Card className="p-6">
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Registration Section */}
@@ -503,6 +512,10 @@ export default function CreateAttraction() {
           </Button>
         </form>
       </Card>
+      </main>
+      
+      <Footer />
+      <MobileBottomBar />
     </div>
   );
 }

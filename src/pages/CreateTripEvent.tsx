@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Calendar, MapPin, DollarSign, Users, Upload, Navigation } from "lucide-react";
 import { getCountryPhoneCode } from "@/lib/countryHelpers";
 import { CountrySelector } from "@/components/creation/CountrySelector";
+import { PageHeader } from "@/components/creation/PageHeader";
 
 const CreateTripEvent = () => {
   const navigate = useNavigate();
@@ -199,7 +200,8 @@ const CreateTripEvent = () => {
       <Header />
       
       <main className="container px-4 py-8 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Create Trip</h1>
+        <PageHeader title="Create Trip" />
+        <h1 className="md:hidden text-3xl font-bold mb-8">Create Trip</h1>
         
         <Card className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">

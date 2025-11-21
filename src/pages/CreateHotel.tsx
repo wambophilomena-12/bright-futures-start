@@ -15,6 +15,7 @@ import { MapPin, Mail, Phone, Navigation } from "lucide-react";
 import { registrationNumberSchema, adminEmailsSchema, descriptionSchema } from "@/lib/validation";
 import { getCountryPhoneCode } from "@/lib/countryHelpers";
 import { CountrySelector } from "@/components/creation/CountrySelector";
+import { PageHeader } from "@/components/creation/PageHeader";
 
 const CreateHotel = () => {
   const navigate = useNavigate();
@@ -251,7 +252,8 @@ const CreateHotel = () => {
       <Header />
       
       <main className="container px-4 py-8 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Create Hotel & Accommodation</h1>
+        <PageHeader title="Create Hotel & Accommodation" />
+        <h1 className="md:hidden text-3xl font-bold mb-8">Create Hotel & Accommodation</h1>
 
         <Card className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">

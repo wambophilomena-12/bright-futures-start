@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { registrationNumberSchema, adminEmailsSchema, descriptionSchema } from "@/lib/validation";
 import { getCountryPhoneCode } from "@/lib/countryHelpers";
 import { CountrySelector } from "@/components/creation/CountrySelector";
+import { PageHeader } from "@/components/creation/PageHeader";
 
 const CreateAdventure = () => {
   const navigate = useNavigate();
@@ -251,7 +252,8 @@ const CreateAdventure = () => {
       <Header />
       
       <main className="container px-4 py-8 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Create Place to Adventure</h1>
+        <PageHeader title="Create Place to Adventure" />
+        <h1 className="md:hidden text-3xl font-bold mb-8">Create Place to Adventure</h1>
         <p className="text-muted-foreground mb-6">
           Submit your adventure place for admin verification. It will be visible after approval.
         </p>
