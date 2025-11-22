@@ -256,12 +256,12 @@ const Index = () => {
                                 <div
                                     key={cat.title}
                                     onClick={() => navigate(cat.path)}
-                                    className="relative h-20 md:h-40 lg:h-48 cursor-pointer overflow-hidden group rounded-lg"
+                                    className="relative h-16 md:h-40 lg:h-48 cursor-pointer overflow-hidden group rounded-lg"
                                     style={{ backgroundImage: `url(${cat.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
                                 >
                                     <div className="absolute inset-0 bg-black/50 group-hover:bg-black/40 transition-all flex flex-col items-center justify-center p-2 md:p-4">
-                                        <cat.icon className="h-6 w-6 md:h-12 md:w-12 lg:h-16 lg:w-16 text-white mb-1 md:mb-3" />
-                                        <h3 className="font-bold text-white text-2xs md:text-base lg:text-lg">{cat.title}</h3>
+                                        <cat.icon className="h-4 w-4 md:h-12 md:w-12 lg:h-16 lg:w-16 text-white mb-0.5 md:mb-3" />
+                                        <h3 className="font-bold text-white text-3xs md:text-base lg:text-lg">{cat.title}</h3>
                                     </div>
                                 </div>
                             ))}
@@ -290,7 +290,7 @@ const Index = () => {
                                 ))
                             ) : (
                 listings.map((item) => (
-                                    <div key={item.id} className="flex-shrink-0 w-40 md:w-64">
+                                    <div key={item.id} className="flex-shrink-0 w-48 md:w-64">
                                         <ListingCard
                                             id={item.id}
                                             type={item.type}
@@ -322,7 +322,7 @@ const Index = () => {
                                 Featured Campsite & Experience
                             </h2>
                             <Link to="/category/campsite">
-                                <Button variant="outline" size="sm" className="text-2xs md:text-sm md:px-4 px-2">
+                                <Button variant="outline" size="sm" className="text-3xs md:text-sm px-1.5 md:px-4">
                                     View All
                                 </Button>
                             </Link>
@@ -330,7 +330,7 @@ const Index = () => {
                         <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide">
                             {loadingScrollable || scrollableRows.campsites.length === 0 ? (
                                 [...Array(10)].map((_, i) => (
-                                    <div key={i} className="flex-shrink-0 w-40 md:w-64 rounded-lg overflow-hidden shadow-md">
+                                    <div key={i} className="flex-shrink-0 w-48 md:w-64 rounded-lg overflow-hidden shadow-md">
                                         <div className="aspect-[4/3] bg-muted animate-pulse" />
                                         <div className="p-2 md:p-4 space-y-2 md:space-y-3">
                                             <div className="h-4 md:h-5 bg-muted animate-pulse rounded w-4/5" />
@@ -341,7 +341,7 @@ const Index = () => {
                                 ))
                             ) : (
                 scrollableRows.campsites.map((place) => (
-                                    <div key={place.id} className="flex-shrink-0 w-40 md:w-64">
+                                    <div key={place.id} className="flex-shrink-0 w-48 md:w-64">
                                         <ListingCard
                                             id={place.id}
                                             type="ADVENTURE PLACE"
@@ -368,7 +368,7 @@ const Index = () => {
                                 Featured Hotels
                             </h2>
                             <Link to="/category/hotels">
-                                <Button variant="outline" size="sm" className="text-2xs md:text-sm md:px-4 px-2">
+                                <Button variant="outline" size="sm" className="text-3xs md:text-sm px-1.5 md:px-4">
                                     View All
                                 </Button>
                             </Link>
@@ -376,7 +376,7 @@ const Index = () => {
                         <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide">
                             {loadingScrollable || scrollableRows.hotels.length === 0 ? (
                                 [...Array(10)].map((_, i) => (
-                                    <div key={i} className="flex-shrink-0 w-40 md:w-64 rounded-lg overflow-hidden shadow-md">
+                                    <div key={i} className="flex-shrink-0 w-48 md:w-64 rounded-lg overflow-hidden shadow-md">
                                         <div className="aspect-[4/3] bg-muted animate-pulse" />
                                         <div className="p-2 md:p-4 space-y-2 md:space-y-3">
                                             <div className="h-4 md:h-5 bg-muted animate-pulse rounded w-4/5" />
@@ -387,7 +387,7 @@ const Index = () => {
                                 ))
                             ) : (
                 scrollableRows.hotels.map((hotel) => (
-                                    <div key={hotel.id} className="flex-shrink-0 w-40 md:w-64">
+                                    <div key={hotel.id} className="flex-shrink-0 w-48 md:w-64">
                                         <ListingCard
                                             id={hotel.id}
                                             type="HOTEL"
@@ -414,7 +414,7 @@ const Index = () => {
                                 Featured Attractions
                             </h2>
                             <Link to="/category/adventure">
-                                <Button variant="outline" size="sm" className="text-2xs md:text-sm md:px-4 px-2">
+                                <Button variant="outline" size="sm" className="text-3xs md:text-sm px-1.5 md:px-4">
                                     View All
                                 </Button>
                             </Link>
@@ -422,7 +422,7 @@ const Index = () => {
                         <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide">
                             {loadingScrollable || scrollableRows.attractions.length === 0 ? (
                                 [...Array(10)].map((_, i) => (
-                                    <div key={i} className="flex-shrink-0 w-40 md:w-64 rounded-lg overflow-hidden shadow-md">
+                                    <div key={i} className="flex-shrink-0 w-48 md:w-64 rounded-lg overflow-hidden shadow-md">
                                         <div className="aspect-[4/3] bg-muted animate-pulse" />
                                         <div className="p-2 md:p-4 space-y-2 md:space-y-3">
                                             <div className="h-4 md:h-5 bg-muted animate-pulse rounded w-4/5" />
@@ -433,7 +433,7 @@ const Index = () => {
                                 ))
                             ) : (
                 scrollableRows.attractions.map((attraction) => (
-                                    <div key={attraction.id} className="flex-shrink-0 w-40 md:w-64">
+                                    <div key={attraction.id} className="flex-shrink-0 w-48 md:w-64">
                                         <ListingCard
                                             id={attraction.id}
                                             type="ATTRACTION"
@@ -462,7 +462,7 @@ const Index = () => {
                                 Featured Trips
                             </h2>
                             <Link to="/category/trips">
-                                <Button variant="outline" size="sm" className="text-2xs md:text-sm md:px-4 px-2">
+                                <Button variant="outline" size="sm" className="text-3xs md:text-sm px-1.5 md:px-4">
                                     View All
                                 </Button>
                             </Link>
@@ -470,7 +470,7 @@ const Index = () => {
                         <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide">
                             {loadingScrollable || scrollableRows.trips.length === 0 ? (
                                 [...Array(10)].map((_, i) => (
-                                    <div key={i} className="flex-shrink-0 w-40 md:w-64 rounded-lg overflow-hidden shadow-md">
+                                    <div key={i} className="flex-shrink-0 w-48 md:w-64 rounded-lg overflow-hidden shadow-md">
                                         <div className="aspect-[4/3] bg-muted animate-pulse" />
                                         <div className="p-2 md:p-4 space-y-2 md:space-y-3">
                                             <div className="h-4 md:h-5 bg-muted animate-pulse rounded w-4/5" />
@@ -483,7 +483,7 @@ const Index = () => {
                                 scrollableRows.trips.map((trip) => {
                                     const isEvent = trip.type === "event";
                                     return (
-                                    <div key={trip.id} className="flex-shrink-0 w-40 md:w-64">
+                                    <div key={trip.id} className="flex-shrink-0 w-48 md:w-64">
                                         <ListingCard
                                             id={trip.id}
                                             type={isEvent ? "EVENT" : "TRIP"}
