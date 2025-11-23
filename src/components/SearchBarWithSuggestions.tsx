@@ -24,6 +24,7 @@ interface SearchResult {
   name: string;
   type: "trip" | "hotel" | "adventure" | "attraction";
   location?: string;
+  place?: string;
   country?: string;
   activities?: any;
 }
@@ -93,17 +94,17 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
       // Fetch all items when empty, or filter when typing
       const [tripsData, hotelsData, adventuresData, attractionsData] = await Promise.all([
         queryValue 
-          ? supabase.from("trips").select("id, name, location, country, activities").eq("approval_status", "approved").or(`name.ilike.%${queryValue}%,location.ilike.%${queryValue}%,country.ilike.%${queryValue}%,activities::text.ilike.%${queryValue}%`).limit(20)
-          : supabase.from("trips").select("id, name, location, country, activities").eq("approval_status", "approved").limit(20),
+          ? supabase.from("trips").select("id, name, location, place, country, activities").eq("approval_status", "approved").or(`name.ilike.%${queryValue}%,location.ilike.%${queryValue}%,place.ilike.%${queryValue}%,country.ilike.%${queryValue}%`).limit(20)
+          : supabase.from("trips").select("id, name, location, place, country, activities").eq("approval_status", "approved").limit(20),
         queryValue
-          ? supabase.from("hotels").select("id, name, location, country, activities, facilities").eq("approval_status", "approved").or(`name.ilike.%${queryValue}%,location.ilike.%${queryValue}%,country.ilike.%${queryValue}%,activities::text.ilike.%${queryValue}%,facilities::text.ilike.%${queryValue}%`).limit(20)
-          : supabase.from("hotels").select("id, name, location, country, activities, facilities").eq("approval_status", "approved").limit(20),
+          ? supabase.from("hotels").select("id, name, location, place, country, activities, facilities").eq("approval_status", "approved").or(`name.ilike.%${queryValue}%,location.ilike.%${queryValue}%,place.ilike.%${queryValue}%,country.ilike.%${queryValue}%`).limit(20)
+          : supabase.from("hotels").select("id, name, location, place, country, activities, facilities").eq("approval_status", "approved").limit(20),
         queryValue
-          ? supabase.from("adventure_places").select("id, name, location, country, activities, facilities").eq("approval_status", "approved").or(`name.ilike.%${queryValue}%,location.ilike.%${queryValue}%,country.ilike.%${queryValue}%,activities::text.ilike.%${queryValue}%,facilities::text.ilike.%${queryValue}%`).limit(20)
-          : supabase.from("adventure_places").select("id, name, location, country, activities, facilities").eq("approval_status", "approved").limit(20),
+          ? supabase.from("adventure_places").select("id, name, location, place, country, activities, facilities").eq("approval_status", "approved").or(`name.ilike.%${queryValue}%,location.ilike.%${queryValue}%,place.ilike.%${queryValue}%,country.ilike.%${queryValue}%`).limit(20)
+          : supabase.from("adventure_places").select("id, name, location, place, country, activities, facilities").eq("approval_status", "approved").limit(20),
         queryValue
-          ? supabase.from("attractions").select("id, location_name, country").eq("approval_status", "approved").or(`location_name.ilike.%${queryValue}%,country.ilike.%${queryValue}%`).limit(20)
-          : supabase.from("attractions").select("id, location_name, country").eq("approval_status", "approved").limit(20)
+          ? supabase.from("attractions").select("id, location_name, local_name, country").eq("approval_status", "approved").or(`location_name.ilike.%${queryValue}%,local_name.ilike.%${queryValue}%,country.ilike.%${queryValue}%`).limit(20)
+          : supabase.from("attractions").select("id, location_name, local_name, country").eq("approval_status", "approved").limit(20)
       ]);
 
       let combined = [
@@ -114,7 +115,7 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
           ...item, 
           type: "attraction" as const, 
           name: item.location_name,
-          location: item.location_name
+          location: item.local_name || item.location_name
         }))
       ];
 
@@ -366,7 +367,7 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
                         <div className="flex flex-col">
                           <p className="font-semibold text-base">{result.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {result.location && `${result.location}, `}{result.country}
+                            {result.location && `${result.location}, `}{result.place && `${result.place}, `}{result.country}
                           </p>
                         </div>
                       </div>
