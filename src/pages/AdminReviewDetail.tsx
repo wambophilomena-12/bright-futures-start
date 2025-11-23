@@ -366,7 +366,7 @@ const AdminReviewDetail = () => {
                   </div>
                 )}
 
-                {/* Rejection Section */}
+                {/* Rejection Section - Only show for pending items */}
                 {item.approval_status === "pending" && (
                   <div className="pt-4 border-t space-y-3">
                     <div className="space-y-2">
@@ -395,21 +395,60 @@ const AdminReviewDetail = () => {
                   </div>
                 )}
 
+                {/* Visibility control for approved items */}
+                {item.approval_status === "approved" && (
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
+                      <div>
+                        <p className="font-medium">Public Visibility</p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.is_hidden ? "This item is hidden from public" : "This item is visible to public"}
+                        </p>
+                      </div>
+                      <Button 
+                        variant={item.is_hidden ? "default" : "outline"}
+                        onClick={async () => {
+                          const { error } = await supabase
+                            .from(item.tableName)
+                            .update({ is_hidden: !item.is_hidden })
+                            .eq("id", id);
+                          
+                          if (!error) {
+                            toast({
+                              title: "Success",
+                              description: item.is_hidden ? "Item is now visible to public" : "Item is now hidden from public",
+                            });
+                            fetchItemDetails();
+                          } else {
+                            toast({
+                              title: "Error",
+                              description: "Failed to update visibility",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        {item.is_hidden ? "Publish" : "Hide"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-3 pt-4 border-t">
                   <Button 
                     onClick={() => updateApprovalStatus("approved")}
                     disabled={item.approval_status === "approved"}
                     className="flex-1"
                   >
-                    Approve
+                    {item.approval_status === "approved" ? "Approved" : "Approve"}
                   </Button>
                   <Button 
                     variant="destructive"
                     onClick={() => updateApprovalStatus("rejected")}
-                    disabled={item.approval_status === "rejected"}
+                    disabled={item.approval_status === "rejected" || item.approval_status === "approved"}
                     className="flex-1"
                   >
-                    Reject
+                    {item.approval_status === "rejected" ? "Rejected" : "Reject"}
                   </Button>
                   <Button 
                     variant="outline"
