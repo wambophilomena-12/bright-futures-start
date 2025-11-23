@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Clock, X, TrendingUp } from "lucide-react";
+import { Clock, X, TrendingUp, Plane, Hotel, Tent, Landmark } from "lucide-react";
 import { getSessionId } from "@/lib/sessionManager";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -214,11 +214,26 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
       case "hotel":
         return "Hotel";
       case "adventure":
-        return "Adventure Place";
+        return "Campsite";
       case "attraction":
         return "Attraction";
       default:
         return type;
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "trip":
+        return Plane;
+      case "hotel":
+        return Hotel;
+      case "adventure":
+        return Tent;
+      case "attraction":
+        return Landmark;
+      default:
+        return Plane;
     }
   };
 
@@ -321,28 +336,34 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
           {/* Show search suggestions when typing */}
           {value.trim() && suggestions.length > 0 && (
             <>
-              {suggestions.map((result) => (
-                <button
-                  key={result.id}
-                  onClick={() => handleSuggestionClick(result)}
-                  className="w-full px-4 py-3 flex flex-col gap-1 hover:bg-accent transition-colors text-left border-b last:border-b-0"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium text-sm flex-1">{result.name}</p>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium whitespace-nowrap">
-                      {getTypeLabel(result.type)}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {result.location && `${result.location}, `}{result.country}
-                  </p>
-                  {getActivitiesText(result.activities) && (
-                    <p className="text-xs text-primary font-medium">
-                      {getActivitiesText(result.activities)}
+              {suggestions.map((result) => {
+                const TypeIcon = getTypeIcon(result.type);
+                return (
+                  <button
+                    key={result.id}
+                    onClick={() => handleSuggestionClick(result)}
+                    className="w-full px-4 py-3 flex flex-col gap-1 hover:bg-accent transition-colors text-left border-b last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1">
+                        <TypeIcon className="h-4 w-4 text-primary flex-shrink-0" />
+                        <p className="font-medium text-sm">{result.name}</p>
+                      </div>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium whitespace-nowrap">
+                        {getTypeLabel(result.type)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground pl-6">
+                      {result.location && `${result.location}, `}{result.country}
                     </p>
-                  )}
-                </button>
-              ))}
+                    {getActivitiesText(result.activities) && (
+                      <p className="text-xs text-primary font-medium pl-6">
+                        {getActivitiesText(result.activities)}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
             </>
           )}
         </div>
