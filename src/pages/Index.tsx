@@ -257,19 +257,19 @@ const Index = () => {
                             onChange={setSearchQuery} 
                             onSubmit={() => {
                                 fetchAllData(searchQuery);
-                                setIsSearchFocused(false);
                             }}
                             onSuggestionSearch={(query) => {
                                 fetchAllData(query);
-                                setIsSearchFocused(false);
                             }}
                             onFocus={() => setIsSearchFocused(true)}
                             onBlur={() => {
-                                // Only blur if search query is empty
-                                if (!searchQuery) {
-                                    setTimeout(() => setIsSearchFocused(false), 200);
-                                }
+                                // Keep search focused when there's content
                             }}
+                            onBack={() => {
+                                setIsSearchFocused(false);
+                                setSearchQuery("");
+                            }}
+                            showBackButton={true}
                         />
                     </div>
                 </div>

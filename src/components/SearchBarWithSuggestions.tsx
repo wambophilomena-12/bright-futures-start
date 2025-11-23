@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Clock, X, TrendingUp, Plane, Hotel, Tent, Landmark } from "lucide-react";
+import { Clock, X, TrendingUp, Plane, Hotel, Tent, Landmark, ArrowLeft } from "lucide-react";
 import { getSessionId } from "@/lib/sessionManager";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ interface SearchBarProps {
   onSuggestionSearch?: (query: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
+  onBack?: () => void;
+  showBackButton?: boolean;
 }
 
 interface SearchResult {
@@ -34,7 +36,7 @@ interface TrendingSearch {
   search_count: number;
 }
 
-export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggestionSearch, onFocus, onBlur }: SearchBarProps) => {
+export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggestionSearch, onFocus, onBlur, onBack, showBackButton = false }: SearchBarProps) => {
   const { user } = useAuth();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
@@ -239,36 +241,50 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
 
   return (
     <div ref={wrapperRef} className="relative w-full mx-auto">
-      <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground z-10" />
-      <Input
-        type="text"
-        placeholder="Search for trips, hotels, campsites, attractions, or countries..."
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setShowSuggestions(true);
-        }}
-        onKeyPress={handleKeyPress}
-        onFocus={() => {
-          setShowSuggestions(true);
-          onFocus?.();
-        }}
-        onBlur={onBlur}
-        className="pl-10 md:pl-12 pr-20 md:pr-24 h-10 md:h-14 text-sm md:text-lg rounded-full border-2 focus-visible:border-primary shadow-md"
-      />
-      <Button
-        onClick={() => {
-          saveToHistory(value);
-          onSubmit();
-        }}
-        size="sm"
-        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full h-8 md:h-12 px-4 md:px-6"
-      >
-        Search
-      </Button>
+      <div className="flex items-center gap-2">
+        {showBackButton && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="flex-shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        )}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground z-10" />
+          <Input
+            type="text"
+            placeholder="Search for trips, hotels, campsites, attractions, or countries..."
+            value={value}
+            onChange={(e) => {
+              onChange(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onKeyPress={handleKeyPress}
+            onFocus={() => {
+              setShowSuggestions(true);
+              onFocus?.();
+            }}
+            onBlur={onBlur}
+            className="pl-10 md:pl-12 pr-20 md:pr-24 h-10 md:h-14 text-sm md:text-lg rounded-full border-2 focus-visible:border-primary shadow-md"
+          />
+          <Button
+            onClick={() => {
+              saveToHistory(value);
+              onSubmit();
+            }}
+            size="sm"
+            className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full h-8 md:h-12 px-4 md:px-6"
+          >
+            Search
+          </Button>
+        </div>
+      </div>
 
       {showSuggestions && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border rounded-lg shadow-lg max-h-96 overflow-y-auto z-[150]">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border rounded-lg shadow-lg max-h-96 overflow-y-auto z-[150]" style={{ marginLeft: showBackButton ? '0' : '0' }}>
           {/* Show search history and trending when no value */}
           {!value.trim() && (
             <div>
