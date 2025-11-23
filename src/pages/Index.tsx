@@ -359,7 +359,7 @@ const Index = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    listings.map((item) => (
+                                    listings.map((item, index) => (
                                         <div key={item.id} className="flex-shrink-0 w-[85vw] md:w-64 snap-center md:snap-align-none">
                                             <ListingCard
                                                 id={item.id}
@@ -375,6 +375,7 @@ const Index = () => {
                                                 isSaved={savedItems.has(item.id)}
                                                 hidePrice={true}
                                                 showBadge={true}
+                                                priority={index === 0}
                                             />
                                         </div>
                                     ))

@@ -21,6 +21,7 @@ interface ListingCardProps {
   availableTickets?: number;
   bookedTickets?: number;
   showBadge?: boolean;
+  priority?: boolean; // Add priority prop for LCP optimization
 }
 
 export const ListingCard = ({
@@ -40,6 +41,7 @@ export const ListingCard = ({
   availableTickets,
   bookedTickets,
   showBadge = false,
+  priority = false, // Default to false
 }: ListingCardProps) => {
   const navigate = useNavigate();
 
@@ -77,7 +79,8 @@ export const ListingCard = ({
         <img
           src={imageUrl}
           alt={name}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
           decoding="async"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
