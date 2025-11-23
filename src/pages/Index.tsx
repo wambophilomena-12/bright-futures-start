@@ -715,7 +715,7 @@ const Index = () => {
                     </section>
                 </div>
             </main>
-            <Footer />
+            <Footer className={isSearchFocused ? 'hidden' : ''} />
             <MobileBottomBar />
         </div>
     );

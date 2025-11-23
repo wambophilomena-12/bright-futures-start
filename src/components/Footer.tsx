@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Compass } from "lucide-react";
 
-export const Footer = () => {
+export const Footer = ({ className = "" }: { className?: string }) => {
   // Detect if running in webview/in-app context
   const isInApp = () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -16,7 +16,7 @@ export const Footer = () => {
   }
 
   return (
-    <footer className="hidden md:block bg-white border-t mt-12 text-gray-900">
+    <footer className={`hidden md:block bg-white border-t mt-12 text-gray-900 ${className}`}>
       <div className="container px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-3">
