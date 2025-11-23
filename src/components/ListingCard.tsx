@@ -3,7 +3,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 
 interface ListingCardProps {
   id: string;
@@ -105,20 +104,26 @@ export const ListingCard = ({
         )}
       </div>
       
-      {/* Date and Event Capacity Details - Below the image */}
+      {/* Content below the image */}
       <div className="p-3 md:p-4 flex flex-col space-y-2">
+        {/* Location with icon */}
+        <div className="flex items-center gap-1">
+          <MapPin className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+          <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">
+            {location}, {country}
+          </p>
+        </div>
+        
         {/* DATE row */}
         {(date || isCustomDate) && (
-          <div className="flex justify-between items-center">
-            <p className="text-xs md:text-sm font-semibold text-red-600 dark:text-red-400">
-              {isCustomDate ? "Custom" : formatDate(date)}
-            </p>
-          </div>
+          <p className="text-xs md:text-sm font-semibold text-red-600 dark:text-red-400">
+            {isCustomDate ? "Custom" : formatDate(date)}
+          </p>
         )}
         
         {/* EVENT CAPACITY - Only for events */}
         {type === "EVENT" && availableTickets !== undefined && (
-          <div className="flex items-center justify-between pt-1 border-t border-border/50 mt-1">
+          <div className="flex items-center justify-between pt-1 border-t border-border/50">
             <p className="text-xs md:text-sm font-medium text-muted-foreground">
               Tickets Remaining:
             </p>

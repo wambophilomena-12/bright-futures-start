@@ -279,14 +279,14 @@ const CategoryDetail = () => {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header onSearchClick={handleSearchIconClick} showSearchIcon={showSearchIcon} />
       
-      {/* Search Bar - Shows when visible with higher z-index */}
+      {/* Search Bar - Shows when visible */}
       <div 
         ref={searchRef}
-        className={`bg-background border-b transition-all duration-300 z-50 relative ${
+        className={`bg-background border-b transition-all duration-300 ${
           isSearchVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full h-0 overflow-hidden'
         }`}
       >
-        <div className="container px-4 py-4">
+        <div className="container px-4 py-4 relative z-[100]">
           <SearchBarWithSuggestions
             value={searchQuery}
             onChange={setSearchQuery}
@@ -300,7 +300,7 @@ const CategoryDetail = () => {
         ref={filterRef}
         className={cn(
           "bg-background border-b transition-all duration-300",
-          isSticky && "sticky top-16 z-40 shadow-md md:relative md:shadow-none"
+          isSticky && "sticky top-16 z-30 shadow-md md:relative md:shadow-none"
         )}
       >
         <div className="container px-4 py-4">
@@ -320,7 +320,7 @@ const CategoryDetail = () => {
       <main className="container px-4 py-8 space-y-4">
         <h1 className="text-3xl font-bold">{config.title}</h1>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
           {loading ? (
             <>
               {[...Array(12)].map((_, i) => (
