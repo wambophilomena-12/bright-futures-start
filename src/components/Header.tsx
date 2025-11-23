@@ -121,7 +121,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
               <span className="font-bold text-base md:text-lg text-header-foreground block">
                 TripTrac
               </span>
-              <p className="text-xs text-white/70 block">Explore the world</p>
+              <p className="text-xs text-muted-foreground block">Explore the world</p>
             </div>
           </Link>
         </div>
@@ -174,10 +174,11 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
           <div className="md:hidden flex items-center gap-2">
             <button 
               onClick={() => user ? navigate('/account') : navigate('/auth')}
-              className="rounded-full h-8 w-8 flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
-              aria-label="Account"
+              className="flex items-center gap-2 text-white hover:text-white/80 transition-colors"
             >
-              <User className="h-4 w-4 text-white" />
+              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold text-sm">
+                {user ? getUserInitials() : <User className="h-4 w-4" />}
+              </div>
             </button>
           </div>
 
@@ -189,6 +190,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
               className="rounded-full h-10 w-10 flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
               aria-label="Account"
             >
+              {/* This is the change: Always show the User icon for desktop */}
               <User className="h-5 w-5 text-white" />
             </button>
           </div>
