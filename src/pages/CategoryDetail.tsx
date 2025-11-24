@@ -327,6 +327,8 @@ const CategoryDetail = () => {
                 ? "hotels"
                 : category === "adventure"
                 ? "adventure"
+                : category === "campsite"
+                ? "adventure"
                 : "trips-events"
             }
             onApplyFilters={handleApplyFilters}
@@ -349,23 +351,24 @@ const CategoryDetail = () => {
           ) : (
             filteredItems.map((item) => {
               const isAttraction = item.table === "attractions";
-              const isEvent = item.table === "trips" && item.type === "event";
+              const isEvent = item.table === "trips" && (item.type === "event" || category === "events");
+              const isTripOrEvent = item.table === "trips";
               return (
               <ListingCard
                 key={item.id}
                 id={item.id}
-                type={item.table === "trips" ? (item.type === "event" ? "EVENT" : "TRIP") : item.table === "hotels" ? "HOTEL" : isAttraction ? "ATTRACTION" : "ADVENTURE PLACE"}
+                type={item.table === "trips" ? (isEvent ? "EVENT" : "TRIP") : item.table === "hotels" ? "HOTEL" : isAttraction ? "ATTRACTION" : "ADVENTURE PLACE"}
                 name={isAttraction ? (item.local_name || item.location_name) : item.name}
                 imageUrl={isAttraction ? (item.photo_urls?.[0] || "") : item.image_url}
                 location={isAttraction ? item.location_name : item.location}
                 country={item.country}
                 price={isAttraction ? (item.price_adult || 0) : (item.price || item.entry_fee || 0)}
                 date={item.date}
+                isCustomDate={item.is_custom_date}
                 onSave={handleSave}
                 isSaved={savedItems.has(item.id)}
                 amenities={item.amenities}
-                availableTickets={isEvent ? item.available_tickets : undefined}
-                bookedTickets={isEvent ? (bookingStats.get(item.id) || 0) : undefined}
+                showBadge={isEvent}
               />
             )})
           )}
