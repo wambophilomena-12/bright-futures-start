@@ -232,7 +232,17 @@ const Index = () => {
             await supabase.from("saved_items").delete().eq("item_id", itemId).eq("user_id", userId);
             setSavedItems(prev => { const newSet = new Set(prev); newSet.delete(itemId); return newSet; });
         } else {
-            await supabase.from("saved_items").insert([{ user_id: userId, item_id: itemId, item_type: itemType }]);
+            // Check if item already exists in database
+            const { data: existing } = await supabase
+                .from("saved_items")
+                .select("id")
+                .eq("item_id", itemId)
+                .eq("user_id", userId)
+                .maybeSingle();
+            
+            if (!existing) {
+                await supabase.from("saved_items").insert([{ user_id: userId, item_id: itemId, item_type: itemType }]);
+            }
             setSavedItems(prev => new Set([...prev, itemId]));
         }
     };

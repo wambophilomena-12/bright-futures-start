@@ -7,10 +7,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getUserId } from "@/lib/sessionManager";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Trash2, CheckCircle } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Saved = () => {
   const [savedListings, setSavedListings] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -73,12 +88,104 @@ const Saved = () => {
     }
   };
 
+  const toggleItemSelection = (itemId: string) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleRemoveSelected = async () => {
+    if (!userId || selectedItems.size === 0) return;
+
+    const { error } = await supabase
+      .from("saved_items")
+      .delete()
+      .in("item_id", Array.from(selectedItems))
+      .eq("user_id", userId);
+
+    if (!error) {
+      setSavedListings(prev => prev.filter(item => !selectedItems.has(item.id)));
+      setSelectedItems(new Set());
+      setIsSelectionMode(false);
+      toast({ title: `Removed ${selectedItems.size} item(s) from saved` });
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!userId) return;
+
+    const { error } = await supabase
+      .from("saved_items")
+      .delete()
+      .eq("user_id", userId);
+
+    if (!error) {
+      setSavedListings([]);
+      setShowClearAllDialog(false);
+      toast({ title: "All saved items cleared" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
       
       <main className="container px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Saved Items</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">Saved Items</h1>
+          
+          {savedListings.length > 0 && (
+            <div className="flex gap-2">
+              {!isSelectionMode ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsSelectionMode(true)}
+                  >
+                    Select Items
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowClearAllDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear All
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsSelectionMode(false);
+                      setSelectedItems(new Set());
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleRemoveSelected}
+                    disabled={selectedItems.size === 0}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Remove ({selectedItems.size})
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         
         {savedListings.length === 0 ? (
           <div className="text-center py-16">
@@ -88,23 +195,58 @@ const Saved = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {savedListings.map((item) => (
-              <ListingCard
+              <div
                 key={item.id}
-                id={item.id}
-                type={item.savedType.replace("_", " ").toUpperCase() as any}
-                name={item.name}
-                imageUrl={item.image_url}
-                location={item.location}
-                country={item.country}
-                price={item.price}
-                date={item.date}
-                onSave={handleUnsave}
-                isSaved={true}
-              />
+                className="relative"
+                onClick={() => isSelectionMode && toggleItemSelection(item.id)}
+              >
+                {isSelectionMode && (
+                  <div
+                    className={`absolute top-2 left-2 z-10 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                      selectedItems.has(item.id)
+                        ? "bg-primary border-primary"
+                        : "bg-background border-muted-foreground"
+                    }`}
+                  >
+                    {selectedItems.has(item.id) && (
+                      <CheckCircle className="h-5 w-5 text-primary-foreground" />
+                    )}
+                  </div>
+                )}
+                <ListingCard
+                  id={item.id}
+                  type={item.savedType.replace("_", " ").toUpperCase() as any}
+                  name={item.name}
+                  imageUrl={item.image_url}
+                  location={item.location}
+                  country={item.country}
+                  price={item.price}
+                  date={item.date}
+                  onSave={handleUnsave}
+                  isSaved={true}
+                />
+              </div>
             ))}
           </div>
         )}
       </main>
+
+      <AlertDialog open={showClearAllDialog} onOpenChange={setShowClearAllDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear all saved items?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove all {savedListings.length} item(s) from your saved list. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Clear All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
       <MobileBottomBar />

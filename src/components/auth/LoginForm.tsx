@@ -44,7 +44,6 @@ export const LoginForm = () => {
         });
       }
     } else {
-      toast({ title: "Login successful!" });
       navigate("/");
     }
 
