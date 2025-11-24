@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Plane, Building, Tent, ChevronRight, Package } from "lucide-react";
+import { Plane, Building, Tent, ChevronRight, Package, MapPin } from "lucide-react";
 
 const BecomeHost = () => {
   const { user } = useAuth();
@@ -62,11 +62,13 @@ const BecomeHost = () => {
         const { data: trips } = await supabase.from("trips").select("*").eq("created_by", user.id);
         const { data: hotels } = await supabase.from("hotels").select("id, name, location, place, country, image_url, description, email, phone_numbers, amenities, establishment_type, map_link, gallery_images, images, approval_status, admin_notes, created_at, created_by, approved_by, approved_at, is_hidden, registration_number, facilities").eq("created_by", user.id);
         const { data: adventures } = await supabase.from("adventure_places").select("id, name, location, place, country, image_url, description, email, phone_numbers, amenities, activities, facilities, entry_fee, entry_fee_type, map_link, gallery_images, images, approval_status, admin_notes, created_at, created_by, approved_by, approved_at, is_hidden, registration_number").eq("created_by", user.id);
+        const { data: attractions } = await supabase.from("attractions").select("*").eq("created_by", user.id);
 
         const allContent = [
           ...(trips?.map(t => ({ ...t, type: "trip" })) || []),
           ...(hotels?.map(h => ({ ...h, type: "hotel" })) || []),
-          ...(adventures?.map(a => ({ ...a, type: "adventure" })) || [])
+          ...(adventures?.map(a => ({ ...a, type: "adventure" })) || []),
+          ...(attractions?.map(a => ({ ...a, type: "attraction", name: a.local_name || a.location_name })) || [])
         ];
 
         setMyContent(allContent);
@@ -202,6 +204,7 @@ const BecomeHost = () => {
                       {item.type === 'trip' && <Plane className="h-5 w-5 text-muted-foreground" />}
                       {item.type === 'hotel' && <Building className="h-5 w-5 text-muted-foreground" />}
                       {item.type === 'adventure' && <Tent className="h-5 w-5 text-muted-foreground" />}
+                      {item.type === 'attraction' && <MapPin className="h-5 w-5 text-muted-foreground" />}
                       <span className="font-medium text-foreground">{item.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
