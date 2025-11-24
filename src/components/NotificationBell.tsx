@@ -34,7 +34,11 @@ export const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
 
     fetchNotifications();
 
@@ -150,8 +154,6 @@ export const NotificationBell = () => {
 
     setIsOpen(false);
   };
-
-  if (!user) return null;
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
