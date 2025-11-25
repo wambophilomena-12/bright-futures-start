@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Clock, DollarSign, Phone, Mail, Share2, Calendar, Users, ArrowLeft, Loader2, Navigation, Heart } from "lucide-react";
 import { Header } from "@/components/Header";
@@ -277,7 +278,10 @@ export default function AttractionDetail() {
         {/* Two Column Layout on Large Screens */}
         <div className="grid lg:grid-cols-2 gap-6">
         {/* Left Column: Image Gallery with border-radius */}
-        <div className="w-full">
+        <div className="w-full relative">
+          <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground z-20 text-xs font-bold px-3 py-1">
+            ATTRACTION
+          </Badge>
           <Carousel
             opts={{ loop: true }}
             plugins={[Autoplay({ delay: 3000 })]}

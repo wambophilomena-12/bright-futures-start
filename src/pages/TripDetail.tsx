@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Share2, Calendar, Mail, ArrowLeft, Copy, Heart } from "lucide-react";
 import { generateReferralLink, trackReferralClick, getReferralTrackingId } from "@/lib/referralUtils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -208,7 +209,10 @@ const TripDetail = () => {
         {/* Two Column Layout on Large Screens */}
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Left Column: Image Gallery with border-radius */}
-          <div className="w-full">
+          <div className="w-full relative">
+            <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground z-20 text-xs font-bold px-3 py-1">
+              TRIP
+            </Badge>
             <Carousel
               opts={{ loop: true }}
               plugins={[Autoplay({ delay: 3000 })]}

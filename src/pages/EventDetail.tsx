@@ -221,7 +221,10 @@ const EventDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Image Carousel */}
           <div className="space-y-4">
-            <Carousel className="w-full">
+            <Carousel className="w-full relative">
+              <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground z-20 text-xs font-bold px-3 py-1">
+                EVENT
+              </Badge>
               <CarouselContent>
                 {allImages.map((image, index) => (
                   <CarouselItem key={index}>
@@ -231,9 +234,6 @@ const EventDetail = () => {
                         alt={`${event.name} - Image ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
-                      <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground">
-                        EVENT
-                      </Badge>
                     </div>
                   </CarouselItem>
                 ))}
