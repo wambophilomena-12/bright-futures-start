@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookTripDialog } from "@/components/booking/BookTripDialog";
 import { SimilarItems } from "@/components/SimilarItems";
-import { LiveViewerCount } from "@/components/LiveViewerCount";
+
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { AvailabilityCalendar } from "@/components/booking/AvailabilityCalendar";
 import { ReviewSection } from "@/components/ReviewSection";
@@ -266,7 +266,7 @@ const EventDetail = () => {
                 <MapPin className="h-4 w-4" />
                 <span>{event.location}, {event.country}</span>
               </div>
-              <LiveViewerCount itemId={event.id} itemType="event" />
+              
             </div>
 
             {/* Action Buttons */}

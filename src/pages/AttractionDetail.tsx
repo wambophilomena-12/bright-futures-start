@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { SimilarItems } from "@/components/SimilarItems";
-import { LiveViewerCount } from "@/components/LiveViewerCount";
+
 import { AvailabilityCalendar } from "@/components/booking/AvailabilityCalendar";
 import { ReviewSection } from "@/components/ReviewSection";
 import Autoplay from "embla-carousel-autoplay";
@@ -341,7 +341,7 @@ export default function AttractionDetail() {
             <p className="text-sm md:text-base text-muted-foreground">
               {attraction.country}
             </p>
-            <LiveViewerCount itemId={attraction.id} itemType="attraction" />
+            
           </div>
           
           <div className="flex gap-2">

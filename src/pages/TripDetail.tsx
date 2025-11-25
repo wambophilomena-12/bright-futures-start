@@ -21,7 +21,7 @@ import {
 import { SimilarItems } from "@/components/SimilarItems";
 import { AvailabilityCalendar } from "@/components/booking/AvailabilityCalendar";
 import { ReviewSection } from "@/components/ReviewSection";
-import { LiveViewerCount } from "@/components/LiveViewerCount";
+
 import Autoplay from "embla-carousel-autoplay";
 
 interface Trip {
@@ -272,7 +272,7 @@ const TripDetail = () => {
             <div className="flex flex-col gap-2">
               <h1 className="text-2xl md:text-3xl font-bold">{trip.name}</h1>
               <p className="text-sm md:text-base text-muted-foreground">{trip.location}, {trip.country}</p>
-              <LiveViewerCount itemId={trip.id} itemType="trip" />
+              
             </div>
             
             <div className="flex gap-2">

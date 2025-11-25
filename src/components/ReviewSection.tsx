@@ -4,9 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Star } from "lucide-react";
+import { Star, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Review {
   id: string;
@@ -29,6 +39,8 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [hoveredStar, setHoveredStar] = useState(0);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [deleteReviewId, setDeleteReviewId] = useState<string | null>(null);
 
   const { data: reviews = [] } = useQuery({
     queryKey: ["reviews", itemId, itemType],
@@ -42,7 +54,6 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
 
       if (error) throw error;
 
-      // Fetch user names separately
       const userIds = [...new Set(data?.map(r => r.user_id) || [])];
       const { data: profiles } = await supabase
         .from("profiles")
@@ -58,31 +69,82 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
     },
   });
 
+  const userReview = reviews.find(r => r.user_id === user?.id);
+
   const submitReviewMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Must be logged in to submit a review");
       if (rating === 0) throw new Error("Please select a rating");
 
-      const { error } = await supabase.from("reviews").insert({
-        user_id: user.id,
-        item_id: itemId,
-        item_type: itemType,
-        rating,
-        comment: comment.trim(),
-      });
+      if (editingReviewId) {
+        const { error } = await supabase
+          .from("reviews")
+          .update({
+            rating,
+            comment: comment.trim(),
+          })
+          .eq("id", editingReviewId)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("reviews").insert({
+          user_id: user.id,
+          item_id: itemId,
+          item_type: itemType,
+          rating,
+          comment: comment.trim(),
+        });
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast({ title: editingReviewId ? "Review updated successfully" : "Review submitted successfully" });
+      setRating(0);
+      setComment("");
+      setEditingReviewId(null);
+      queryClient.invalidateQueries({ queryKey: ["reviews", itemId, itemType] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteReviewMutation = useMutation({
+    mutationFn: async (reviewId: string) => {
+      if (!user) throw new Error("Must be logged in");
+
+      const { error } = await supabase
+        .from("reviews")
+        .delete()
+        .eq("id", reviewId)
+        .eq("user_id", user.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Review submitted successfully" });
-      setRating(0);
-      setComment("");
+      toast({ title: "Review deleted successfully" });
+      setDeleteReviewId(null);
       queryClient.invalidateQueries({ queryKey: ["reviews", itemId, itemType] });
     },
     onError: (error: Error) => {
-      toast({ title: "Error submitting review", description: error.message, variant: "destructive" });
+      toast({ title: "Error deleting review", description: error.message, variant: "destructive" });
     },
   });
+
+  const handleEdit = (review: Review) => {
+    setEditingReviewId(review.id);
+    setRating(review.rating);
+    setComment(review.comment || "");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReviewId(null);
+    setRating(0);
+    setComment("");
+  };
 
   const averageRating = reviews.length > 0
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
@@ -107,8 +169,18 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
           </div>
         )}
 
-        {user && (
+        {user && (!userReview || editingReviewId) && (
           <div className="mb-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">
+                {editingReviewId ? "Edit Your Review" : "Add Your Review"}
+              </h3>
+              {editingReviewId && (
+                <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+                  Cancel
+                </Button>
+              )}
+            </div>
             <div>
               <p className="text-sm font-medium mb-2">Your Rating</p>
               <div className="flex gap-1">
@@ -140,7 +212,7 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
               onClick={() => submitReviewMutation.mutate()}
               disabled={rating === 0 || submitReviewMutation.isPending}
             >
-              {submitReviewMutation.isPending ? "Submitting..." : "Submit Review"}
+              {submitReviewMutation.isPending ? "Submitting..." : editingReviewId ? "Update Review" : "Submit Review"}
             </Button>
           </div>
         )}
@@ -160,9 +232,31 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
                     ))}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(review.created_at).toLocaleDateString()}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(review.created_at).toLocaleDateString()}
+                  </p>
+                  {user?.id === review.user_id && (
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleEdit(review)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => setDeleteReviewId(review.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
               {review.comment && <p className="text-sm text-muted-foreground">{review.comment}</p>}
             </Card>
@@ -173,6 +267,26 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
           )}
         </div>
       </Card>
+
+      <AlertDialog open={!!deleteReviewId} onOpenChange={() => setDeleteReviewId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Review</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete your review? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteReviewId && deleteReviewMutation.mutate(deleteReviewId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

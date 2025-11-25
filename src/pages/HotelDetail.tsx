@@ -10,7 +10,7 @@ import { MapPin, Phone, Share2, Mail, Wifi, Users, Clock, DollarSign, ArrowLeft,
 import { BookHotelDialog } from "@/components/booking/BookHotelDialog";
 import { SimilarItems } from "@/components/SimilarItems";
 import { AvailabilityCalendar } from "@/components/booking/AvailabilityCalendar";
-import { LiveViewerCount } from "@/components/LiveViewerCount";
+
 import { useToast } from "@/hooks/use-toast";
 import { 
   Carousel, 
@@ -264,7 +264,7 @@ const HotelDetail = () => {
                   {hotel.establishment_type}
                 </p>
               )}
-              <LiveViewerCount itemId={hotel.id} itemType="hotel" />
+              
             </div>
             
             <div className="flex gap-2">
