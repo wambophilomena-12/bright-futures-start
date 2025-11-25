@@ -70,8 +70,10 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
     },
   });
 
-  const userReview = reviews.find(r => r.user_id === user?.id);
-  const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 5);
+  const userReviews = reviews.filter(r => r.user_id === user?.id);
+  const otherReviews = reviews.filter(r => r.user_id !== user?.id);
+  const allReviewsSorted = [...userReviews, ...otherReviews];
+  const displayedReviews = showAllReviews ? allReviewsSorted : allReviewsSorted.slice(0, 5);
   const hasMoreReviews = reviews.length > 5;
 
   const submitReviewMutation = useMutation({
@@ -91,19 +93,6 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
 
         if (error) throw error;
       } else {
-        // Check if user already has a review
-        const { data: existingReview } = await supabase
-          .from("reviews")
-          .select("id")
-          .eq("item_id", itemId)
-          .eq("item_type", itemType)
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (existingReview) {
-          throw new Error("You have already submitted a review for this item");
-        }
-
         const { error } = await supabase.from("reviews").insert({
           user_id: user.id,
           item_id: itemId,
@@ -185,7 +174,7 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
           </div>
         )}
 
-        {user && !userReview && !editingReviewId && (
+        {user && !editingReviewId && (
           <div className="mb-6 space-y-4">
             <h3 className="text-lg font-semibold">Add Your Review</h3>
             <div>
@@ -224,7 +213,7 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
           </div>
         )}
 
-        {user && userReview && editingReviewId && (
+        {user && editingReviewId && (
           <div className="mb-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Edit Your Review</h3>
