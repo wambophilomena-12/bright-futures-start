@@ -421,9 +421,9 @@ export default function AttractionDetail() {
         </div>
       </div>
 
-        {/* Description and Operating Hours Below */}
-        <div className="space-y-6 mt-6">
-          {/* Description */}
+        {/* Description Below Image Gallery on Left Side */}
+        <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          {/* Description - Left Column */}
           {attraction.description && (
             <Card className="p-6">
               <h2 className="text-2xl font-semibold mb-3">About</h2>
@@ -431,7 +431,7 @@ export default function AttractionDetail() {
             </Card>
           )}
 
-          {/* Operating Hours */}
+          {/* Operating Hours - Right Column */}
           {(attraction.opening_hours || attraction.closing_hours || attraction.days_opened?.length > 0) && (
             <Card className="p-6">
               <h2 className="text-2xl font-semibold mb-3 flex items-center gap-2">
@@ -448,9 +448,10 @@ export default function AttractionDetail() {
               </div>
             </Card>
           )}
-          
-          {attraction && <SimilarItems currentItemId={attraction.id} itemType="attraction" country={attraction.country} />}
         </div>
+
+        {/* Similar Items */}
+        {attraction && <SimilarItems currentItemId={attraction.id} itemType="attraction" country={attraction.country} />}
       </main>
 
       {/* Booking Dialog */}

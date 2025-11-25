@@ -320,18 +320,25 @@ const HotelDetail = () => {
           </div>
         </div>
 
-        {/* Description, Amenities, Facilities Below */}
+        {/* Description Below Image Gallery on Left Side */}
+        <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          {/* About Section - Left Column */}
+          <div className="p-4 md:p-6 border rounded-lg bg-card shadow-sm">
+            <h2 className="text-lg md:text-xl font-semibold mb-2">About {hotel.name}</h2>
+            <p className="text-xs md:text-base text-muted-foreground">{hotel.description}</p>
+          </div>
+
+          {/* Right Column - Placeholder or Additional Content */}
+          <div></div>
+        </div>
+
+        {/* Amenities and Facilities Below */}
         <div className="space-y-6 mt-6">
           <div className="space-y-6 p-4 md:p-6 border rounded-lg bg-card shadow-sm">
-            {/* About Section */}
-            <div>
-              <h2 className="text-lg md:text-xl font-semibold mb-2">About {hotel.name}</h2>
-              <p className="text-xs md:text-base text-muted-foreground">{hotel.description}</p>
-            </div>
 
             {/* Amenities Section */}
             {hotel.amenities && hotel.amenities.length > 0 && (
-              <div className="pt-4 border-t">
+              <div>
                 <h2 className="text-lg md:text-xl font-semibold mb-2">Amenities</h2>
                 <div className="flex flex-wrap gap-2">
                   {hotel.amenities.map((amenity, idx) => (
@@ -345,7 +352,7 @@ const HotelDetail = () => {
             )}
 
             {/* Facilities and Activities Section - Side by Side on Large Screens */}
-            <div className="pt-4 border-t grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               {/* Facilities Section */}
               {hotel.facilities && hotel.facilities.length > 0 && (
                 <div>

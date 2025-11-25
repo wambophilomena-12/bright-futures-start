@@ -341,18 +341,25 @@ const AdventurePlaceDetail = () => {
           </div>
         </div>
 
-        {/* Description and Details Below */}
+        {/* Description Below Image Gallery on Left Side */}
+        <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          {/* About Section - Left Column */}
+          <div className="p-4 md:p-6 border rounded-lg bg-card shadow-sm">
+            <h2 className="text-lg md:text-xl font-semibold mb-2">About This Place</h2>
+            <p className="text-xs md:text-base text-muted-foreground">{place.description}</p>
+          </div>
+
+          {/* Right Column - Placeholder or Additional Content */}
+          <div></div>
+        </div>
+
+        {/* Additional Details */}
         <div className="space-y-6 mt-6">
           <div className="space-y-6 p-4 md:p-6 border rounded-lg bg-card shadow-sm">
-            {/* About Section */}
-            <div>
-              <h2 className="text-lg md:text-xl font-semibold mb-2">About This Place</h2>
-              <p className="text-xs md:text-base text-muted-foreground">{place.description}</p>
-            </div>
 
             {/* Operating Hours Section */}
             {(place.opening_hours || place.closing_hours || (place.days_opened && place.days_opened.length > 0)) && (
-              <div className="pt-4 border-t">
+              <div>
                 <h2 className="text-lg md:text-xl font-semibold mb-3 flex items-center gap-2">
                   <Clock className="h-5 w-5" />
                   Operating Hours
@@ -370,7 +377,7 @@ const AdventurePlaceDetail = () => {
 
             {/* Amenities Section */}
             {place.amenities && place.amenities.length > 0 && (
-              <div className="pt-4 border-t">
+              <div>
                 <h2 className="text-lg md:text-xl font-semibold mb-2">Amenities</h2>
                 <div className="flex flex-wrap gap-2">
                   {place.amenities.map((amenity, idx) => (
@@ -384,7 +391,7 @@ const AdventurePlaceDetail = () => {
             )}
 
             {/* Facilities and Activities Section - Side by Side on Large Screens */}
-            <div className="pt-4 border-t grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               {/* Facilities Section */}
               {place.facilities && place.facilities.length > 0 && (
                 <div>

@@ -6,7 +6,7 @@ import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Share2, Heart, Map as MapIcon, Calendar, Users, Mail, Phone } from "lucide-react";
+import { MapPin, Share2, Heart, Map as MapIcon, Calendar, Users, Mail, Phone, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -218,6 +218,16 @@ const EventDetail = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container px-4 py-8 max-w-7xl mx-auto mb-20 md:mb-0">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Image Carousel */}
           <div className="space-y-4">
@@ -347,16 +357,21 @@ const EventDetail = () => {
           </div>
         </div>
 
-        {/* Description */}
-        {event.description && (
-          <Card className="p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-4">About This Event</h2>
-            <p className="text-muted-foreground whitespace-pre-wrap">{event.description}</p>
-          </Card>
-        )}
+        {/* Description and Availability Calendar */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Description - Left Column */}
+          {event.description && (
+            <Card className="p-6">
+              <h2 className="text-2xl font-bold mb-4">About This Event</h2>
+              <p className="text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+            </Card>
+          )}
 
-        {/* Availability Calendar */}
-        <AvailabilityCalendar itemId={event.id} itemType="trip" />
+          {/* Availability Calendar - Right Column */}
+          <div>
+            <AvailabilityCalendar itemId={event.id} itemType="trip" />
+          </div>
+        </div>
 
         {/* Similar Events */}
         <SimilarItems currentItemId={event.id} itemType="trip" location={event.location} country={event.country} />

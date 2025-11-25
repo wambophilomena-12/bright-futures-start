@@ -116,14 +116,24 @@ const Index = () => {
             return;
         }
 
-        const [placesData, hotelsData] = await Promise.all([
+        const [placesData, hotelsData, attractionsData] = await Promise.all([
             supabase.from("adventure_places").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(20),
-            supabase.from("hotels").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(20)
+            supabase.from("hotels").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(20),
+            supabase.from("attractions").select("*").eq("approval_status", "approved").eq("is_hidden", false).limit(20)
         ]);
 
         const combined = [
-            ...(placesData.data || []).map(item => ({ ...item, table: "adventure_places", category: "Adventure Place" })),
-            ...(hotelsData.data || []).map(item => ({ ...item, table: "hotels", category: "Hotel" }))
+            ...(placesData.data || []).map(item => ({ ...item, type: "ADVENTURE PLACE", table: "adventure_places", category: "Adventure Place" })),
+            ...(hotelsData.data || []).map(item => ({ ...item, type: "HOTEL", table: "hotels", category: "Hotel" })),
+            ...(attractionsData.data || []).map(item => ({ 
+                ...item, 
+                type: "ATTRACTION",
+                table: "attractions",
+                category: "Attraction",
+                name: item.local_name || item.location_name,
+                location: item.location_name,
+                image_url: item.photo_urls?.[0] || ""
+            }))
         ];
 
         const nearby = combined.slice(0, 12);
@@ -412,7 +422,7 @@ const Index = () => {
                     <section className="mb-4 md:mb-8">
                         <div className="flex justify-between items-center mb-2 md:mb-4 mt-2 md:mt-0">
                             <h2 className="text-xs md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
-                                {searchQuery ? 'Search Results' : (position ? 'Near You' : 'Latest')}
+                                {searchQuery ? 'Search Results' : (position ? 'Featured For You' : 'Latest')}
                             </h2>
                             {searchQuery && listings.length > 0 && (
                                 <div className="flex gap-2">
@@ -591,7 +601,7 @@ const Index = () => {
                                 <p className="text-center text-muted-foreground py-8 w-full">No campsites available</p>
             ) : (
                 scrollableRows.campsites.map((place, index) => (
-                                    <div key={place.id} className="flex-shrink-0 w-[85vw] md:w-64 snap-center md:snap-align-none">
+                                     <div key={place.id} className="flex-shrink-0 w-[85vw] md:w-64 snap-center md:snap-align-none">
                                         <ListingCard
                                             id={place.id}
                                             type="ADVENTURE PLACE"
@@ -604,6 +614,7 @@ const Index = () => {
                                             onSave={handleSave}
                                             isSaved={savedItems.has(place.id)}
                                             hidePrice={true}
+                                            showBadge={true}
                                             priority={index === 0}
                                         />
                                     </div>
@@ -634,7 +645,7 @@ const Index = () => {
                             ) : scrollableRows.hotels.length === 0 ? (
                                 <p className="text-center text-muted-foreground py-8 w-full">No hotels available</p>
                             ) : (
-                scrollableRows.hotels.map((hotel) => (
+                scrollableRows.hotels.map((hotel, index) => (
                                     <div key={hotel.id} className="flex-shrink-0 w-[85vw] md:w-64 snap-center md:snap-align-none">
                                         <ListingCard
                                             id={hotel.id}
@@ -648,9 +659,11 @@ const Index = () => {
                                             onSave={handleSave}
                                             isSaved={savedItems.has(hotel.id)}
                                             hidePrice={true}
+                                            showBadge={true}
+                                            priority={index === 0}
                                         />
                                     </div>
-                                ))
+                ))
                             )}
                         </div>
                     </section>
@@ -677,7 +690,7 @@ const Index = () => {
                             ) : scrollableRows.attractions.length === 0 ? (
                                 <p className="text-center text-muted-foreground py-8 w-full">No attractions available</p>
                             ) : (
-                scrollableRows.attractions.map((attraction) => (
+                scrollableRows.attractions.map((attraction, index) => (
                                     <div key={attraction.id} className="flex-shrink-0 w-[85vw] md:w-64 snap-center md:snap-align-none">
                                         <ListingCard
                                             id={attraction.id}
@@ -691,9 +704,11 @@ const Index = () => {
                                             onSave={handleSave}
                                             isSaved={savedItems.has(attraction.id)}
                                             hidePrice={true}
+                                            showBadge={true}
+                                            priority={index === 0}
                                         />
                                     </div>
-                                ))
+                ))
                             )}
                         </div>
                     </section>
@@ -765,12 +780,12 @@ const Index = () => {
                                     <ListingCard
                                         key={item.id}
                                         id={item.id}
-                                        type={item.table === "hotels" ? "HOTEL" : "ADVENTURE PLACE"}
+                                        type={item.type}
                                         name={item.name}
                                         imageUrl={item.image_url}
                                         location={item.location}
                                         country={item.country}
-                                        price={item.table === "hotels" ? 0 : item.entry_fee || 0}
+                                        price={item.type === "HOTEL" ? 0 : item.entry_fee || item.price_adult || 0}
                                         onSave={handleSave}
                                         isSaved={savedItems.has(item.id)}
                                         hidePrice={true}
