@@ -107,15 +107,6 @@ const Index = () => {
         }
     };
 
-  const getScrollIndicators = (ref: React.RefObject<HTMLDivElement>, itemCount: number) => {
-    if (!ref.current || itemCount === 0) return { total: 3, current: 0 };
-    
-    const container = ref.current;
-    const scrollPercentage = container.scrollLeft / (container.scrollWidth - container.clientWidth);
-    const currentDot = Math.min(2, Math.floor(scrollPercentage * 3));
-    
-    return { total: 3, current: currentDot };
-  };
 
     const fetchScrollableRows = async () => {
         setLoadingScrollable(true);
@@ -615,23 +606,6 @@ const Index = () => {
                                      ))
                                  )}
                                 </div>
-                                {!searchQuery && listings.length > 0 && (() => {
-                                    const indicators = getScrollIndicators(featuredForYouRef, listings.length);
-                                    return indicators.total > 1 && (
-                                        <div className="flex justify-center gap-2 mt-2">
-                                            {Array.from({ length: indicators.total }).map((_, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className={`h-2 rounded-full transition-all ${
-                                                        idx === indicators.current 
-                                                            ? 'w-8 bg-primary' 
-                                                            : 'w-2 bg-muted-foreground/30'
-                                                    }`}
-                                                />
-                                            ))}
-                                        </div>
-                                    );
-                                })()}
                             </div>
                         )}
                     </section>
@@ -710,23 +684,6 @@ const Index = () => {
                                 ))
                             )}
                             </div>
-                            {scrollableRows.events.length > 0 && (() => {
-                                const indicators = getScrollIndicators(featuredEventsRef, scrollableRows.events.length);
-                                return indicators.total > 1 && (
-                                    <div className="flex justify-center gap-2 mt-2">
-                                        {Array.from({ length: indicators.total }).map((_, idx) => (
-                                            <div
-                                                key={idx}
-                                                className={`h-2 rounded-full transition-all ${
-                                                    idx === indicators.current 
-                                                        ? 'w-8 bg-primary' 
-                                                        : 'w-2 bg-muted-foreground/30'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                );
-                            })()}
                         </div>
                     </section>
 
@@ -803,23 +760,6 @@ const Index = () => {
                  ))
             )}
                             </div>
-                            {scrollableRows.campsites.length > 0 && (() => {
-                                const indicators = getScrollIndicators(featuredCampsitesRef, scrollableRows.campsites.length);
-                                return indicators.total > 1 && (
-                                    <div className="flex justify-center gap-2 mt-2">
-                                        {Array.from({ length: indicators.total }).map((_, idx) => (
-                                            <div
-                                                key={idx}
-                                                className={`h-2 rounded-full transition-all ${
-                                                    idx === indicators.current 
-                                                        ? 'w-8 bg-primary' 
-                                                        : 'w-2 bg-muted-foreground/30'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                );
-                            })()}
                         </div>
                     </section>
 
@@ -894,23 +834,6 @@ const Index = () => {
                  ))
                             )}
                             </div>
-                            {scrollableRows.hotels.length > 0 && (() => {
-                                const indicators = getScrollIndicators(featuredHotelsRef, scrollableRows.hotels.length);
-                                return indicators.total > 1 && (
-                                    <div className="flex justify-center gap-2 mt-2">
-                                        {Array.from({ length: indicators.total }).map((_, idx) => (
-                                            <div
-                                                key={idx}
-                                                className={`h-2 rounded-full transition-all ${
-                                                    idx === indicators.current 
-                                                        ? 'w-8 bg-primary' 
-                                                        : 'w-2 bg-muted-foreground/30'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                );
-                            })()}
                         </div>
                     </section>
 
@@ -985,23 +908,6 @@ const Index = () => {
                  ))
                             )}
                             </div>
-                            {scrollableRows.attractions.length > 0 && (() => {
-                                const indicators = getScrollIndicators(featuredAttractionsRef, scrollableRows.attractions.length);
-                                return indicators.total > 1 && (
-                                    <div className="flex justify-center gap-2 mt-2">
-                                        {Array.from({ length: indicators.total }).map((_, idx) => (
-                                            <div
-                                                key={idx}
-                                                className={`h-2 rounded-full transition-all ${
-                                                    idx === indicators.current 
-                                                        ? 'w-8 bg-primary' 
-                                                        : 'w-2 bg-muted-foreground/30'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                );
-                            })()}
                         </div>
                     </section>
 
@@ -1081,23 +987,6 @@ const Index = () => {
                                 )})
                             )}
                             </div>
-                            {scrollableRows.trips.length > 0 && (() => {
-                                const indicators = getScrollIndicators(featuredTripsRef, scrollableRows.trips.length);
-                                return indicators.total > 1 && (
-                                    <div className="flex justify-center gap-2 mt-2">
-                                        {Array.from({ length: indicators.total }).map((_, idx) => (
-                                            <div
-                                                key={idx}
-                                                className={`h-2 rounded-full transition-all ${
-                                                    idx === indicators.current 
-                                                        ? 'w-8 bg-primary' 
-                                                        : 'w-2 bg-muted-foreground/30'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                );
-                            })()}
                         </div>
                     </section>
 
