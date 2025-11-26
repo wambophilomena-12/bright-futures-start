@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapPin, Mail, Navigation, Clock, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { registrationNumberSchema, descriptionSchema } from "@/lib/validation";
+import { registrationNumberSchema, descriptionSchema, approvalStatusSchema } from "@/lib/validation";
 import { CountrySelector } from "@/components/creation/CountrySelector";
 import { PageHeader } from "@/components/creation/PageHeader";
 import { PhoneInput } from "@/components/creation/PhoneInput";
@@ -255,7 +255,7 @@ const CreateAdventure = () => {
           activities: activitiesArray.length > 0 ? activitiesArray : null,
           facilities: facilitiesArray.length > 0 ? facilitiesArray : null,
           created_by: user.id,
-          approval_status: "pending"
+          approval_status: approvalStatusSchema.parse("pending")
         }]);
 
       if (error) throw error;

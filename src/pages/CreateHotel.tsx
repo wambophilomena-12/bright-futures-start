@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapPin, Mail, Navigation, Clock, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { registrationNumberSchema, descriptionSchema } from "@/lib/validation";
+import { registrationNumberSchema, descriptionSchema, approvalStatusSchema } from "@/lib/validation";
 import { CountrySelector } from "@/components/creation/CountrySelector";
 import { PageHeader } from "@/components/creation/PageHeader";
 import { PhoneInput } from "@/components/creation/PhoneInput";
@@ -233,6 +233,9 @@ const CreateHotel = () => {
           price: a.priceType === "free" ? 0 : parseFloat(a.price) || 0 
         }));
 
+      // Validate approval_status before insert
+      const approvalStatus = approvalStatusSchema.parse("pending");
+
       const { error } = await supabase
         .from("hotels")
         .insert([{
@@ -250,7 +253,7 @@ const CreateHotel = () => {
           establishment_type: formData.establishmentType,
           facilities: facilitiesArray.length > 0 ? facilitiesArray : null,
           created_by: user.id,
-          approval_status: "pending"
+          approval_status: approvalStatus
         }]);
 
       if (error) throw error;

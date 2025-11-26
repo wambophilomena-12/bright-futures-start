@@ -16,6 +16,7 @@ import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Footer } from "@/components/Footer";
 import { PageHeader } from "@/components/creation/PageHeader";
 import { PhoneInput } from "@/components/creation/PhoneInput";
+import { approvalStatusSchema } from "@/lib/validation";
 const EAST_AFRICAN_COUNTRIES = [
   { name: "Kenya", code: "KE", flag: "🇰🇪" },
   { name: "Uganda", code: "UG", flag: "🇺🇬" },
@@ -227,7 +228,7 @@ export default function CreateAttraction() {
           gallery_images: photoUrls,
           facilities: facilitiesArray.length > 0 ? facilitiesArray : null,
           created_by: user.id,
-          approval_status: 'pending',
+          approval_status: approvalStatusSchema.parse('pending'),
         }]);
 
       if (error) throw error;

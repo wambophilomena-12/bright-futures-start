@@ -47,3 +47,6 @@ export const adminEmailsSchema = z.string()
     z.array(z.string().email("Invalid email format"))
       .max(10, "Maximum 10 administrators allowed")
   );
+
+// Approval status validation schema
+export const approvalStatusSchema = z.enum(["pending", "approved", "rejected", "removed", "banned"]);
