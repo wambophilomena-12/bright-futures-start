@@ -7,7 +7,7 @@ import { ListingCard } from "@/components/ListingCard";
 import { MapView } from "@/components/MapView";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
-import { Calendar, Hotel, Tent, Compass, Map, Grid, MapPin } from "lucide-react";
+import { Calendar, Hotel, Tent, Compass, Map, Grid, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +37,25 @@ const Index = () => {
     const [bookingStats, setBookingStats] = useState<Record<string, number>>({});
     const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+    // Scroll refs for navigation
+    const featuredForYouRef = useRef<HTMLDivElement>(null);
+    const featuredEventsRef = useRef<HTMLDivElement>(null);
+    const featuredCampsitesRef = useRef<HTMLDivElement>(null);
+    const featuredHotelsRef = useRef<HTMLDivElement>(null);
+    const featuredAttractionsRef = useRef<HTMLDivElement>(null);
+    const featuredTripsRef = useRef<HTMLDivElement>(null);
+    const vlogsRef = useRef<HTMLDivElement>(null);
+
+    const scrollSection = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
+        if (ref.current) {
+            const scrollAmount = 300;
+            const newScrollLeft = direction === 'left' 
+                ? ref.current.scrollLeft - scrollAmount 
+                : ref.current.scrollLeft + scrollAmount;
+            ref.current.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+        }
+    };
 
     const fetchScrollableRows = async () => {
         setLoadingScrollable(true);
@@ -189,7 +208,8 @@ const Index = () => {
             fetchTable("attractions", "ATTRACTION")
         ]);
 
-        let combined = [...events, ...hotels, ...adventures, ...attractions];
+        // Filter out events and trips from Featured For You section
+        let combined = [...hotels, ...adventures, ...attractions];
 
         // Fetch booking statistics for events
         const eventIds = events.map((event: any) => event.id);
@@ -406,6 +426,26 @@ const Index = () => {
                             <h2 className="text-xs md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
                                 {searchQuery ? 'Search Results' : (position ? 'Featured For You' : 'Latest')}
                             </h2>
+                            {!searchQuery && (
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => scrollSection(featuredForYouRef, 'left')}
+                                        className="h-8 w-8"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => scrollSection(featuredForYouRef, 'right')}
+                                        className="h-8 w-8"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
                             {searchQuery && listings.length > 0 && (
                                 <div className="flex gap-2">
                                     <Button
@@ -470,7 +510,7 @@ const Index = () => {
                             </div>
                         ) : (
                             // Horizontal scroll view for latest items (when not searching)
-                            <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
+                            <div ref={featuredForYouRef} className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
                                 {loading || listings.length === 0 ? (
                                     [...Array(10)].map((_, i) => (
                                         <div key={i} className="flex-shrink-0 w-[85vw] md:w-64 rounded-lg overflow-hidden shadow-md snap-center md:snap-align-none">
@@ -519,11 +559,29 @@ const Index = () => {
                             <h2 className="text-xs md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
                                 Featured Events
                             </h2>
-                            <Link to="/category/events" className="text-primary text-3xs md:text-sm hover:underline">
-                                View All
-                            </Link>
+                            <div className="flex gap-2 items-center">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(featuredEventsRef, 'left')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(featuredEventsRef, 'right')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Link to="/category/events" className="text-primary text-3xs md:text-sm hover:underline">
+                                    View All
+                                </Link>
+                            </div>
                         </div>
-                        <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
+                        <div ref={featuredEventsRef} className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
                             {loadingScrollable ? (
                                 <div className="flex gap-2 md:gap-4">
                                     {[...Array(5)].map((_, i) => (
@@ -566,11 +624,29 @@ const Index = () => {
                             <h2 className="text-xs md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
                                 Featured Campsite & Experience
                             </h2>
-                            <Link to="/category/campsite" className="text-primary text-3xs md:text-sm hover:underline">
-                                View All
-                            </Link>
+                            <div className="flex gap-2 items-center">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(featuredCampsitesRef, 'left')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(featuredCampsitesRef, 'right')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Link to="/category/campsite" className="text-primary text-3xs md:text-sm hover:underline">
+                                    View All
+                                </Link>
+                            </div>
                         </div>
-                        <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
+                        <div ref={featuredCampsitesRef} className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
                             {loadingScrollable ? (
                                 <div className="flex gap-2 md:gap-4">
                                     {[...Array(5)].map((_, i) => (
@@ -611,11 +687,29 @@ const Index = () => {
                             <h2 className="text-xs md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
                                 Featured Hotels
                             </h2>
-                            <Link to="/category/hotels" className="text-primary text-3xs md:text-sm hover:underline">
-                                View All
-                            </Link>
+                            <div className="flex gap-2 items-center">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(featuredHotelsRef, 'left')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(featuredHotelsRef, 'right')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Link to="/category/hotels" className="text-primary text-3xs md:text-sm hover:underline">
+                                    View All
+                                </Link>
+                            </div>
                         </div>
-                        <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
+                        <div ref={featuredHotelsRef} className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
                             {loadingScrollable ? (
                                 <div className="flex gap-2 md:gap-4">
                                     {[...Array(5)].map((_, i) => (
@@ -656,11 +750,29 @@ const Index = () => {
                             <h2 className="text-xs md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
                                 Featured Attractions
                             </h2>
-                            <Link to="/category/adventure" className="text-primary text-3xs md:text-sm hover:underline">
-                                View All
-                            </Link>
+                            <div className="flex gap-2 items-center">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(featuredAttractionsRef, 'left')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(featuredAttractionsRef, 'right')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Link to="/category/adventure" className="text-primary text-3xs md:text-sm hover:underline">
+                                    View All
+                                </Link>
+                            </div>
                         </div>
-                        <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
+                        <div ref={featuredAttractionsRef} className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
                             {loadingScrollable ? (
                                 <div className="flex gap-2 md:gap-4">
                                     {[...Array(5)].map((_, i) => (
@@ -703,11 +815,29 @@ const Index = () => {
                             <h2 className="text-xs md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
                                 Featured Trips
                             </h2>
-                            <Link to="/category/trips" className="text-primary text-3xs md:text-sm hover:underline">
-                                View All
-                            </Link>
+                            <div className="flex gap-2 items-center">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(featuredTripsRef, 'left')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(featuredTripsRef, 'right')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Link to="/category/trips" className="text-primary text-3xs md:text-sm hover:underline">
+                                    View All
+                                </Link>
+                            </div>
                         </div>
-                        <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
+                        <div ref={featuredTripsRef} className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
                             {loadingScrollable ? (
                                 <div className="flex gap-2 md:gap-4">
                                     {[...Array(5)].map((_, i) => (
@@ -786,11 +916,29 @@ const Index = () => {
                             <h2 className="text-sm md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
                                 Travel Vlogs
                             </h2>
-                            <Link to="/vlog" className="text-primary text-3xs md:text-sm hover:underline">
-                                View All
-                            </Link>
+                            <div className="flex gap-2 items-center">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(vlogsRef, 'left')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => scrollSection(vlogsRef, 'right')}
+                                    className="h-8 w-8"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Link to="/vlog" className="text-primary text-3xs md:text-sm hover:underline">
+                                    View All
+                                </Link>
+                            </div>
                         </div>
-                        <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
+                        <div ref={vlogsRef} className="flex gap-2 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory md:snap-none">
                             {[
                                 {
                                     id: "1",
