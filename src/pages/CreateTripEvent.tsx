@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CountrySelector } from "@/components/creation/CountrySelector";
 import { PageHeader } from "@/components/creation/PageHeader";
 import { PhoneInput } from "@/components/creation/PhoneInput";
+import { approvalStatusSchema } from "@/lib/validation";
 
 const CreateTripEvent = () => {
   const navigate = useNavigate();
@@ -176,7 +177,8 @@ const CreateTripEvent = () => {
         email: formData.email || null,
         phone_number: formData.phone_number || null,
         map_link: formData.map_link || null,
-        created_by: user.id
+        created_by: user.id,
+        approval_status: approvalStatusSchema.parse("pending")
       };
 
       const { error } = await supabase

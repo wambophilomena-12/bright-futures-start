@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Mail, Phone, Calendar, User, Eye, Clock, DollarSign } from "lucide-react";
+import { approvalStatusSchema } from "@/lib/validation";
 
 const AdminReviewDetail = () => {
   const { type, id } = useParams();
@@ -118,10 +119,13 @@ const AdminReviewDetail = () => {
 
   const updateApprovalStatus = async (status: string) => {
     try {
+      // Validate status before update
+      const validatedStatus = approvalStatusSchema.parse(status);
+      
       const updateData: any = {
-        approval_status: status,
-        approved_by: status === "approved" ? user?.id : null,
-        approved_at: status === "approved" ? new Date().toISOString() : null
+        approval_status: validatedStatus,
+        approved_by: validatedStatus === "approved" ? user?.id : null,
+        approved_at: validatedStatus === "approved" ? new Date().toISOString() : null
       };
 
       const tableName = item.tableName;

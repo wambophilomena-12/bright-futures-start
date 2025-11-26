@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { approvalStatusSchema } from "@/lib/validation";
 
 interface Facility {
   name: string;
@@ -316,14 +317,14 @@ const EditListing = () => {
     setSaving(true);
     try {
       let table: "hotels" | "adventure_places" | "trips" | "attractions" = "hotels";
-      if (type === "hotel") table = "hotels";
-      else if (type === "adventure") table = "adventure_places";
-      else if (type === "trip") table = "trips";
-      else if (type === "attraction") table = "attractions";
+      if (!table) return;
+
+      // Validate approval_status before update
+      const validatedStatus = approvalStatusSchema.parse("pending");
 
       const { error } = await supabase
         .from(table)
-        .update({ approval_status: "pending" })
+        .update({ approval_status: validatedStatus })
         .eq("id", id!)
         .eq("created_by", user?.id!);
 
