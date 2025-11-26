@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Mail, Phone, Calendar, User, Eye, Clock, DollarSign } from "lucide-react";
 import { approvalStatusSchema } from "@/lib/validation";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const AdminReviewDetail = () => {
   const { type, id } = useParams();
@@ -125,7 +126,8 @@ const AdminReviewDetail = () => {
       const updateData: any = {
         approval_status: validatedStatus,
         approved_by: validatedStatus === "approved" ? user?.id : null,
-        approved_at: validatedStatus === "approved" ? new Date().toISOString() : null
+        approved_at: validatedStatus === "approved" ? new Date().toISOString() : null,
+        is_hidden: validatedStatus === "approved" ? false : item.is_hidden
       };
 
       const tableName = item.tableName;
@@ -188,6 +190,33 @@ const AdminReviewDetail = () => {
         <Button variant="outline" onClick={() => navigate("/admin")} className="mb-4">
           ← Back to Admin Dashboard
         </Button>
+
+        {/* Image Gallery */}
+        {displayImages.length > 0 && (
+          <Card className="overflow-hidden mb-6">
+            <Carousel className="w-full">
+              <CarouselContent>
+                {displayImages.map((image: string, index: number) => (
+                  <CarouselItem key={index}>
+                    <div className="relative aspect-video md:aspect-[21/9] w-full overflow-hidden">
+                      <img
+                        src={image}
+                        alt={`${item.name} - Image ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {displayImages.length > 1 && (
+                <>
+                  <CarouselPrevious className="left-4" />
+                  <CarouselNext className="right-4" />
+                </>
+              )}
+            </Carousel>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
