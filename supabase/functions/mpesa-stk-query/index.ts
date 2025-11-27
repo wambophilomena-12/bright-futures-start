@@ -75,6 +75,23 @@ serve(async (req) => {
     const queryData = await queryResponse.json();
     console.log('STK Query response:', queryData);
 
+    // Check if it's a rate limit error
+    if (queryData.fault?.detail?.errorcode === 'policies.ratelimit.SpikeArrestViolation') {
+      console.log('Rate limit hit - will retry later');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          resultCode: 'RATE_LIMIT',
+          resultDesc: 'Rate limit exceeded, please try again in a moment',
+          responseDescription: 'Too many requests to M-Pesa API',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 429,
+        }
+      );
+    }
+
     // Update database based on query result
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -134,8 +151,9 @@ serve(async (req) => {
           }
         }
       }
-    } else if (queryData.ResultCode !== '1032') {
+    } else if (queryData.ResultCode && queryData.ResultCode !== '1032') {
       // Payment failed (but not pending)
+      // Only update if we have a valid result code and it's not pending (1032)
       await supabaseClient
         .from('pending_payments')
         .update({
@@ -147,6 +165,8 @@ serve(async (req) => {
         .eq('checkout_request_id', checkoutRequestId);
       
       console.log('Payment status updated to failed');
+    } else {
+      console.log('Payment still pending or no result code');
     }
 
     return new Response(

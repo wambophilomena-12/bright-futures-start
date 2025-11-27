@@ -293,6 +293,12 @@ export default function AttractionDetail() {
                   title: "Payment successful!",
                   description: "Your booking has been confirmed",
                 });
+              } else if (queryResponse?.resultCode === 'RATE_LIMIT') {
+                setIsProcessingPayment(false);
+                toast({
+                  title: "Verification delayed",
+                  description: "Too many attempts. Please check payment history shortly.",
+                });
               } else {
                 setIsProcessingPayment(false);
                 toast({

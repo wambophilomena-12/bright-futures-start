@@ -392,6 +392,9 @@ const AdventurePlaceDetail = () => {
                 description: "Your booking has been confirmed",
               });
               return;
+            } else if (queryResponse?.resultCode === 'RATE_LIMIT') {
+              // Rate limit hit - don't mark as failed, suggest retry
+              throw new Error('Too many verification attempts. Please check your payment history in a few moments.');
             } else {
               throw new Error(queryResponse?.resultDesc || 'Payment confirmation timeout');
             }
