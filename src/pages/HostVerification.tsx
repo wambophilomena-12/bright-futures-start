@@ -185,11 +185,33 @@ const HostVerification = () => {
         submitted_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
+      // Check if verification exists
+      const { data: existingVer } = await supabase
         .from("host_verifications")
-        .upsert(verificationData, { onConflict: "user_id" });
+        .select("id")
+        .eq("user_id", user!.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      let verificationError;
+      if (existingVer) {
+        // Update existing verification
+        const { error } = await supabase
+          .from("host_verifications")
+          .update(verificationData)
+          .eq("user_id", user!.id);
+        verificationError = error;
+      } else {
+        // Insert new verification
+        const { error } = await supabase
+          .from("host_verifications")
+          .insert(verificationData);
+        verificationError = error;
+      }
+
+      if (verificationError) {
+        console.error("Verification insert/update error:", verificationError);
+        throw verificationError;
+      }
 
       toast({
         title: "Submission Successful",
