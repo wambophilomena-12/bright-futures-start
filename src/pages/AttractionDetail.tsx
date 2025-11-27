@@ -51,6 +51,8 @@ export default function AttractionDetail() {
   const [loading, setLoading] = useState(true);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [current, setCurrent] = useState(0);
   const { savedItems, handleSave: handleSaveItem } = useSavedItems();
   const isSaved = savedItems.has(id || "");
@@ -229,16 +231,61 @@ export default function AttractionDetail() {
           throw new Error(mpesaResponse?.error || "M-Pesa payment failed");
         }
 
+        const checkoutRequestId = mpesaResponse.checkoutRequestId;
+
         toast({
           title: "Payment initiated",
           description: "Please check your phone to complete the payment",
         });
 
-        // Wait for payment confirmation (similar to booking dialogs)
-        setBookingOpen(false);
-        if (user) {
-          navigate('/payment-history');
-        }
+        setIsProcessingPayment(true);
+
+        // Poll for payment status for up to 120 seconds
+        const maxAttempts = 40; // 120 seconds (40 * 3 seconds)
+        let attempts = 0;
+        
+        const pollInterval = setInterval(async () => {
+          attempts++;
+          
+          const { data: pendingPayment, error: pollError } = await supabase
+            .from('pending_payments')
+            .select('payment_status')
+            .eq('checkout_request_id', checkoutRequestId)
+            .single();
+
+          if (!pollError && pendingPayment) {
+            if (pendingPayment.payment_status === 'completed') {
+              clearInterval(pollInterval);
+              setIsProcessingPayment(false);
+              setIsPaymentCompleted(true);
+              
+              toast({
+                title: "Payment successful!",
+                description: "Your booking has been confirmed",
+              });
+            } else if (pendingPayment.payment_status === 'failed') {
+              clearInterval(pollInterval);
+              setIsProcessingPayment(false);
+              
+              toast({
+                title: "Payment failed",
+                description: "Please try again or use a different payment method",
+                variant: "destructive",
+              });
+            }
+          }
+
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            setIsProcessingPayment(false);
+            
+            toast({
+              title: "Payment timeout",
+              description: "Check payment history for status",
+            });
+          }
+        }, 3000); // Check every 3 seconds
+
         return;
       }
 

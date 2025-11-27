@@ -305,9 +305,9 @@ const EventDetail = () => {
         const checkoutRequestId = mpesaResponse.checkoutRequestId;
         setIsProcessingPayment(true);
 
-        // Poll for payment status
+        // Poll for payment status for up to 120 seconds
         const startTime = Date.now();
-        const timeout = 40000;
+        const timeout = 120000; // 120 seconds
         let paymentConfirmed = false;
 
         while (Date.now() - startTime < timeout) {
