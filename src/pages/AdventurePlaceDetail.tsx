@@ -1,136 +1,1019 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import {
-  Container,
-  Typography,
-  Grid,
-  Paper,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Box,
-  Snackbar,
-  Alert,
-} from '@mui/material';
-import { DateRangePicker } from '@mui/x-date-pickers-pro';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import dayjs, { Dayjs } from 'dayjs';
-import 'dayjs/locale/en-gb';
-import { Adventure } from '../types/Adventure';
-import { getAdventureById } from '../api/adventures';
-import BookingDialog from '../components/booking/BookingDialog';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { MobileBottomBar } from "@/components/MobileBottomBar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Phone, Share2, Mail, DollarSign, Wifi, ArrowLeft, Clock, Heart, Loader2 } from "lucide-react";
+import { SimilarItems } from "@/components/SimilarItems";
+import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+import { ReviewSection } from "@/components/ReviewSection";
+import { useSavedItems } from "@/hooks/useSavedItems";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface AdventurePlaceDetailParams {
-  id: string;
+interface Facility {
+  name: string;
+  price: number;
+  capacity?: number;
 }
 
-const AdventurePlaceDetail: React.FC = () => {
-  const { id } = useParams<AdventurePlaceDetailParams>();
-  const [adventure, setAdventure] = useState<Adventure | null>(null);
-  const [openBookingDialog, setOpenBookingDialog] = useState(false);
-  const [dateRange, setDateRange] = useState<Dayjs[]>([null, null]);
-	const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
-	const [snackbarMessage, setSnackbarMessage] = useState('');
-	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+interface Activity {
+  name: string;
+  price: number;
+}
 
+interface SelectedFacility extends Facility {
+  startDate: string;
+  endDate: string;
+}
+
+interface SelectedActivity extends Activity {
+  numberOfPeople: number;
+}
+
+interface AdventurePlace {
+  id: string;
+  name: string;
+  location: string;
+  place: string;
+  country: string;
+  image_url: string;
+  images: string[];
+  gallery_images: string[];
+  description: string;
+  entry_fee: number;
+  entry_fee_type: string;
+  phone_numbers: string[];
+  email: string;
+  facilities: Facility[];
+  activities: Activity[];
+  amenities: string[];
+  registration_number: string;
+  map_link: string;
+  opening_hours: string | null;
+  closing_hours: string | null;
+  days_opened: string[] | null;
+}
+
+const AdventurePlaceDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [place, setPlace] = useState<AdventurePlace | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const { savedItems, handleSave: handleSaveItem } = useSavedItems();
+
+  // Booking form state
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
+  const [completedBookingId, setCompletedBookingId] = useState<string | null>(null);
+  const [visitDate, setVisitDate] = useState("");
+  const [adults, setAdults] = useState(0);
+  const [children, setChildren] = useState(0);
+  const [selectedFacilities, setSelectedFacilities] = useState<SelectedFacility[]>([]);
+  const [selectedActivities, setSelectedActivities] = useState<SelectedActivity[]>([]);
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("mpesa");
+  const [paymentPhone, setPaymentPhone] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+
+  const isSaved = savedItems.has(id || "");
 
   useEffect(() => {
-    if (id) {
-      fetchAdventure(id);
-    }
+    fetchPlace();
   }, [id]);
 
-  const fetchAdventure = async (id: string) => {
+  const fetchPlace = async () => {
     try {
-      const adventureData = await getAdventureById(id);
-      setAdventure(adventureData);
+      const { data, error } = await supabase
+        .from("adventure_places")
+        .select("id, name, location, place, country, image_url, description, email, phone_numbers, amenities, activities, facilities, entry_fee, entry_fee_type, map_link, gallery_images, images, opening_hours, closing_hours, days_opened, approval_status, created_at, created_by, is_hidden, allowed_admin_emails")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      setPlace(data as any);
     } catch (error) {
-      console.error('Error fetching adventure:', error);
-			setSnackbarMessage('Failed to load adventure details.');
-			setSnackbarSeverity('error');
-			setIsSnackbarOpen(true);
+      console.error("Error fetching adventure place:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load place details",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleOpenBookingDialog = () => {
-    setOpenBookingDialog(true);
+  const handleSave = () => {
+    if (id) {
+      handleSaveItem(id, "adventure_place");
+    }
   };
 
-  const handleCloseBookingDialog = () => {
-    setOpenBookingDialog(false);
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: place?.name,
+          text: place?.description,
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.log("Share failed:", error);
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link copied",
+        description: "Place link copied to clipboard",
+      });
+    }
   };
 
-	const handleSnackbarClose = () => {
-		setIsSnackbarOpen(false);
-	};
+  const openInMaps = () => {
+    if (place?.map_link) {
+      window.open(place.map_link, '_blank');
+    } else {
+      const query = encodeURIComponent(`${place?.name}, ${place?.location}, ${place?.country}`);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+    }
+  };
 
+  const toggleFacility = (facility: Facility, checked: boolean) => {
+    if (checked) {
+      setSelectedFacilities([...selectedFacilities, { ...facility, startDate: "", endDate: "" }]);
+    } else {
+      setSelectedFacilities(selectedFacilities.filter(f => f.name !== facility.name));
+    }
+  };
 
-  if (!adventure) {
-    return <Typography>Loading...</Typography>;
+  const toggleActivity = (activity: Activity, checked: boolean) => {
+    if (checked) {
+      setSelectedActivities([...selectedActivities, { ...activity, numberOfPeople: 1 }]);
+    } else {
+      setSelectedActivities(selectedActivities.filter(a => a.name !== activity.name));
+    }
+  };
+
+  const updateActivityPeople = (name: string, count: number) => {
+    setSelectedActivities(selectedActivities.map(a => 
+      a.name === name ? { ...a, numberOfPeople: Math.max(1, count) } : a
+    ));
+  };
+
+  const updateFacilityDates = (name: string, field: 'startDate' | 'endDate', value: string) => {
+    setSelectedFacilities(selectedFacilities.map(f => 
+      f.name === name ? { ...f, [field]: value } : f
+    ));
+  };
+
+  const calculateTotal = () => {
+    let total = 0;
+    
+    // Entry fees
+    if (place?.entry_fee_type !== 'free' && place?.entry_fee) {
+      total += (adults * place.entry_fee) + (children * (place.entry_fee || 0));
+    }
+    
+    // Facilities
+    total += selectedFacilities.reduce((sum, facility) => {
+      if (!facility.startDate || !facility.endDate) return sum;
+      const days = Math.ceil((new Date(facility.endDate).getTime() - new Date(facility.startDate).getTime()) / (1000 * 60 * 60 * 24));
+      return sum + (facility.price * Math.max(days, 1));
+    }, 0);
+    
+    // Activities
+    total += selectedActivities.reduce((sum, activity) => sum + (activity.price * activity.numberOfPeople), 0);
+    
+    return total;
+  };
+
+  const handleBooking = async () => {
+    if (!place) return;
+
+    // Validation
+    if (!visitDate) {
+      toast({
+        title: "Missing information",
+        description: "Please select a visit date",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (adults === 0 && children === 0) {
+      toast({
+        title: "Missing information",
+        description: "Please add at least one guest",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const incompleteFacilities = selectedFacilities.some(f => !f.startDate || !f.endDate);
+    if (incompleteFacilities) {
+      toast({
+        title: "Missing dates",
+        description: "Please enter dates for all selected facilities",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user && (!guestName || !guestEmail || !guestPhone)) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all guest details",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!paymentMethod) {
+      toast({
+        title: "Payment required",
+        description: "Please select a payment method",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if ((paymentMethod === 'mpesa' || paymentMethod === 'airtel') && !paymentPhone) {
+      toast({
+        title: "Payment required",
+        description: "Please provide payment phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setBookingLoading(true);
+
+    try {
+      const emailData = {
+        bookingId: '',
+        email: user ? user.email : guestEmail,
+        guestName: user ? user.user_metadata?.name || guestName : guestName,
+        bookingType: "adventure_place",
+        itemName: place.name,
+        totalAmount: calculateTotal(),
+        bookingDetails: {
+          adults,
+          children,
+          selectedFacilities,
+          selectedActivities,
+          phone: user ? "" : guestPhone,
+        },
+        visitDate,
+      };
+
+      // M-Pesa payment flow
+      if (paymentMethod === "mpesa") {
+        const bookingData = {
+          user_id: user?.id || null,
+          booking_type: "adventure_place",
+          item_id: id,
+          visit_date: visitDate,
+          total_amount: calculateTotal(),
+          payment_method: paymentMethod,
+          payment_phone: paymentPhone || null,
+          is_guest_booking: !user,
+          guest_name: !user ? guestName : null,
+          guest_email: !user ? guestEmail : null,
+          guest_phone: !user ? guestPhone : null,
+          booking_details: {
+            place_name: place.name,
+            adults,
+            children,
+            facilities: selectedFacilities,
+            activities: selectedActivities,
+          } as any,
+          emailData,
+        };
+
+        const { data: mpesaResponse, error: mpesaError } = await supabase.functions.invoke("mpesa-stk-push", {
+          body: {
+            phoneNumber: paymentPhone,
+            amount: calculateTotal(),
+            accountReference: `ADVENTURE-${place.id}`,
+            transactionDesc: `Booking for ${place.name}`,
+            bookingData,
+          },
+        });
+
+        if (mpesaError || !mpesaResponse?.success) {
+          throw new Error(mpesaResponse?.error || "M-Pesa payment failed");
+        }
+
+        const checkoutRequestId = mpesaResponse.checkoutRequestId;
+        setIsProcessingPayment(true);
+
+        // Poll for payment status
+        const startTime = Date.now();
+        const timeout = 40000;
+        let paymentConfirmed = false;
+
+        while (Date.now() - startTime < timeout) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          const { data: pendingPayment } = await supabase
+            .from('pending_payments')
+            .select('payment_status')
+            .eq('checkout_request_id', checkoutRequestId)
+            .single();
+
+          if (pendingPayment?.payment_status === 'completed') {
+            paymentConfirmed = true;
+
+            const { data: bookings } = await supabase
+              .from('bookings')
+              .select('id')
+              .eq('payment_phone', paymentPhone)
+              .eq('item_id', id)
+              .eq('payment_status', 'paid')
+              .order('created_at', { ascending: false })
+              .limit(1);
+
+            if (bookings && bookings.length > 0) {
+              setCompletedBookingId(bookings[0].id);
+            }
+
+            setIsProcessingPayment(false);
+            setIsPaymentCompleted(true);
+            break;
+          } else if (pendingPayment?.payment_status === 'failed') {
+            throw new Error('Payment failed');
+          }
+        }
+
+        if (!paymentConfirmed) {
+          throw new Error('Payment confirmation timeout');
+        }
+        return;
+      }
+
+      // Non-M-Pesa payment flow
+      const { data: bookingData, error } = await supabase.from('bookings').insert([{
+        user_id: user?.id || null,
+        item_id: id,
+        booking_type: 'adventure_place',
+        visit_date: visitDate,
+        total_amount: calculateTotal(),
+        booking_details: {
+          place_name: place.name,
+          adults,
+          children,
+          facilities: selectedFacilities,
+          activities: selectedActivities,
+        } as any,
+        is_guest_booking: !user,
+        guest_name: user ? null : guestName,
+        guest_email: user ? null : guestEmail,
+        guest_phone: user ? null : guestPhone,
+        payment_method: paymentMethod,
+        payment_phone: paymentPhone || null,
+        status: 'pending',
+        payment_status: 'paid',
+      }]).select();
+
+      if (error) throw error;
+
+      if (bookingData && bookingData[0]) {
+        emailData.bookingId = bookingData[0].id;
+      }
+
+      await supabase.functions.invoke("send-booking-confirmation", {
+        body: emailData,
+      });
+
+      toast({
+        title: "Booking successful!",
+        description: "Your booking has been submitted",
+      });
+      
+      setBookingOpen(false);
+      if (user) {
+        navigate('/bookings');
+      }
+    } catch (error: any) {
+      console.error('Booking error:', error);
+      toast({
+        title: "Booking failed",
+        description: error.message || "Failed to create booking",
+        variant: "destructive",
+      });
+    } finally {
+      setBookingLoading(false);
+      setIsProcessingPayment(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background pb-20 md:pb-0">
+        <Header />
+        <main className="container px-4 py-6 max-w-6xl mx-auto">
+          <div className="space-y-6">
+            <div className="w-full h-64 md:h-96 bg-muted animate-pulse rounded-lg" />
+            <div className="space-y-4">
+              <div className="h-8 bg-muted animate-pulse rounded w-1/2" />
+              <div className="h-4 bg-muted animate-pulse rounded w-1/3" />
+              <div className="h-20 bg-muted animate-pulse rounded" />
+            </div>
+          </div>
+        </main>
+        <Footer />
+        <MobileBottomBar />
+      </div>
+    );
   }
 
-  return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {adventure.name}
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <img
-              src={adventure.imageUrl}
-              alt={adventure.name}
-              style={{ width: '100%', height: 'auto', borderRadius: 8 }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="h6">Description:</Typography>
-            <Typography paragraph>{adventure.description}</Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography>
-              <strong>Location:</strong> {adventure.location}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography>
-              <strong>Price:</strong> ${adventure.price}
-            </Typography>
-          </Grid>
-					<Grid item xs={12} md={6}>
-						<Typography>
-							<strong>Duration:</strong> {adventure.duration} hours
-						</Typography>
-					</Grid>
-          <Grid item xs={12}>
-            <Button variant="contained" color="primary" onClick={handleOpenBookingDialog}>
-              Book Now
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
+  if (!place) {
+    return <div className="min-h-screen bg-background">Place not found</div>;
+  }
 
-			<BookingDialog
-				open={openBookingDialog}
-				handleClose={handleCloseBookingDialog}
-				item={adventure}
-				type="adventure"
-			/>
-			<Snackbar
-				open={isSnackbarOpen}
-				autoHideDuration={6000}
-				onClose={handleSnackbarClose}
-				anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-			>
-				<Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-					{snackbarMessage}
-				</Alert>
-			</Snackbar>
-    </Container>
+  const displayImages = place.gallery_images?.length > 0 
+    ? place.gallery_images 
+    : place.images?.length > 0 
+    ? place.images 
+    : [place.image_url];
+
+  return (
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <Header />
+      
+      <main className="container px-4 py-6 max-w-6xl mx-auto">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        {/* Two Column Layout on Large Screens */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Left Column: Image Gallery with border-radius */}
+          <div className="w-full relative">
+            <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground z-20 text-xs font-bold px-3 py-1">
+              ADVENTURE
+            </Badge>
+            <Carousel
+              opts={{ loop: true }}
+              plugins={[Autoplay({ delay: 3000 })]}
+              className="w-full rounded-2xl overflow-hidden"
+              setApi={(api) => {
+                  if (api) {
+                    api.on("select", () => {
+                        setCurrent(api.selectedScrollSnap());
+                    });
+                  }
+              }}
+            >
+              <CarouselContent>
+                {displayImages.map((img, idx) => (
+                  <CarouselItem key={idx}>
+                    <img
+                      src={img}
+                      alt={`${place.name} ${idx + 1}`}
+                      className="w-full h-64 md:h-96 object-cover"
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+
+              {displayImages.length > 1 && (
+                <>
+                  <CarouselPrevious 
+                    className="left-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-none" 
+                  />
+                  <CarouselNext 
+                    className="right-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-none" 
+                  />
+                </>
+              )}
+              
+              {displayImages.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
+                      {displayImages.map((_, index) => (
+                          <div
+                              key={index}
+                              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                  index === current
+                                      ? 'bg-white'
+                                      : 'bg-white/40'
+                              }`}
+                          />
+                      ))}
+                  </div>
+              )}
+            </Carousel>
+          </div>
+
+          {/* Right Column: Item Details */}
+          <div className="flex flex-col gap-4">
+            {/* Title and Actions */}
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl md:text-3xl font-bold">{place.name}</h1>
+              <p className="text-sm md:text-base text-muted-foreground">{place.location}, {place.country}</p>
+              
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="lg"
+                onClick={openInMaps}
+                className="bg-blue-600 text-white hover:bg-blue-700 text-xs md:text-base"
+              >
+                <MapPin className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                Location
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleShare}
+                className="hover:bg-accent"
+              >
+                <Share2 className="h-4 w-4 md:h-5 md:w-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleSave}
+                className={isSaved ? "bg-red-500 text-white hover:bg-red-600" : "hover:bg-accent"}
+              >
+                <Heart className={`h-4 w-4 md:h-5 md:w-5 ${isSaved ? "fill-current" : ""}`} />
+              </Button>
+            </div>
+
+            {/* Entry Fee */}
+            <div className="bg-card p-6 rounded-lg border shadow-sm">
+              <div className="flex items-center gap-4 mb-3 text-base md:text-lg font-semibold">
+                <div className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                    <span className="text-xs md:text-base">
+                      {place.entry_fee_type === 'free' ? 'Free Entry' : `KSh ${place.entry_fee} Entry Fee`}
+                    </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Info - Hidden on small, shown on large */}
+            <div className="hidden md:block bg-card p-6 rounded-lg border space-y-3 shadow-sm">
+              <h3 className="font-semibold text-base md:text-lg">Contact & Booking</h3>
+              <div className="pt-2 border-t space-y-3">
+                {place.phone_numbers && place.phone_numbers.map((phone, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Phone className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+                    <a href={`tel:${phone}`} className="text-xs md:text-sm">{phone}</a>
+                  </div>
+                ))}
+                {place.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+                    <a href={`mailto:${place.email}`} className="text-xs md:text-sm">{place.email}</a>
+                  </div>
+                )}
+              </div>
+              
+              <Button 
+                className="w-full mt-4 text-xs md:text-sm" 
+                onClick={() => setBookingOpen(true)}
+              >
+                Book Now
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Description Below Image Gallery on Left Side */}
+        <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          {/* About Section - Left Column */}
+          <div className="p-4 md:p-6 border rounded-lg bg-card shadow-sm">
+            <h2 className="text-lg md:text-xl font-semibold mb-2">About This Place</h2>
+            <p className="text-xs md:text-base text-muted-foreground">{place.description}</p>
+          </div>
+
+          {/* Right Column - Placeholder or Additional Content */}
+          <div></div>
+        </div>
+
+        {/* Contact Info for Small Screens - Below Description */}
+        <div className="md:hidden mt-6 bg-card p-6 rounded-lg border space-y-3 shadow-sm">
+          <h3 className="font-semibold text-base md:text-lg">Contact Information</h3>
+          <div className="pt-2 border-t space-y-3">
+            {place.phone_numbers && place.phone_numbers.map((phone, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Phone className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+                <a href={`tel:${phone}`} className="text-xs md:text-sm">{phone}</a>
+              </div>
+            ))}
+            {place.email && (
+              <div className="flex items-center gap-2">
+                <Mail className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+                <a href={`mailto:${place.email}`} className="text-xs md:text-sm">{place.email}</a>
+              </div>
+            )}
+          </div>
+          
+          <Button 
+            className="w-full mt-4 text-xs md:text-sm" 
+            onClick={() => setBookingOpen(true)}
+          >
+            Book Now
+          </Button>
+        </div>
+
+        {/* Additional Details */}
+        <div className="space-y-6 mt-6">
+          <div className="space-y-6 p-4 md:p-6 border rounded-lg bg-card shadow-sm">
+
+            {/* Operating Hours Section */}
+            {(place.opening_hours || place.closing_hours || (place.days_opened && place.days_opened.length > 0)) && (
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold mb-3 flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Operating Hours
+                </h2>
+                <div className="space-y-2">
+                  {place.opening_hours && place.closing_hours && (
+                    <p className="text-xs md:text-base">Hours: {place.opening_hours} - {place.closing_hours}</p>
+                  )}
+                  {place.days_opened && place.days_opened.length > 0 && (
+                    <p className="text-xs md:text-base">Open: {place.days_opened.join(', ')}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Amenities Section */}
+            {place.amenities && place.amenities.length > 0 && (
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold mb-2">Amenities</h2>
+                <div className="flex flex-wrap gap-2">
+                  {place.amenities.map((amenity, idx) => (
+                    <span key={idx} className="bg-secondary px-3 py-1 rounded-full text-xs md:text-sm flex items-center gap-1">
+                      <Wifi className="h-3 w-3" />
+                      {amenity}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Facilities and Activities Section - Side by Side on Large Screens */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Facilities Section */}
+              {place.facilities && place.facilities.length > 0 && (
+                <div>
+                  <h2 className="text-lg md:text-xl font-semibold mb-3">Available Facilities</h2>
+                  <div className="grid gap-3">
+                    {place.facilities.map((facility, idx) => (
+                      <div key={idx} className="border rounded-lg p-4 bg-background">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="font-medium text-xs md:text-base">{facility.name}</span>
+                            {facility.capacity && <p className="text-xs text-muted-foreground mt-1">Capacity: {facility.capacity} people</p>}
+                          </div>
+                          <span className="font-bold text-xs md:text-base">KSh {facility.price}/day</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Activities Section */}
+              {place.activities && place.activities.length > 0 && (
+                <div>
+                  <h2 className="text-lg md:text-xl font-semibold mb-3">Available Activities</h2>
+                  <div className="grid gap-3">
+                    {place.activities.map((activity, idx) => (
+                      <div key={idx} className="border rounded-lg p-4 flex justify-between items-center bg-background">
+                        <span className="font-medium text-xs md:text-base">{activity.name}</span>
+                        <span className="font-bold text-xs md:text-base">KSh {activity.price}/person</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <ReviewSection itemId={place.id} itemType="adventure_place" />
+
+        {place && <SimilarItems currentItemId={place.id} itemType="adventure" country={place.country} />}
+      </main>
+
+      {/* Booking Dialog - Same structure as AttractionDetail */}
+      <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          {isProcessingPayment ? (
+            <div className="py-8 text-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+              <DialogTitle>Processing Payment...</DialogTitle>
+              <p className="text-sm text-muted-foreground">Please complete the payment on your phone</p>
+            </div>
+          ) : isPaymentCompleted ? (
+            <div className="py-8 text-center space-y-4">
+              <div className="h-12 w-12 rounded-full bg-green-100 mx-auto flex items-center justify-center">
+                <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <DialogTitle>Payment Completed!</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Your booking has been confirmed
+                {completedBookingId && ` (ID: ${completedBookingId})`}
+              </p>
+              <Button onClick={() => {
+                setBookingOpen(false);
+                setIsPaymentCompleted(false);
+                navigate('/bookings');
+              }} className="w-full">
+                View Bookings
+              </Button>
+            </div>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Book Your Visit</DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="visit_date">Visit Date</Label>
+                  <Input
+                    id="visit_date"
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={visitDate}
+                    onChange={(e) => setVisitDate(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="num_adults">Number of Adults</Label>
+                  <Input
+                    id="num_adults"
+                    type="number"
+                    min="0"
+                    value={adults}
+                    onChange={(e) => setAdults(parseInt(e.target.value) || 0)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="num_children">Number of Children</Label>
+                  <Input
+                    id="num_children"
+                    type="number"
+                    min="0"
+                    value={children}
+                    onChange={(e) => setChildren(parseInt(e.target.value) || 0)}
+                  />
+                </div>
+
+                {/* Facilities Selection */}
+                {place.facilities && Array.isArray(place.facilities) && place.facilities.length > 0 && (
+                  <div className="space-y-3">
+                    <Label>Select Facilities (Optional)</Label>
+                    {place.facilities.map((facility: any, idx: number) => {
+                      const selected = selectedFacilities.find(f => f.name === facility.name);
+                      return (
+                        <div key={idx} className="border rounded p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                checked={!!selected}
+                                onCheckedChange={(checked) => toggleFacility(facility, !!checked)}
+                              />
+                              <div>
+                                <p className="font-medium">{facility.name}</p>
+                                {facility.capacity && <p className="text-xs text-muted-foreground">Capacity: {facility.capacity} people</p>}
+                              </div>
+                            </div>
+                            <span className="font-bold">KSh {facility.price}/day</span>
+                          </div>
+                          {selected && (
+                            <div className="ml-8 grid grid-cols-2 gap-2">
+                              <div>
+                                <Label htmlFor={`facility-start-${idx}`} className="text-xs">Start Date</Label>
+                                <Input
+                                  id={`facility-start-${idx}`}
+                                  type="date"
+                                  min={visitDate || new Date().toISOString().split('T')[0]}
+                                  value={selected.startDate}
+                                  onChange={(e) => updateFacilityDates(facility.name, 'startDate', e.target.value)}
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor={`facility-end-${idx}`} className="text-xs">End Date</Label>
+                                <Input
+                                  id={`facility-end-${idx}`}
+                                  type="date"
+                                  min={selected.startDate || visitDate || new Date().toISOString().split('T')[0]}
+                                  value={selected.endDate}
+                                  onChange={(e) => updateFacilityDates(facility.name, 'endDate', e.target.value)}
+                                  required
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Activities Selection */}
+                {place.activities && Array.isArray(place.activities) && place.activities.length > 0 && (
+                  <div className="space-y-3">
+                    <Label>Select Activities (Optional)</Label>
+                    {place.activities.map((activity: any, idx: number) => {
+                      const selected = selectedActivities.find(a => a.name === activity.name);
+                      return (
+                        <div key={idx} className="border rounded p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                checked={!!selected}
+                                onCheckedChange={(checked) => toggleActivity(activity, !!checked)}
+                              />
+                              <div>
+                                <p className="font-medium">{activity.name}</p>
+                                <p className="text-xs text-muted-foreground">KSh {activity.price}/person</p>
+                              </div>
+                            </div>
+                          </div>
+                          {selected && (
+                            <div className="ml-8">
+                              <Label htmlFor={`activity-${idx}`}>Number of People</Label>
+                              <Input
+                                id={`activity-${idx}`}
+                                type="number"
+                                min="1"
+                                value={selected.numberOfPeople}
+                                onChange={(e) => updateActivityPeople(activity.name, parseInt(e.target.value) || 1)}
+                                className="w-24"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {!user && (
+                  <>
+                    <div>
+                      <Label htmlFor="guest_name">Your Name</Label>
+                      <Input
+                        id="guest_name"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="guest_email">Email</Label>
+                      <Input
+                        id="guest_email"
+                        type="email"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="guest_phone">Phone Number</Label>
+                      <Input
+                        id="guest_phone"
+                        type="tel"
+                        value={guestPhone}
+                        onChange={(e) => setGuestPhone(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <Label htmlFor="payment_method">Payment Method</Label>
+                  <select
+                    id="payment_method"
+                    className="w-full border rounded-md p-2"
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                  >
+                    <option value="mpesa">M-Pesa</option>
+                    <option value="airtel">Airtel</option>
+                    <option value="card">Card</option>
+                  </select>
+                </div>
+
+                {(paymentMethod === 'mpesa' || paymentMethod === 'airtel') && (
+                  <div>
+                    <Label htmlFor="payment_phone">Phone Number</Label>
+                    <Input
+                      id="payment_phone"
+                      type="tel"
+                      value={paymentPhone}
+                      onChange={(e) => setPaymentPhone(e.target.value)}
+                      placeholder="+254..."
+                      required
+                    />
+                  </div>
+                )}
+
+                {paymentMethod === 'card' && (
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="card_number">Card Number</Label>
+                      <Input
+                        id="card_number"
+                        value={cardNumber}
+                        onChange={(e) => setCardNumber(e.target.value)}
+                        placeholder="1234 5678 9012 3456"
+                        maxLength={19}
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="card_expiry">Expiry Date</Label>
+                        <Input
+                          id="card_expiry"
+                          value={cardExpiry}
+                          onChange={(e) => setCardExpiry(e.target.value)}
+                          placeholder="MM/YY"
+                          maxLength={5}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="card_cvv">CVV</Label>
+                        <Input
+                          id="card_cvv"
+                          type="password"
+                          value={cardCvv}
+                          onChange={(e) => setCardCvv(e.target.value)}
+                          placeholder="123"
+                          maxLength={4}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t">
+                  <p className="text-lg font-semibold">
+                    Total Amount: KSh {calculateTotal().toFixed(2)}
+                  </p>
+                </div>
+
+                <Button onClick={handleBooking} className="w-full" disabled={bookingLoading}>
+                  {bookingLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Complete Booking"
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <MobileBottomBar />
+    </div>
   );
 };
 
