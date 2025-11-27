@@ -214,6 +214,26 @@ export const BookTripDialog = ({ open, onOpenChange, trip }: Props) => {
         clearReferralTracking();
       }
 
+      // Send confirmation email
+      const emailData = {
+        email: user ? user.email : guestEmail,
+        guestName: user ? user.user_metadata?.name || guestName : guestName,
+        bookingType: "trip",
+        itemName: trip.name,
+        totalAmount,
+        bookingDetails: {
+          adults,
+          children,
+          selectedActivities,
+          phone: user ? "" : guestPhone,
+        },
+        visitDate: trip.is_custom_date ? visitDate : trip.date,
+      };
+
+      await supabase.functions.invoke("send-booking-confirmation", {
+        body: emailData,
+      });
+
       toast({
         title: "Booking successful!",
         description: "Your tour has been booked. Check your email for confirmation.",

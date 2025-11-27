@@ -206,6 +206,27 @@ export const BookAdventureDialog = ({ open, onOpenChange, place }: Props) => {
 
       if (error) throw error;
 
+      // Send confirmation email
+      const emailData = {
+        email: user ? user.email : guestEmail,
+        guestName: user ? user.user_metadata?.name || guestName : guestName,
+        bookingType: "adventure_place",
+        itemName: place.name,
+        totalAmount: calculateTotal(),
+        bookingDetails: {
+          adults,
+          children,
+          selectedFacilities,
+          selectedActivities,
+          phone: user ? "" : guestPhone,
+        },
+        visitDate,
+      };
+
+      await supabase.functions.invoke("send-booking-confirmation", {
+        body: emailData,
+      });
+
       toast({
         title: "Booking successful!",
         description: "Your adventure has been booked. Check your email for confirmation.",

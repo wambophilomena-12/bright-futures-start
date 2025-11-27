@@ -1,0 +1,155 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "https://esm.sh/resend@4.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface BookingConfirmationRequest {
+  email: string;
+  guestName: string;
+  bookingType: string;
+  itemName: string;
+  totalAmount: number;
+  bookingDetails: any;
+  visitDate?: string;
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { email, guestName, bookingType, itemName, totalAmount, bookingDetails, visitDate }: BookingConfirmationRequest = await req.json();
+
+    // Format booking type for display
+    const typeDisplay = bookingType.charAt(0).toUpperCase() + bookingType.slice(1);
+
+    // Build booking details HTML
+    let detailsHTML = "";
+    
+    if (bookingType === "trip") {
+      const details = bookingDetails as any;
+      detailsHTML = `
+        <p><strong>Number of Adults:</strong> ${details.adults || 0}</p>
+        <p><strong>Number of Children:</strong> ${details.children || 0}</p>
+        ${details.selectedActivities && details.selectedActivities.length > 0 ? `
+          <p><strong>Activities:</strong></p>
+          <ul>
+            ${details.selectedActivities.map((act: any) => `
+              <li>${act.name} - ${act.adults} adults, ${act.children} children (${act.price} each)</li>
+            `).join('')}
+          </ul>
+        ` : ''}
+      `;
+    } else if (bookingType === "hotel" || bookingType === "adventure_place") {
+      const details = bookingDetails as any;
+      detailsHTML = `
+        <p><strong>Visit Date:</strong> ${visitDate || 'Not specified'}</p>
+        <p><strong>Number of Adults:</strong> ${details.adults || 0}</p>
+        <p><strong>Number of Children:</strong> ${details.children || 0}</p>
+        ${details.selectedFacilities && details.selectedFacilities.length > 0 ? `
+          <p><strong>Facilities:</strong></p>
+          <ul>
+            ${details.selectedFacilities.map((fac: any) => `
+              <li>${fac.name} - Check-in: ${fac.checkIn}, Check-out: ${fac.checkOut} (${fac.price} per day)</li>
+            `).join('')}
+          </ul>
+        ` : ''}
+        ${details.selectedActivities && details.selectedActivities.length > 0 ? `
+          <p><strong>Activities:</strong></p>
+          <ul>
+            ${details.selectedActivities.map((act: any) => `
+              <li>${act.name} - ${act.people} people (${act.price} each)</li>
+            `).join('')}
+          </ul>
+        ` : ''}
+      `;
+    }
+
+    const emailHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+            .detail-box { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #4F46E5; }
+            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+            h1 { margin: 0; font-size: 24px; }
+            h2 { color: #4F46E5; font-size: 20px; margin-top: 0; }
+            .amount { font-size: 28px; color: #4F46E5; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🎉 Booking Confirmed!</h1>
+            </div>
+            <div class="content">
+              <p>Dear ${guestName},</p>
+              <p>Thank you for your booking! We're excited to confirm your reservation.</p>
+              
+              <div class="detail-box">
+                <h2>Booking Details</h2>
+                <p><strong>Booking Type:</strong> ${typeDisplay}</p>
+                <p><strong>Item:</strong> ${itemName}</p>
+                <p><strong>Guest Name:</strong> ${guestName}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                ${bookingDetails.phone ? `<p><strong>Phone:</strong> ${bookingDetails.phone}</p>` : ''}
+                ${detailsHTML}
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+                <p class="amount">Total Amount: ${totalAmount.toFixed(2)}</p>
+              </div>
+
+              <p>If you have any questions about your booking, please don't hesitate to contact us.</p>
+              <p>We look forward to serving you!</p>
+            </div>
+            <div class="footer">
+              <p>This is an automated confirmation email. Please do not reply to this message.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const { data, error } = await resend.emails.send({
+      from: "Bookings <onboarding@resend.dev>",
+      to: [email],
+      subject: `Booking Confirmation - ${itemName}`,
+      html: emailHTML,
+    });
+
+    if (error) {
+      console.error("Error sending email:", error);
+      throw error;
+    }
+
+    console.log("Booking confirmation email sent successfully:", data);
+
+    return new Response(JSON.stringify({ success: true, data }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders,
+      },
+    });
+  } catch (error: any) {
+    console.error("Error in send-booking-confirmation function:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+};
+
+serve(handler);
