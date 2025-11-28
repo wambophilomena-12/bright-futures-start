@@ -55,6 +55,8 @@ import CategoryExperiences from "./pages/host/CategoryExperiences";
 import VerificationList from "./pages/admin/VerificationList";
 import VerificationDetail from "./pages/admin/VerificationDetail";
 import PaymentHistory from "./pages/PaymentHistory";
+import Install from "./pages/Install";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <InstallPrompt />
           <div className="w-full">
             <Routes>
               <Route path="/" element={<Index />} />
@@ -115,6 +118,7 @@ const App = () => (
               <Route path="/admin/verification/:status" element={<VerificationList />} />
               <Route path="/admin/verification-detail/:id" element={<VerificationDetail />} />
               <Route path="/payment-history" element={<PaymentHistory />} />
+              <Route path="/install" element={<Install />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

@@ -140,11 +140,15 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
   };
 
 
-  const bottomNavItems = [
-    { icon: Video, label: "Vlog", path: "/vlog", protected: false },
-    { icon: Phone, label: "Contact", path: "/contact", protected: false },
-    { icon: Info, label: "About", path: "/about", protected: false },
-  ];
+  const bottomNavItems = [
+    { icon: Video, label: "Vlog", path: "/vlog", protected: false },
+    { icon: Phone, label: "Contact", path: "/contact", protected: false },
+    { icon: Info, label: "About", path: "/about", protected: false },
+  ];
+
+  const appNavItems = [
+    { icon: Download, label: "Install App", path: "/install", protected: false },
+  ];
 
   const topContentItems = [
     { icon: Home, label: "Home", path: "/", protected: false },
@@ -297,6 +301,29 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
               ))}
             </ul>
           </li>
+
+          {/* 3. INSTALL APP SECTION */}
+          {!isInstalled && (
+            <li className="mb-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+              <p className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">App</p>
+              <ul className="space-y-1">
+                {appNavItems.map((item) => (
+                  <li key={item.path}>
+                    <Link
+                      to={item.path}
+                      onClick={onClose}
+                      className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group"
+                    >
+                      <item.icon className="h-5 w-5 text-black dark:text-white" />
+                      <span className="font-medium text-black dark:text-white">
+                        {item.label}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          )}
           
           {/* LOGIN/LOGOUT ICON AND NAME (Moved to inside the UL) */}
           {AuthDisplay}
@@ -304,11 +331,12 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
         </ul>
       </nav>
 
-      {/* Install App Section */}
+      {/* Install App Bottom Banner - Only shows if browser supports it */}
       {!isInstalled && deferredPrompt && (
         <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-          <button
-            onClick={handleInstallClick}
+          <Link
+            to="/install"
+            onClick={onClose}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-all duration-200"
           >
             <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center font-bold text-lg text-blue-900">
@@ -319,7 +347,7 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
               <span className="text-xs text-white/80">Quick access on your device</span>
             </div>
             <Download className="h-5 w-5" />
-          </button>
+          </Link>
         </div>
       )}
     </div>
