@@ -477,6 +477,7 @@ const TripDetail = () => {
             itemName={trip.name}
             skipDateSelection={!trip.is_custom_date}
             fixedDate={trip.date}
+            skipFacilitiesAndActivities={true}
           />
         </DialogContent>
       </Dialog>

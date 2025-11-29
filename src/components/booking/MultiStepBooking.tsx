@@ -32,6 +32,7 @@ interface MultiStepBookingProps {
   itemName: string;
   skipDateSelection?: boolean; // Skip date selection for fixed-date items
   fixedDate?: string; // Pre-set date for fixed-date items
+  skipFacilitiesAndActivities?: boolean; // Skip facilities/activities for trips and events
 }
 
 export interface BookingFormData {
@@ -62,6 +63,7 @@ export const MultiStepBooking = ({
   itemName,
   skipDateSelection = false,
   fixedDate = "",
+  skipFacilitiesAndActivities = false,
 }: MultiStepBookingProps) => {
   // Use the custom Auth hook
   const { user } = useAuth();
@@ -118,6 +120,18 @@ export const MultiStepBooking = ({
     if (currentStep === 1 && !formData.visit_date && !skipDateSelection) return;
     if (currentStep === 2 && formData.num_adults === 0 && formData.num_children === 0) return;
     
+    // Skip facilities/activities step (Step 3) if not needed
+    if (currentStep === 2 && skipFacilitiesAndActivities) {
+      // If user is logged in, skip to payment (Step 5)
+      if (user) {
+        setCurrentStep(5);
+      } else {
+        // Otherwise go to guest info (Step 4)
+        setCurrentStep(4);
+      }
+      return;
+    }
+    
     // Skip guest info step (Step 4) if user is logged in
     if (currentStep === 3 && user) {
       setCurrentStep(5);
@@ -127,13 +141,28 @@ export const MultiStepBooking = ({
   };
 
   const handlePrevious = () => {
-    // Skip guest info step (Step 4) when going back if user is logged in
-    if (currentStep === 5 && user) {
-      setCurrentStep(3);
-    } else {
-      const minStep = skipDateSelection ? 2 : 1;
-      setCurrentStep(Math.max(currentStep - 1, minStep));
+    // Handle going back from payment (Step 5)
+    if (currentStep === 5) {
+      if (skipFacilitiesAndActivities) {
+        // If skipping facilities, go back to guest info or number of people
+        setCurrentStep(user ? 2 : 4);
+      } else if (user) {
+        // If user logged in, skip guest info
+        setCurrentStep(3);
+      } else {
+        setCurrentStep(4);
+      }
+      return;
     }
+    
+    // Handle going back from guest info (Step 4)
+    if (currentStep === 4 && skipFacilitiesAndActivities) {
+      setCurrentStep(2);
+      return;
+    }
+    
+    const minStep = skipDateSelection ? 2 : 1;
+    setCurrentStep(Math.max(currentStep - 1, minStep));
   };
 
   const handleSubmit = async () => {
@@ -344,7 +373,7 @@ export const MultiStepBooking = ({
       )}
 
       {/* --- Step 3: Facilities & Activities --- */}
-      {currentStep === 3 && (
+      {currentStep === 3 && !skipFacilitiesAndActivities && (
         <div className="space-y-6">
           <h3 className="text-lg font-semibold">Step 3: Additional Services (Optional)</h3>
           
