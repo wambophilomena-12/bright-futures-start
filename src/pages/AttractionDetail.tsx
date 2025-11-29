@@ -20,7 +20,13 @@ import { getReferralTrackingId } from "@/lib/referralUtils";
 
 interface Facility {
   name: string;
+  price?: number;
   capacity?: number;
+}
+
+interface Activity {
+  name: string;
+  price: number;
 }
 
 interface Attraction {
@@ -37,6 +43,8 @@ interface Attraction {
   phone_number: string;
   email: string;
   facilities: Facility[];
+  activities: Activity[];
+  amenities: string[];
   opening_hours: string | null;
   closing_hours: string | null;
   days_opened: string[] | null;
@@ -312,14 +320,44 @@ const AttractionDetail = () => {
           </div>
         </div>
 
+        {attraction.amenities && attraction.amenities.length > 0 && (
+          <div className="mt-6 p-6 border bg-card">
+            <h2 className="text-xl font-semibold mb-4">Amenities</h2>
+            <div className="flex flex-wrap gap-2">
+              {attraction.amenities.map((amenity: string, idx: number) => (
+                <div key={idx} className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm">
+                  {amenity}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {attraction.facilities && attraction.facilities.length > 0 && (
           <div className="mt-6 p-6 border bg-card">
-            <h2 className="text-xl font-semibold mb-4">Facilities & Amenities</h2>
+            <h2 className="text-xl font-semibold mb-4">Facilities</h2>
             <div className="flex flex-wrap gap-2">
               {attraction.facilities.map((facility: any, idx: number) => (
                 <div key={idx} className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm flex items-center gap-2">
                   <span className="font-medium">{facility.name}</span>
-                  {facility.capacity && <span className="text-xs opacity-90">Max: {facility.capacity}</span>}
+                  {facility.price !== undefined && (
+                    <span className="text-xs opacity-90">{facility.price === 0 ? 'Free' : `KSh ${facility.price}`}</span>
+                  )}
+                  {facility.capacity && <span className="text-xs opacity-90">• Capacity: {facility.capacity}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {attraction.activities && attraction.activities.length > 0 && (
+          <div className="mt-6 p-6 border bg-card">
+            <h2 className="text-xl font-semibold mb-4">Activities</h2>
+            <div className="flex flex-wrap gap-2">
+              {attraction.activities.map((activity: Activity, idx: number) => (
+                <div key={idx} className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm flex items-center gap-2">
+                  <span className="font-medium">{activity.name}</span>
+                  <span className="text-xs opacity-90">{activity.price === 0 ? 'Free' : `KSh ${activity.price}/person`}</span>
                 </div>
               ))}
             </div>
@@ -360,6 +398,8 @@ const AttractionDetail = () => {
             priceAdult={attraction.price_adult || 0}
             priceChild={attraction.price_child || 0}
             entranceType={attraction.entrance_type}
+            facilities={(attraction.facilities || []).map(f => ({ ...f, price: f.price || 0 }))}
+            activities={attraction.activities || []}
             isProcessing={isProcessing} 
             isCompleted={isCompleted} 
             itemName={attraction.location_name} 

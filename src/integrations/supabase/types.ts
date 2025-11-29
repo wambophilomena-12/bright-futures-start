@@ -112,6 +112,8 @@ export type Database = {
       }
       attractions: {
         Row: {
+          activities: Json | null
+          amenities: Json | null
           approval_status: string
           approved_at: string | null
           approved_by: string | null
@@ -142,6 +144,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          activities?: Json | null
+          amenities?: Json | null
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
@@ -172,6 +176,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          activities?: Json | null
+          amenities?: Json | null
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
