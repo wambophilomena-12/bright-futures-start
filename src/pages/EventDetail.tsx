@@ -331,32 +331,30 @@ const EventDetail = () => {
         </Button>
 
         <div className="grid lg:grid-cols-[2fr,1fr] gap-6">
-          <div className="space-y-4">
-            <div className="w-full relative">
-              <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground z-20 text-xs font-bold px-3 py-1">
-                EVENT
-              </Badge>
-              <Carousel className="w-full rounded-2xl overflow-hidden">
-                <CarouselContent>
-                  {allImages.map((img, idx) => (
-                    <CarouselItem key={idx}>
-                      <img src={img} alt={`${event.name} ${idx + 1}`} className="w-full h-64 md:h-96 object-cover" />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                {allImages.length > 1 && (
-                  <>
-                    <CarouselPrevious className="left-2" />
-                    <CarouselNext className="right-2" />
-                  </>
-                )}
-              </Carousel>
-            </div>
-
+          <div className="w-full relative">
+            <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground z-20 text-xs font-bold px-3 py-1">
+              EVENT
+            </Badge>
+            <Carousel className="w-full rounded-2xl overflow-hidden">
+              <CarouselContent>
+                {allImages.map((img, idx) => (
+                  <CarouselItem key={idx}>
+                    <img src={img} alt={`${event.name} ${idx + 1}`} className="w-full h-64 md:h-96 object-cover" />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {allImages.length > 1 && (
+                <>
+                  <CarouselPrevious className="left-2" />
+                  <CarouselNext className="right-2" />
+                </>
+              )}
+            </Carousel>
+            
             {event.description && (
-              <div className="p-6 border bg-card" style={{ borderRadius: 0 }}>
-                <h2 className="text-xl font-semibold mb-3">About This Event</h2>
-                <p className="text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+              <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm text-white p-4 z-10">
+                <h2 className="text-lg font-semibold mb-2">About This Event</h2>
+                <p className="text-sm line-clamp-3">{event.description}</p>
               </div>
             )}
           </div>

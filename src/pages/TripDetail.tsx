@@ -333,42 +333,40 @@ const TripDetail = () => {
         </Button>
 
         <div className="grid lg:grid-cols-[2fr,1fr] gap-6">
-          <div className="space-y-4">
-            <div className="w-full relative">
-              <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground z-20 text-xs font-bold px-3 py-1">
-                TRIP
-              </Badge>
-              <Carousel
-                opts={{ loop: true }}
-                plugins={[Autoplay({ delay: 3000 })]}
-                className="w-full rounded-2xl overflow-hidden"
-                setApi={(api) => {
-                  if (api) {
-                    api.on("select", () => setCurrent(api.selectedScrollSnap()));
-                  }
-                }}
-              >
-                <CarouselContent>
-                  {displayImages.map((img, idx) => (
-                    <CarouselItem key={idx}>
-                      <img src={img} alt={`${trip.name} ${idx + 1}`} className="w-full h-64 md:h-96 object-cover" />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
+          <div className="w-full relative">
+            <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground z-20 text-xs font-bold px-3 py-1">
+              TRIP
+            </Badge>
+            <Carousel
+              opts={{ loop: true }}
+              plugins={[Autoplay({ delay: 3000 })]}
+              className="w-full rounded-2xl overflow-hidden"
+              setApi={(api) => {
+                if (api) {
+                  api.on("select", () => setCurrent(api.selectedScrollSnap()));
+                }
+              }}
+            >
+              <CarouselContent>
+                {displayImages.map((img, idx) => (
+                  <CarouselItem key={idx}>
+                    <img src={img} alt={`${trip.name} ${idx + 1}`} className="w-full h-64 md:h-96 object-cover" />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
 
-                {displayImages.length > 1 && (
-                  <>
-                    <CarouselPrevious className="left-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-none" />
-                    <CarouselNext className="right-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-none" />
-                  </>
-                )}
-              </Carousel>
-            </div>
-
+              {displayImages.length > 1 && (
+                <>
+                  <CarouselPrevious className="left-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-none" />
+                  <CarouselNext className="right-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-none" />
+                </>
+              )}
+            </Carousel>
+            
             {trip.description && (
-              <div className="p-6 border bg-card" style={{ borderRadius: 0 }}>
-                <h2 className="text-xl font-semibold mb-3">About This Trip</h2>
-                <p className="text-muted-foreground whitespace-pre-wrap">{trip.description}</p>
+              <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm text-white p-4 z-10">
+                <h2 className="text-lg font-semibold mb-2">About This Trip</h2>
+                <p className="text-sm line-clamp-3">{trip.description}</p>
               </div>
             )}
           </div>
