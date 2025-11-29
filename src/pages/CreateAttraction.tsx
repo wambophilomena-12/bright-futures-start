@@ -64,6 +64,10 @@ export default function CreateAttraction() {
   const [facilities, setFacilities] = useState<Array<{name: string, price: string, capacity: string, priceType: string}>>([
     { name: "", price: "", capacity: "", priceType: "free" }
   ]);
+  const [activities, setActivities] = useState<Array<{name: string, price: string, priceType: string}>>([
+    { name: "", price: "", priceType: "free" }
+  ]);
+  const [amenities, setAmenities] = useState<string[]>([""]);
   const [emailVerified, setEmailVerified] = useState(false);
 
   const addFacility = () => {
@@ -73,6 +77,26 @@ export default function CreateAttraction() {
   const removeFacility = (index: number) => {
     if (facilities.length > 1) {
       setFacilities(facilities.filter((_, i) => i !== index));
+    }
+  };
+
+  const addActivity = () => {
+    setActivities([...activities, { name: "", price: "", priceType: "free" }]);
+  };
+
+  const removeActivity = (index: number) => {
+    if (activities.length > 1) {
+      setActivities(activities.filter((_, i) => i !== index));
+    }
+  };
+
+  const addAmenity = () => {
+    setAmenities([...amenities, ""]);
+  };
+
+  const removeAmenity = (index: number) => {
+    if (amenities.length > 1) {
+      setAmenities(amenities.filter((_, i) => i !== index));
     }
   };
 
@@ -232,6 +256,17 @@ export default function CreateAttraction() {
           capacity: parseInt(f.capacity) || 0
         }));
       
+      // Prepare activities array
+      const activitiesArray = activities
+        .filter(a => a.name.trim())
+        .map(a => ({ 
+          name: a.name.trim(), 
+          price: a.priceType === "free" ? 0 : parseFloat(a.price) || 0
+        }));
+
+      // Prepare amenities array
+      const amenitiesArray = amenities.filter(a => a.trim()).map(a => a.trim());
+      
       const { error } = await supabase
         .from('attractions')
         .insert([{
@@ -239,6 +274,8 @@ export default function CreateAttraction() {
           photo_urls: photoUrls,
           gallery_images: photoUrls,
           facilities: facilitiesArray.length > 0 ? facilitiesArray : null,
+          activities: activitiesArray.length > 0 ? activitiesArray : null,
+          amenities: amenitiesArray.length > 0 ? amenitiesArray : null,
           created_by: user.id,
           approval_status: approvalStatusSchema.parse('pending'),
         }]);
@@ -574,6 +611,96 @@ export default function CreateAttraction() {
                     </div>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Activities */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Activities (Optional)</h2>
+              <Button type="button" size="sm" onClick={addActivity}>Add Activity</Button>
+            </div>
+            {activities.map((activity, index) => (
+              <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Name</Label>
+                  <Input
+                    placeholder="Activity name"
+                    value={activity.name}
+                    onChange={(e) => {
+                      const newActivities = [...activities];
+                      newActivities[index].name = e.target.value;
+                      setActivities(newActivities);
+                    }}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Price Type</Label>
+                  <Select
+                    value={activity.priceType}
+                    onValueChange={(value) => {
+                      const newActivities = [...activities];
+                      newActivities[index].priceType = value;
+                      setActivities(newActivities);
+                    }}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1 flex gap-2 items-end">
+                  {activity.priceType === "paid" && (
+                    <div className="flex-1">
+                      <Label className="text-xs">Price</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={activity.price}
+                        onChange={(e) => {
+                          const newActivities = [...activities];
+                          newActivities[index].price = e.target.value;
+                          setActivities(newActivities);
+                        }}
+                      />
+                    </div>
+                  )}
+                  {activities.length > 1 && (
+                    <Button type="button" size="sm" variant="destructive" onClick={() => removeActivity(index)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Amenities */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Amenities (Optional)</h2>
+              <Button type="button" size="sm" onClick={addAmenity}>Add Amenity</Button>
+            </div>
+            {amenities.map((amenity, index) => (
+              <div key={index} className="flex gap-2">
+                <Input
+                  placeholder="e.g. Free WiFi, Parking, Restrooms"
+                  value={amenity}
+                  onChange={(e) => {
+                    const newAmenities = [...amenities];
+                    newAmenities[index] = e.target.value;
+                    setAmenities(newAmenities);
+                  }}
+                />
+                {amenities.length > 1 && (
+                  <Button type="button" size="sm" variant="destructive" onClick={() => removeAmenity(index)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             ))}
           </div>

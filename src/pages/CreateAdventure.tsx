@@ -59,6 +59,8 @@ const CreateAdventure = () => {
     {name: "", priceType: "free", price: "0"}
   ]);
   
+  const [amenities, setAmenities] = useState<string[]>([""]);
+  
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
@@ -139,6 +141,16 @@ const CreateAdventure = () => {
   const removeActivity = (index: number) => {
     if (activities.length > 1) {
       setActivities(activities.filter((_, i) => i !== index));
+    }
+  };
+
+  const addAmenity = () => {
+    setAmenities([...amenities, ""]);
+  };
+
+  const removeAmenity = (index: number) => {
+    if (amenities.length > 1) {
+      setAmenities(amenities.filter((_, i) => i !== index));
     }
   };
 
@@ -244,6 +256,9 @@ const CreateAdventure = () => {
           price: a.priceType === "free" ? 0 : parseFloat(a.price) || 0 
         }));
 
+      // Prepare amenities array
+      const amenitiesArray = amenities.filter(a => a.trim()).map(a => a.trim());
+
       const { error } = await supabase
         .from("adventure_places")
         .insert([{
@@ -266,6 +281,7 @@ const CreateAdventure = () => {
             (parseFloat(formData.adultPrice) || 0) : 0,
           activities: activitiesArray.length > 0 ? activitiesArray : null,
           facilities: facilitiesArray.length > 0 ? facilitiesArray : null,
+          amenities: amenitiesArray.length > 0 ? amenitiesArray : null,
           created_by: user.id,
           approval_status: approvalStatusSchema.parse("pending")
         }]);
@@ -648,6 +664,32 @@ const CreateAdventure = () => {
                       )}
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Amenities */}
+            <div className="space-y-4 pt-6 border-t">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Amenities</h3>
+                <Button type="button" size="sm" onClick={addAmenity}>Add Amenity</Button>
+              </div>
+              {amenities.map((amenity, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    placeholder="e.g. Free WiFi, Parking, Restrooms"
+                    value={amenity}
+                    onChange={(e) => {
+                      const newAmenities = [...amenities];
+                      newAmenities[index] = e.target.value;
+                      setAmenities(newAmenities);
+                    }}
+                  />
+                  {amenities.length > 1 && (
+                    <Button type="button" size="sm" variant="destructive" onClick={() => removeAmenity(index)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>

@@ -254,15 +254,29 @@ const AdventurePlaceDetail = () => {
           </div>
         )}
 
+        {place.facilities && place.facilities.length > 0 && (
+          <div className="mt-6 p-6 border bg-card">
+            <h2 className="text-xl font-semibold mb-4">Facilities</h2>
+            <div className="flex flex-wrap gap-2">
+              {place.facilities.map((facility: Facility, idx: number) => (
+                <div key={idx} className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm flex items-center gap-2">
+                  <span className="font-medium">{facility.name}</span>
+                  <span className="text-xs opacity-90">{facility.price === 0 ? 'Free' : `KSh ${facility.price}/day`}</span>
+                  {facility.capacity && <span className="text-xs opacity-90">• Capacity: {facility.capacity}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {place.activities && place.activities.length > 0 && (
           <div className="mt-6 p-6 border bg-card">
-            <h2 className="text-xl font-semibold mb-4">Facilities & Activities</h2>
+            <h2 className="text-xl font-semibold mb-4">Activities</h2>
             <div className="flex flex-wrap gap-2">
-              {place.activities.map((activity: any, idx: number) => (
+              {place.activities.map((activity: Activity, idx: number) => (
                 <div key={idx} className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm flex items-center gap-2">
                   <span className="font-medium">{activity.name}</span>
-                  {activity.capacity && <span className="text-xs opacity-90">Max: {activity.capacity}</span>}
-                  {activity.price && <span className="text-xs opacity-90">KSh {activity.price}</span>}
+                  <span className="text-xs opacity-90">{activity.price === 0 ? 'Free' : `KSh ${activity.price}/person`}</span>
                 </div>
               ))}
             </div>
