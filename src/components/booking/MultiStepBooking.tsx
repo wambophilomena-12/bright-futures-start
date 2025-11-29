@@ -1,5 +1,5 @@
 // src/components/MultiStepBooking.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // Assuming you are using Shadcn UI components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, Users, Loader2, CreditCard } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext"; // Assuming this path is correct
+import { supabase } from "@/integrations/supabase/client";
 
 interface Facility {
   name: string;
@@ -69,16 +70,39 @@ export const MultiStepBooking = ({
     num_children: 0,
     selectedFacilities: [],
     selectedActivities: [],
-    // Pre-fill user data if available
-    guest_name: user ? user.name : "",
-    guest_email: user ? user.email : "",
-    guest_phone: "", // Assuming phone is not stored in the basic user context
+    // Pre-fill user data if available - will fetch from profiles
+    guest_name: "",
+    guest_email: user?.email || "",
+    guest_phone: "",
     payment_method: "mpesa",
     payment_phone: "",
     card_number: "",
     card_expiry: "",
     card_cvv: "",
   });
+
+  // Fetch user profile data for name
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name, email')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setFormData(prev => ({
+            ...prev,
+            guest_name: profile.name || "",
+            guest_email: profile.email || user.email || "",
+          }));
+        }
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   // Total steps including the conditional guest info step
   const totalSteps = 5;

@@ -60,6 +60,8 @@ const CreateHotel = () => {
     {name: "", priceType: "free", price: "0"}
   ]);
   
+  const [amenities, setAmenities] = useState<string[]>([""]);
+  
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
@@ -140,6 +142,16 @@ const CreateHotel = () => {
   const removeActivity = (index: number) => {
     if (activities.length > 1) {
       setActivities(activities.filter((_, i) => i !== index));
+    }
+  };
+
+  const addAmenity = () => {
+    setAmenities([...amenities, ""]);
+  };
+
+  const removeAmenity = (index: number) => {
+    if (amenities.length > 1) {
+      setAmenities(amenities.filter((_, i) => i !== index));
     }
   };
 
@@ -245,6 +257,11 @@ const CreateHotel = () => {
           price: a.priceType === "free" ? 0 : parseFloat(a.price) || 0 
         }));
 
+      // Prepare amenities array
+      const amenitiesArray = amenities
+        .map(a => a.trim())
+        .filter(a => a.length > 0);
+
       // Validate approval_status before insert
       const approvalStatus = approvalStatusSchema.parse("pending");
 
@@ -264,6 +281,8 @@ const CreateHotel = () => {
           gallery_images: uploadedUrls,
           establishment_type: formData.establishmentType,
           facilities: facilitiesArray.length > 0 ? facilitiesArray : null,
+          activities: activitiesArray.length > 0 ? activitiesArray : null,
+          amenities: amenitiesArray.length > 0 ? amenitiesArray : null,
           created_by: user.id,
           approval_status: approvalStatus
         }]);
@@ -587,12 +606,45 @@ const CreateHotel = () => {
               ))}
             </div>
 
+            {/* Amenities */}
+            <div className="space-y-4 pt-6 border-t">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Amenities</h3>
+                <Button type="button" size="sm" onClick={addAmenity}>Add Amenity</Button>
+              </div>
+              <p className="text-sm text-muted-foreground">Add amenities like WiFi, Pool, Gym, etc.</p>
+              {amenities.map((amenity, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    placeholder="e.g., WiFi, Swimming Pool, Gym"
+                    value={amenity}
+                    onChange={(e) => {
+                      const newAmenities = [...amenities];
+                      newAmenities[index] = e.target.value;
+                      setAmenities(newAmenities);
+                    }}
+                  />
+                  {amenities.length > 1 && (
+                    <Button 
+                      type="button" 
+                      size="sm" 
+                      variant="destructive" 
+                      onClick={() => removeAmenity(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+
             {/* Activities */}
             <div className="space-y-4 pt-6 border-t">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Activities</h3>
                 <Button type="button" size="sm" onClick={addActivity}>Add Activity</Button>
               </div>
+              <p className="text-sm text-muted-foreground">Add activities with prices (per person)</p>
               {activities.map((activity, index) => (
                 <div key={index} className="space-y-2">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">

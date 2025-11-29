@@ -387,21 +387,32 @@ const HotelDetail = () => {
           </div>
         </div>
 
-        {hotel.amenities && hotel.amenities.length > 0 && <div className="mt-6 p-6 border bg-card my-0 py-0 px-0">
+        {hotel.amenities && hotel.amenities.length > 0 && <div className="mt-6 p-6 border bg-card">
             <h2 className="text-xl font-semibold mb-4">Amenities</h2>
-            <div className="flex-wrap py-[2px] px-[2px] my-[5px] mx-[5px] gap-[5px] items-center justify-start flex flex-row">
+            <div className="flex flex-wrap gap-2">
               {hotel.amenities.map((amenity, idx) => <div key={idx} className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm">
                   {amenity}
                 </div>)}
             </div>
           </div>}
 
+        {hotel.facilities && hotel.facilities.length > 0 && <div className="mt-6 p-6 border bg-card">
+            <h2 className="text-xl font-semibold mb-4">Facilities (Room Types)</h2>
+            <div className="flex flex-wrap gap-2">
+              {hotel.facilities.map((facility, idx) => <div key={idx} className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm flex items-center gap-2">
+                  <span className="font-medium">{facility.name}</span>
+                  <span className="text-xs opacity-90">{facility.price === 0 ? 'Free' : `KSh ${facility.price}/day`}</span>
+                  {facility.capacity && <span className="text-xs opacity-90">• Capacity: {facility.capacity}</span>}
+                </div>)}
+            </div>
+          </div>}
+
         {hotel.activities && hotel.activities.length > 0 && <div className="mt-6 p-6 border bg-card">
-            <h2 className="text-xl font-semibold mb-4">Facilities & Rooms</h2>
+            <h2 className="text-xl font-semibold mb-4">Activities</h2>
             <div className="flex flex-wrap gap-2">
               {hotel.activities.map((activity, idx) => <div key={idx} className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm flex items-center gap-2">
                   <span className="font-medium">{activity.name}</span>
-                  <span className="text-xs opacity-90">KSh {activity.price}</span>
+                  <span className="text-xs opacity-90">{activity.price === 0 ? 'Free' : `KSh ${activity.price}/person`}</span>
                 </div>)}
             </div>
           </div>}

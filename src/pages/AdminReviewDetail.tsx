@@ -333,15 +333,30 @@ const AdminReviewDetail = () => {
                   )}
                 </div>
 
+                {/* Amenities */}
+                {item.amenities && item.amenities.length > 0 && (
+                  <div className="pt-4 border-t">
+                    <h3 className="font-semibold mb-2">Amenities</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {item.amenities.map((amenity: string, idx: number) => (
+                        <Badge key={idx} variant="outline">{amenity}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Facilities */}
                 {item.facilities && item.facilities.length > 0 && (
                   <div className="pt-4 border-t">
-                    <h3 className="font-semibold mb-2">Facilities</h3>
+                    <h3 className="font-semibold mb-2">Facilities (Room Types)</h3>
                     <div className="grid gap-2">
                       {item.facilities.map((facility: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center p-2 bg-accent rounded">
                           <span>{facility.name}</span>
-                          <span className="font-medium">KSh {facility.price || facility.price_per_day}/day - Cap: {facility.capacity}</span>
+                          <div className="flex gap-2 items-center">
+                            <span className="font-medium">{facility.price === 0 ? 'Free' : `KSh ${facility.price || facility.price_per_day}/day`}</span>
+                            {facility.capacity && <span className="text-sm text-muted-foreground">• Capacity: {facility.capacity}</span>}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -356,20 +371,8 @@ const AdminReviewDetail = () => {
                       {item.activities.map((activity: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center p-2 bg-accent rounded">
                           <span>{activity.name}</span>
-                          <span className="font-medium">KSh {activity.price}</span>
+                          <span className="font-medium">{activity.price === 0 ? 'Free' : `KSh ${activity.price}/person`}</span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Amenities */}
-                {item.amenities && item.amenities.length > 0 && (
-                  <div className="pt-4 border-t">
-                    <h3 className="font-semibold mb-2">Amenities</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {item.amenities.map((amenity: string, idx: number) => (
-                        <Badge key={idx} variant="outline">{amenity}</Badge>
                       ))}
                     </div>
                   </div>
