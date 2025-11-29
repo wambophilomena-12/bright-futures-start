@@ -389,7 +389,7 @@ const HotelDetail = () => {
 
         {hotel.amenities && hotel.amenities.length > 0 && <div className="mt-6 p-6 border bg-card my-0 py-0 px-0">
             <h2 className="text-xl font-semibold mb-4">Amenities</h2>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex-wrap py-[2px] px-[2px] my-[5px] mx-[5px] items-start justify-end flex flex-col gap-[5px]">
               {hotel.amenities.map((amenity, idx) => <div key={idx} className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm">
                   {amenity}
                 </div>)}
