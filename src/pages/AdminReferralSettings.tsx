@@ -31,7 +31,6 @@ export default function AdminReferralSettings() {
     hotelServiceFee: 20.0,
     attractionServiceFee: 20.0,
     adventurePlaceServiceFee: 20.0,
-    platformReferralCommissionRate: 5.0,
   });
 
   useEffect(() => {
@@ -76,7 +75,6 @@ export default function AdminReferralSettings() {
             hotelServiceFee: Number(settingsData.hotel_service_fee || 20.0),
             attractionServiceFee: Number(settingsData.attraction_service_fee || 20.0),
             adventurePlaceServiceFee: Number(settingsData.adventure_place_service_fee || 20.0),
-            platformReferralCommissionRate: Number(settingsData.platform_referral_commission_rate || 5.0),
           });
         }
 
@@ -123,7 +121,6 @@ export default function AdminReferralSettings() {
           hotel_service_fee: settings.hotelServiceFee,
           attraction_service_fee: settings.attractionServiceFee,
           adventure_place_service_fee: settings.adventurePlaceServiceFee,
-          platform_referral_commission_rate: settings.platformReferralCommissionRate,
         })
         .eq("id", (await supabase.from("referral_settings").select("id").single()).data?.id);
 
@@ -163,12 +160,6 @@ export default function AdminReferralSettings() {
     return null;
   }
 
-  // Calculate payout breakdown based on $100 example (using trip as example)
-  const exampleGrossAmount = 100;
-  const totalPlatformFee = (exampleGrossAmount * settings.tripServiceFee) / 100;
-  const referralCommission = (totalPlatformFee * settings.platformReferralCommissionRate) / 100;
-  const platformNetRevenue = totalPlatformFee - referralCommission;
-  const hostFinalPayout = exampleGrossAmount - totalPlatformFee;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -410,68 +401,6 @@ export default function AdminReferralSettings() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Payout Calculation Breakdown</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Example showing how fees and commissions are calculated (using Trip category)
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <Label htmlFor="platformReferralRate">
-                    Platform Referral Allocation Rate (% of Service Fee)
-                  </Label>
-                  <Input
-                    id="platformReferralRate"
-                    type="number"
-                    value={settings.platformReferralCommissionRate}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        platformReferralCommissionRate: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Percentage of service fee allocated to referral commissions
-                  </p>
-                </div>
-
-                <div className="border-t border-border pt-6">
-                  <h3 className="font-semibold text-foreground mb-4">Calculation Example (Trip - Sh 100)</h3>
-                  <div className="space-y-3 bg-muted/50 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">1. Gross Booking Amount</span>
-                      <span className="font-semibold text-foreground">Sh {exampleGrossAmount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">2. Platform Service Fee ({settings.tripServiceFee}%)</span>
-                      <span className="font-semibold text-foreground">Sh {totalPlatformFee.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">3. Referral Commission ({settings.platformReferralCommissionRate}% of Service Fee)</span>
-                      <span className="font-semibold text-foreground">Sh {referralCommission.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-t border-border pt-3">
-                      <span className="text-sm text-muted-foreground">4. Platform Net Revenue (Service Fee - Referral)</span>
-                      <span className="font-semibold text-primary">Sh {platformNetRevenue.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-t border-border pt-3">
-                      <span className="text-sm text-muted-foreground">5. Host Payout (Gross - Service Fee)</span>
-                      <span className="font-semibold text-success">Sh {hostFinalPayout.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-4">
-                    Note: Referral commission is paid from the platform service fee, not from the host payout
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
 
             <Button
               onClick={handleSave}

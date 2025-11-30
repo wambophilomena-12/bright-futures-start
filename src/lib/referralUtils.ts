@@ -104,16 +104,23 @@ export const calculateAndAwardCommission = async (
 
     // Determine service fee and commission rate based on item type
     let serviceFeeRate = 20.0; // default fallback
+    let commissionRate = 5.0; // default fallback
+    
     if (tracking.item_type === 'trip') {
       serviceFeeRate = Number(settings.trip_service_fee);
+      commissionRate = Number(settings.trip_commission_rate);
     } else if (tracking.item_type === 'event') {
       serviceFeeRate = Number(settings.event_service_fee);
+      commissionRate = Number(settings.event_commission_rate);
     } else if (tracking.item_type === 'hotel') {
       serviceFeeRate = Number(settings.hotel_service_fee);
+      commissionRate = Number(settings.hotel_commission_rate);
     } else if (tracking.item_type === 'attraction') {
       serviceFeeRate = Number(settings.attraction_service_fee);
+      commissionRate = Number(settings.attraction_commission_rate);
     } else if (tracking.item_type === 'adventure' || tracking.item_type === 'adventure_place') {
       serviceFeeRate = Number(settings.adventure_place_service_fee);
+      commissionRate = Number(settings.adventure_place_commission_rate);
     }
     
     const commissionType = "booking";
@@ -121,9 +128,8 @@ export const calculateAndAwardCommission = async (
     // Calculate service fee from gross booking amount
     const serviceFeeAmount = (bookingAmount * serviceFeeRate) / 100;
     
-    // Calculate commission from service fee (not gross amount)
-    const platformReferralRate = Number(settings.platform_referral_commission_rate);
-    const commissionAmount = (serviceFeeAmount * platformReferralRate) / 100;
+    // Calculate commission from service fee using category-specific commission rate
+    const commissionAmount = (serviceFeeAmount * commissionRate) / 100;
 
     // Create commission record
     const { error: commissionError } = await supabase
@@ -135,7 +141,7 @@ export const calculateAndAwardCommission = async (
         referral_tracking_id: referralTrackingId,
         commission_type: commissionType,
         commission_amount: commissionAmount,
-        commission_rate: platformReferralRate,
+        commission_rate: commissionRate,
         booking_amount: bookingAmount,
         status: "paid",
         paid_at: new Date().toISOString(),
