@@ -15,7 +15,7 @@ export const MobileBottomBar = () => {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 **bg-white** border-t **border-gray-200**">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 **bg-white** border-t **border-gray-200** shadow-lg dark:bg-gray-800">
       <nav className="flex items-center justify-around h-16 px-4">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -23,13 +23,11 @@ export const MobileBottomBar = () => {
             <Link
               key={item.path}
               to={item.path}
-              // Removed py-2 px-4 and rounded-lg to simplify the appearance, as typically seen in bottom bars.
               className={cn(
-                "flex flex-col items-center gap-1 transition-all duration-200 h-full justify-center w-full",
+                "flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-all duration-200",
                 isActive
-                  ? "**text-[#008080]**" // Active: Teal
-                  : "**text-gray-500**"  // Inactive: Gray
-                // Hover effect classes were removed entirely
+                  ? "**text-[#008080]**" // Active link is Teal
+                  : "**text-gray-500 hover:text-gray-900**" // Inactive links are gray
               )}
             >
               <item.icon className={cn("h-5 w-5", isActive && "scale-110")} />
