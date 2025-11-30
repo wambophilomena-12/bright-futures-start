@@ -145,6 +145,8 @@ const BecomeHost = () => {
           referred_user_id: user?.id,
           referral_type: "host",
           status: "pending",
+          item_id: null,
+          item_type: null,
         });
 
         // Save to profile for future reference
