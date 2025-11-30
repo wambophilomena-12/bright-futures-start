@@ -799,38 +799,50 @@ export type Database = {
       referral_settings: {
         Row: {
           adventure_place_commission_rate: number
+          adventure_place_service_fee: number
           attraction_commission_rate: number
+          attraction_service_fee: number
           created_at: string | null
           event_commission_rate: number
+          event_service_fee: number
           hotel_commission_rate: number
+          hotel_service_fee: number
           id: string
           platform_referral_commission_rate: number
-          platform_service_fee: number
           trip_commission_rate: number
+          trip_service_fee: number
           updated_at: string | null
         }
         Insert: {
           adventure_place_commission_rate?: number
+          adventure_place_service_fee?: number
           attraction_commission_rate?: number
+          attraction_service_fee?: number
           created_at?: string | null
           event_commission_rate?: number
+          event_service_fee?: number
           hotel_commission_rate?: number
+          hotel_service_fee?: number
           id?: string
           platform_referral_commission_rate?: number
-          platform_service_fee?: number
           trip_commission_rate?: number
+          trip_service_fee?: number
           updated_at?: string | null
         }
         Update: {
           adventure_place_commission_rate?: number
+          adventure_place_service_fee?: number
           attraction_commission_rate?: number
+          attraction_service_fee?: number
           created_at?: string | null
           event_commission_rate?: number
+          event_service_fee?: number
           hotel_commission_rate?: number
+          hotel_service_fee?: number
           id?: string
           platform_referral_commission_rate?: number
-          platform_service_fee?: number
           trip_commission_rate?: number
+          trip_service_fee?: number
           updated_at?: string | null
         }
         Relationships: []
