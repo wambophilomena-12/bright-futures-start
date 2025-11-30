@@ -856,8 +856,8 @@ export type Database = {
           converted_at: string | null
           created_at: string | null
           id: string
-          item_id: string | null
-          item_type: string | null
+          item_id: string
+          item_type: string
           referral_type: string
           referred_user_id: string | null
           referrer_id: string
@@ -868,8 +868,8 @@ export type Database = {
           converted_at?: string | null
           created_at?: string | null
           id?: string
-          item_id?: string | null
-          item_type?: string | null
+          item_id: string
+          item_type: string
           referral_type: string
           referred_user_id?: string | null
           referrer_id: string
@@ -880,8 +880,8 @@ export type Database = {
           converted_at?: string | null
           created_at?: string | null
           id?: string
-          item_id?: string | null
-          item_type?: string | null
+          item_id?: string
+          item_type?: string
           referral_type?: string
           referred_user_id?: string | null
           referrer_id?: string
