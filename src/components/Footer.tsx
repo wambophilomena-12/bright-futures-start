@@ -2,14 +2,13 @@ import { Link } from "react-router-dom";
 import {
   Compass,
   Download,
-  Facebook, // Imported icon
-  Instagram, // Imported icon
-  X, // Imported icon (for Twitter)
-  Mail, // Imported icon
-  MessageSquare, // Using for WhatsApp - you might need to install a dedicated WhatsApp icon library or use a custom one for the official look.
-  // Note: lucide-react doesn't have a specific TikTok icon, but you can use a custom one or a different general icon.
-  // For this example, I'll use 'Send' as a placeholder for TikTok if no custom icon is available.
-  Send as TikTok, // Imported icon, aliased as TikTok for clarity
+  Facebook,
+  Instagram,
+  X,
+  Mail,
+  MessageSquare,
+  Send as TikTok,
+  Youtube, // <<< ADDED YOUTUBE IMPORT
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ const socialLinks = {
   instagram: "https://instagram.com/YOUR_ACCOUNT",
   tiktok: "https://tiktok.com/@YOUR_ACCOUNT",
   x: "https://x.com/YOUR_ACCOUNT", // Formerly Twitter
+  youtube: "https://youtube.com/YOUR_CHANNEL", // <<< ADDED YOUTUBE LINK
   email: "mailto:YOUR_EMAIL@example.com", // Replace with your email address
 };
 // --- END: Define Social Media Links ---
@@ -52,7 +52,7 @@ export const Footer = ({
   return (
     <footer className={`hidden md:block bg-white border-t mt-12 text-gray-900 ${className}`}>
       <div className="container px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8"> {/* Increased grid to 5 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           
           {/* TripTrac Info */}
           <div className="space-y-3">
@@ -101,7 +101,7 @@ export const Footer = ({
               </Link>}
           </div>
 
-          {/* Social Media and Email - NEW SECTION */}
+          {/* Social Media and Email - UPDATED SECTION */}
           <div>
             <h3 className="font-bold mb-3">Connect With Us</h3>
             <div className="flex space-x-4 mb-4">
@@ -119,6 +119,11 @@ export const Footer = ({
               {/* TikTok (Using 'Send' as a placeholder) */}
               <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok">
                 <TikTok className="h-6 w-6 text-gray-600 hover:text-black transition-colors" />
+              </a>
+              
+              {/* YouTube */}
+              <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                <Youtube className="h-6 w-6 text-gray-600 hover:text-red-600 transition-colors" />
               </a>
 
               {/* Facebook */}
