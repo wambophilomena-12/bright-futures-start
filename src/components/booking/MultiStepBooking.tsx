@@ -116,10 +116,13 @@ export const MultiStepBooking = ({
   // Function to check if all selected facilities have valid start/end dates
   const areFacilityDatesValid = () => {
     return formData.selectedFacilities.every(f => {
+      // Must have both dates filled
       if (!f.startDate || !f.endDate) return false;
+      
       const start = new Date(f.startDate).getTime();
       const end = new Date(f.endDate).getTime();
-      // End date must be >= Start date
+      
+      // End date must be >= Start date (valid range)
       return end >= start;
     });
   };
@@ -131,8 +134,10 @@ export const MultiStepBooking = ({
     if (currentStep === 1 && !formData.visit_date && !skipDateSelection) return;
     if (currentStep === 2 && formData.num_adults === 0 && formData.num_children === 0) return;
     
-    // **NEW VALIDATION: Check facility dates on Step 3**
-    if (currentStep === 3 && !skipFacilitiesAndActivities && !areFacilityDatesValid()) return;
+    // VALIDATION: Check facility dates on Step 3
+    if (currentStep === 3 && !skipFacilitiesAndActivities && formData.selectedFacilities.length > 0 && !areFacilityDatesValid()) {
+        return; // Prevent navigating forward if facility dates are invalid
+    }
     
     // Skip facilities/activities step (Step 3) if not needed
     if (currentStep === 2 && skipFacilitiesAndActivities) {
@@ -193,7 +198,7 @@ export const MultiStepBooking = ({
         selectedFacilities: formData.selectedFacilities.filter(f => f.name !== facility.name),
       });
     } else {
-      // **INITIALIZE START/END DATE TO VISIT DATE FOR SIMPLICITY IF AVAILABLE**
+      // INITIALIZE START/END DATE TO VISIT DATE for convenience (can be changed by user)
       const defaultDate = formData.visit_date || new Date().toISOString().split('T')[0];
       
       setFormData({
@@ -260,21 +265,16 @@ export const MultiStepBooking = ({
         const start = new Date(f.startDate).getTime();
         const end = new Date(f.endDate).getTime();
         
-        // Calculate difference in days. Use 1 day as minimum.
+        // Calculate difference in days. Use 1 day as minimum if dates are valid.
         const dayDifferenceMs = end - start;
         const days = Math.ceil(dayDifferenceMs / (1000 * 60 * 60 * 24));
         
-        // Charge at least 1 day if dates are valid, otherwise 0
-        total += f.price * Math.max(days, (days >= 0 ? 1 : 0));
-      } else {
-        // Charge base price if dates are missing, but only if they are not required (i.e., this section is technically incorrect logic 
-        // as we are now requiring dates, but keeping the structure for calculation safety).
-        // Since we enforce date selection, we mainly focus on the block above.
-        // For calculation safety, if we miss dates but the facility is selected, we charge 1 day's price.
-        if (f.startDate || f.endDate) {
-             total += f.price;
+        // Only charge if end date >= start date
+        if (days >= 0) {
+            total += f.price * Math.max(days, 1);
         }
-      }
+      } 
+      // If dates are not filled (and thus invalid for the Next button), we charge 0 for safety.
     });
     
     // 3. Activities
@@ -690,7 +690,8 @@ export const MultiStepBooking = ({
             disabled={
               (currentStep === 1 && !formData.visit_date && !skipDateSelection) ||
               (currentStep === 2 && formData.num_adults === 0 && formData.num_children === 0) ||
-              (currentStep === 3 && !skipFacilitiesAndActivities && formData.selectedFacilities.length > 0 && !areFacilityDatesValid()) || // Facility date validation
+              // THIS IS THE VALIDATION THAT PREVENTS MOVING PAST STEP 3 IF FACILITY DATES ARE INVALID
+              (currentStep === 3 && !skipFacilitiesAndActivities && formData.selectedFacilities.length > 0 && !areFacilityDatesValid()) || 
               (currentStep === 4 && (!formData.guest_name || !formData.guest_email || !formData.guest_phone)) // Guest info validation
             }
           >
