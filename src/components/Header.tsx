@@ -98,14 +98,14 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border **bg-[#008080]** text-white h-16 dark:**bg-[#008080]** dark:text-white">
+    <header className="sticky top-0 z-50 w-full border-b border-border **bg-[#008080]** text-white h-16 **dark:bg-[#008080]** dark:text-white">
       <div className="container flex h-full items-center justify-between px-4">
         
         {/* Logo and Drawer Trigger (Left Side) */}
         <div className="flex items-center gap-3">
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>
-              <button className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white hover:**bg-[#006666]** transition-colors">
+              <button className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white **hover:bg-[#006666]** transition-colors">
                 <Menu className="h-5 w-5" />
               </button>
             </SheetTrigger>
@@ -164,7 +164,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
-              className="rounded-full h-10 w-10 flex items-center justify-center **bg-white/10** hover:**bg-white/20** transition-colors"
+              className="rounded-full h-10 w-10 flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
               aria-label="Search"
             >
               <Search className="h-5 w-5 text-white" />
@@ -179,11 +179,10 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
           {/* Desktop Auth Actions (Right Side) - Notification, Theme, Account */}
           <div className="hidden md:flex items-center gap-2">
             <NotificationBell />
-            {/* ThemeToggle remains, assuming it handles its own internal styling for dark/light */}
-            <ThemeToggle /> 
+            <ThemeToggle />
             <button 
               onClick={() => user ? navigate('/account') : navigate('/auth')}
-              className="rounded-full h-10 w-10 flex items-center justify-center **bg-white/10** hover:**bg-white/20** transition-colors"
+              className="rounded-full h-10 w-10 flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
               aria-label="Account"
             >
               <User className="h-5 w-5 text-white" />
