@@ -612,7 +612,7 @@ const CreateHotel = () => {
                 <h3 className="text-lg font-semibold">Amenities</h3>
                 <Button type="button" size="sm" onClick={addAmenity}>Add Amenity</Button>
               </div>
-              <p className="text-sm text-muted-foreground">Add amenities like WiFi, Pool, Gym, etc. (Separate with a coma)</p>
+              <p className="text-sm text-muted-foreground">Add amenities like WiFi, Pool, Gym, etc.</p>
               {amenities.map((amenity, index) => (
                 <div key={index} className="flex gap-2">
                   <Input

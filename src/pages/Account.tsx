@@ -104,13 +104,13 @@ export default function Account() {
     },
     {
       icon: Shield,
-      label: "Listing reviews",
+      label: "Admin Dashboard",
       path: "/admin",
       show: userRole === "admin",
     },
     {
       icon: UserCog,
-      label: "Host Verification reviews",
+      label: "Host Verification",
       path: "/admin/verification",
       show: userRole === "admin",
     },

@@ -232,7 +232,7 @@ const CreateTripEvent = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Trip/Event Type Selector */}
             <div className="space-y-2">
-              <Label>Listing Type </Label>
+              <Label>Listing Type *</Label>
               <div className="flex gap-4">
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input
@@ -261,7 +261,7 @@ const CreateTripEvent = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Name *</Label>
                 <Input
                   id="name"
                   required
@@ -272,7 +272,7 @@ const CreateTripEvent = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="country">Country</Label>
+                <Label htmlFor="country">Country *</Label>
                 <CountrySelector
                   value={formData.country}
                   onChange={(value) => setFormData({...formData, country: value})}
@@ -280,7 +280,7 @@ const CreateTripEvent = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="place">Place </Label>
+                <Label htmlFor="place">Place *</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -295,7 +295,7 @@ const CreateTripEvent = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Location Details </Label>
+                <Label htmlFor="location">Location Details *</Label>
                 <Input
                   id="location"
                   required
@@ -404,7 +404,7 @@ const CreateTripEvent = () => {
                   value={formData.phone_number}
                   onChange={(value) => setFormData({...formData, phone_number: value})}
                   country={formData.country}
-                  placeholder="0758800117"
+                  placeholder="758800117"
                 />
                 <p className="text-sm text-muted-foreground">Enter number without leading zero</p>
               </div>
@@ -438,7 +438,7 @@ const CreateTripEvent = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Gallery Images (Max 5) </Label>
+              <Label>Gallery Images (Max 5) *</Label>
               <Label htmlFor="gallery-images-trip" className="cursor-pointer">
                 <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-accent/50 transition-colors">
                   <div className="mx-auto h-12 w-12 text-muted-foreground mb-2">📁</div>
