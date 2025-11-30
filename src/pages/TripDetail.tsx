@@ -7,7 +7,7 @@ import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Share2, Calendar, Mail, ArrowLeft, Heart, Copy } from "lucide-react";
-import { generateReferralLink, trackReferralClick, getReferralTrackingId } from "@/lib/referralUtils";
+import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -21,6 +21,7 @@ import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiSte
 // Define the specific colors
 const TEAL_COLOR = "#008080"; // 0,128,128
 const ORANGE_COLOR = "#FF9800"; // FF9800
+const RED_COLOR = "#FF0000"; // Added for price emphasis
 
 interface Activity {
   name: string;
@@ -154,8 +155,6 @@ const TripDetail = () => {
     setIsProcessing(true);
     
     try {
-      const dateToUse = trip.is_custom_date ? data.visit_date : trip.date;
-      const totalPeople = data.num_adults + data.num_children;
       const totalAmount = (data.num_adults * trip.price) + (data.num_children * trip.price_child) +
                          data.selectedActivities.reduce((sum, a) => sum + (a.price * a.numberOfPeople), 0);
 
@@ -297,7 +296,8 @@ const TripDetail = () => {
               
               <div className="border-t pt-3">
                 <p className="text-sm text-muted-foreground mb-1">Price</p>
-                <p className="text-2xl font-bold">KSh {trip.price}</p>
+                {/* Price in Red */}
+                <p className="text-2xl font-bold" style={{ color: RED_COLOR }}>KSh {trip.price}</p>
                 {trip.price_child > 0 && <p className="text-sm text-muted-foreground">Child: KSh {trip.price_child}</p>}
                 <p className="text-sm text-muted-foreground mt-2">Available Tickets: {trip.available_tickets}</p>
               </div>
@@ -411,11 +411,9 @@ const TripDetail = () => {
           <ReviewSection itemId={trip.id} itemType="trip" />
         </div>
 
-        {/* Note on SimilarItems: 
-            To make the location icon teal (#008080) and the price red (e.g., text-red-600) 
-            in the SimilarItems cards, you must modify the internal implementation of the 
-            <SimilarItems /> component itself, as it is an external import here.
-        */}
+        {/* Similar Items Section */}
+        {/* NOTE: Styling for price (red) and location icon (teal) on individual cards 
+            within SimilarItems must be implemented inside the SimilarItems component itself. */}
         {trip && <SimilarItems currentItemId={trip.id} itemType="trip" country={trip.country} />}
       </main>
 
