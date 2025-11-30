@@ -102,9 +102,23 @@ export const calculateAndAwardCommission = async (
 
     if (settingsError || !settings) return;
 
-    const commissionRate = Number(settings.booking_commission_rate);
+    // Determine commission rate based on item type
+    let commissionRate = 5.0; // default fallback
+    if (tracking.item_type === 'trip') {
+      commissionRate = Number(settings.trip_commission_rate);
+    } else if (tracking.item_type === 'event') {
+      commissionRate = Number(settings.event_commission_rate);
+    } else if (tracking.item_type === 'hotel') {
+      commissionRate = Number(settings.hotel_commission_rate);
+    } else if (tracking.item_type === 'attraction') {
+      commissionRate = Number(settings.attraction_commission_rate);
+    } else if (tracking.item_type === 'adventure' || tracking.item_type === 'adventure_place') {
+      commissionRate = Number(settings.adventure_place_commission_rate);
+    }
+    
     const commissionType = "booking";
 
+    // Commission calculated from gross booking amount
     const commissionAmount = (bookingAmount * commissionRate) / 100;
 
     // Create commission record

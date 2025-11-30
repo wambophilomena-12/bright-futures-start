@@ -21,7 +21,11 @@ export default function AdminReferralSettings() {
   const [saving, setSaving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [settings, setSettings] = useState({
-    bookingCommissionRate: 5.0,
+    tripCommissionRate: 5.0,
+    eventCommissionRate: 5.0,
+    hotelCommissionRate: 5.0,
+    attractionCommissionRate: 5.0,
+    adventurePlaceCommissionRate: 5.0,
     platformServiceFee: 20.0,
     platformReferralCommissionRate: 5.0,
   });
@@ -58,7 +62,11 @@ export default function AdminReferralSettings() {
 
         if (settingsData) {
           setSettings({
-            bookingCommissionRate: Number(settingsData.booking_commission_rate),
+            tripCommissionRate: Number(settingsData.trip_commission_rate || 5.0),
+            eventCommissionRate: Number(settingsData.event_commission_rate || 5.0),
+            hotelCommissionRate: Number(settingsData.hotel_commission_rate || 5.0),
+            attractionCommissionRate: Number(settingsData.attraction_commission_rate || 5.0),
+            adventurePlaceCommissionRate: Number(settingsData.adventure_place_commission_rate || 5.0),
             platformServiceFee: Number(settingsData.platform_service_fee || 20.0),
             platformReferralCommissionRate: Number(settingsData.platform_referral_commission_rate || 5.0),
           });
@@ -80,7 +88,11 @@ export default function AdminReferralSettings() {
       const { error } = await supabase
         .from("referral_settings")
         .update({
-          booking_commission_rate: settings.bookingCommissionRate,
+          trip_commission_rate: settings.tripCommissionRate,
+          event_commission_rate: settings.eventCommissionRate,
+          hotel_commission_rate: settings.hotelCommissionRate,
+          attraction_commission_rate: settings.attractionCommissionRate,
+          adventure_place_commission_rate: settings.adventurePlaceCommissionRate,
           platform_service_fee: settings.platformServiceFee,
           platform_referral_commission_rate: settings.platformReferralCommissionRate,
         })
@@ -122,11 +134,12 @@ export default function AdminReferralSettings() {
     return null;
   }
 
-  // Calculate payout breakdown based on $100 example
+  // Calculate payout breakdown based on $100 example (using trip as example)
   const exampleGrossAmount = 100;
   const totalPlatformFee = (exampleGrossAmount * settings.platformServiceFee) / 100;
-  const referralCommissionDeduction = (totalPlatformFee * settings.platformReferralCommissionRate) / 100;
-  const platformNetRevenue = totalPlatformFee - referralCommissionDeduction;
+  const referralCommission = (exampleGrossAmount * settings.tripCommissionRate) / 100;
+  const referralFromPlatformFee = (totalPlatformFee * settings.platformReferralCommissionRate) / 100;
+  const platformNetRevenue = totalPlatformFee - referralFromPlatformFee;
   const hostFinalPayout = exampleGrossAmount - totalPlatformFee;
 
   return (
@@ -151,35 +164,107 @@ export default function AdminReferralSettings() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Commission Settings</CardTitle>
+                <CardTitle>Category Commission Rates</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Configure commission rates for booking and host referrals
+                  Configure commission rates by category (calculated from gross booking amount)
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div>
-                  <Label htmlFor="bookingRate">
-                    Booking Referral Commission Rate (%)
-                  </Label>
-                  <Input
-                    id="bookingRate"
-                    type="number"
-                    value={settings.bookingCommissionRate}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        bookingCommissionRate: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Commission earned when someone books through a referral link
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="tripRate">Trip Commission Rate (%)</Label>
+                    <Input
+                      id="tripRate"
+                      type="number"
+                      value={settings.tripCommissionRate}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          tripCommissionRate: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="eventRate">Event Commission Rate (%)</Label>
+                    <Input
+                      id="eventRate"
+                      type="number"
+                      value={settings.eventCommissionRate}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          eventCommissionRate: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="hotelRate">Hotel Commission Rate (%)</Label>
+                    <Input
+                      id="hotelRate"
+                      type="number"
+                      value={settings.hotelCommissionRate}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          hotelCommissionRate: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="attractionRate">Attraction Commission Rate (%)</Label>
+                    <Input
+                      id="attractionRate"
+                      type="number"
+                      value={settings.attractionCommissionRate}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          attractionCommissionRate: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="adventurePlaceRate">Campsite/Experience Commission Rate (%)</Label>
+                    <Input
+                      id="adventurePlaceRate"
+                      type="number"
+                      value={settings.adventurePlaceCommissionRate}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          adventurePlaceCommissionRate: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      className="mt-2"
+                    />
+                  </div>
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Commission earned when someone books through a referral link (calculated from gross booking amount)
+                </p>
               </CardContent>
             </Card>
 
@@ -240,7 +325,7 @@ export default function AdminReferralSettings() {
                 </div>
 
                 <div className="border-t border-border pt-6">
-                  <h3 className="font-semibold text-foreground mb-4">Calculation Breakdown (Example)</h3>
+                  <h3 className="font-semibold text-foreground mb-4">Calculation Breakdown (Example using Trip)</h3>
                   <div className="space-y-3 bg-muted/50 rounded-lg p-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">1. Gross Transaction Amount (Example)</span>
@@ -251,15 +336,19 @@ export default function AdminReferralSettings() {
                       <span className="font-semibold text-foreground">Sh {totalPlatformFee.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">3. Referral Commission Deduction (Step 2 × Commission Rate %)</span>
-                      <span className="font-semibold text-foreground">Sh {referralCommissionDeduction.toFixed(2)}</span>
+                      <span className="text-sm text-muted-foreground">3. Referral Commission (Step 1 × Trip Commission Rate %)</span>
+                      <span className="font-semibold text-foreground">Sh {referralCommission.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">4. Platform Deduction from Fee (Step 2 × Referral From Platform %)</span>
+                      <span className="font-semibold text-foreground">Sh {referralFromPlatformFee.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center border-t border-border pt-3">
-                      <span className="text-sm text-muted-foreground">4. Platform Net Revenue (Step 2 - Step 3)</span>
+                      <span className="text-sm text-muted-foreground">5. Platform Net Revenue (Step 2 - Step 4)</span>
                       <span className="font-semibold text-primary">Sh {platformNetRevenue.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center border-t border-border pt-3">
-                      <span className="text-sm text-muted-foreground">5. Host Final Payout (Step 1 - Step 2)</span>
+                      <span className="text-sm text-muted-foreground">6. Host Final Payout (Step 1 - Step 2)</span>
                       <span className="font-semibold text-success">Sh {hostFinalPayout.toFixed(2)}</span>
                     </div>
                   </div>
