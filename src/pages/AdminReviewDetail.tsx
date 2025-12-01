@@ -475,6 +475,14 @@ const AdminReviewDetail = () => {
                     </a>
                   </div>
                 )}
+                {creator?.phone_number && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <a href={`tel:${creator.phone_number}`} className="text-sm hover:underline">
+                      {creator.phone_number}
+                    </a>
+                  </div>
+                )}
                 {creator?.country && (
                   <div>
                     <p className="text-sm font-medium">Country</p>
