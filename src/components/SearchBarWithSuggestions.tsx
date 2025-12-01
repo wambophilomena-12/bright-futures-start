@@ -290,11 +290,11 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
               setShowSuggestions(true);
               onFocus?.();
             }}
-            onBlur={onBlur}
-            // Input border focus set to Teal
-            className="pl-10 md:pl-12 pr-20 md:pr-24 h-10 md:h-14 text-sm md:text-lg rounded-full border-2 shadow-md"
-            style={{ '--tw-ring-color': TEAL_COLOR, borderColor: showSuggestions ? TEAL_COLOR : undefined }} // Use inline style for focus-visible:border-primary replacement
-          />
+            onBlur={onBlur}
+            // Input border focus set to Teal
+            className="pl-10 md:pl-12 pr-20 md:pr-24 h-10 md:h-14 text-sm md:text-lg rounded-full border-2 shadow-md"
+            style={{ borderColor: showSuggestions ? TEAL_COLOR : undefined }}
+          />
           <Button
             onClick={() => {
               saveToHistory(value);

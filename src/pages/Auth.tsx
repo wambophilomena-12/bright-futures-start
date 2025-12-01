@@ -68,12 +68,7 @@ const Auth = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Passes TEAL color properties for the Login button */}
-                <LoginForm 
-                  onSwitchToSignup={() => handleSwitchTab("signup")} 
-                  primaryColor={TEAL_COLOR} 
-                  primaryHoverColor={TEAL_HOVER_COLOR}
-                />
+                <LoginForm />
               </CardContent>
             </Card>
           </TabsContent>
@@ -87,12 +82,7 @@ const Auth = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Passes TEAL color properties for the Sign Up button */}
-                <SignupForm 
-                  onSwitchToLogin={() => handleSwitchTab("login")} 
-                  primaryColor={TEAL_COLOR} 
-                  primaryHoverColor={TEAL_HOVER_COLOR}
-                />
+                <SignupForm />
               </CardContent>
             </Card>
           </TabsContent>

@@ -240,8 +240,7 @@ const BecomeHost = () => {
               className="absolute top-2 right-2 z-10 text-white"
               style={{ 
                 backgroundColor: TEAL_COLOR,
-                borderColor: TEAL_COLOR,
-                hover: { backgroundColor: TEAL_HOVER_COLOR } 
+                borderColor: TEAL_COLOR
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = TEAL_HOVER_COLOR}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = TEAL_COLOR}
@@ -280,8 +279,7 @@ const BecomeHost = () => {
               className="absolute top-2 right-2 z-10 text-white"
               style={{ 
                 backgroundColor: TEAL_COLOR,
-                borderColor: TEAL_COLOR,
-                hover: { backgroundColor: TEAL_HOVER_COLOR } 
+                borderColor: TEAL_COLOR
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = TEAL_HOVER_COLOR}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = TEAL_COLOR}
@@ -320,8 +318,7 @@ const BecomeHost = () => {
               className="absolute top-2 right-2 z-10 text-white"
               style={{ 
                 backgroundColor: TEAL_COLOR,
-                borderColor: TEAL_COLOR,
-                hover: { backgroundColor: TEAL_HOVER_COLOR } 
+                borderColor: TEAL_COLOR
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = TEAL_HOVER_COLOR}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = TEAL_COLOR}
@@ -360,8 +357,7 @@ const BecomeHost = () => {
               className="absolute top-2 right-2 z-10 text-white"
               style={{ 
                 backgroundColor: TEAL_COLOR,
-                borderColor: TEAL_COLOR,
-                hover: { backgroundColor: TEAL_HOVER_COLOR } 
+                borderColor: TEAL_COLOR
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = TEAL_HOVER_COLOR}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = TEAL_COLOR}
