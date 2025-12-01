@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignupForm } from "@/components/auth/SignupForm";
 
-// Define the specified TEAL color (008080)
+// Define the specified TEAL color
 const TEAL_COLOR = "#008080";
 const TEAL_HOVER_COLOR = "#005555"; // A darker shade of teal for hover
 
@@ -68,7 +68,7 @@ const Auth = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Pass the TEAL color properties to the LoginForm component */}
+                {/* Pass the new TEAL color properties to the LoginForm component */}
                 <LoginForm 
                   onSwitchToSignup={() => handleSwitchTab("signup")} 
                   primaryColor={TEAL_COLOR} 
@@ -87,7 +87,7 @@ const Auth = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Pass the TEAL color properties to the SignupForm component */}
+                {/* Pass the new TEAL color properties to the SignupForm component */}
                 <SignupForm 
                   onSwitchToLogin={() => handleSwitchTab("login")} 
                   primaryColor={TEAL_COLOR} 
