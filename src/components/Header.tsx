@@ -153,23 +153,23 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
         {/* Account Controls (Right Side) */}
         <div className="flex items-center gap-2">
           
-          {/* Search Icon Button */}
-          {showSearchIcon && (
-            <button 
-              onClick={() => {
-                if (onSearchClick) {
-                  onSearchClick();
-                } else {
-                  navigate('/');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-              }}
-              className="rounded-full h-10 w-10 flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
-              aria-label="Search"
-            >
-              <Search className="h-5 w-5 text-white" />
-            </button>
-          )}
+          {/* Search Icon Button */}
+          {showSearchIcon && (
+            <button 
+              onClick={() => {
+                if (onSearchClick) {
+                  onSearchClick();
+                } else {
+                  navigate('/');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+              className="rounded-full h-10 w-10 flex items-center justify-center transition-colors bg-white/10 hover:bg-white group"
+              aria-label="Search"
+            >
+              <Search className="h-5 w-5 text-white group-hover:text-[#008080]" />
+            </button>
+          )}
           
           {/* Mobile: Notification Bell replaces Account Icon */}
           <div className="md:hidden flex items-center gap-2">

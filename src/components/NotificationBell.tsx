@@ -130,16 +130,10 @@ export const NotificationBell = () => {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        {/* MODIFIED: Added custom hover styles */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="relative group hover:bg-white" // Added 'group' and 'hover:bg-white'
+        <button 
+          className="rounded-full h-10 w-10 flex items-center justify-center transition-colors bg-white/10 hover:bg-white group relative"
         >
-          <Bell 
-            className="h-5 w-5 transition-colors group-hover:text-[rgb(0,128,128)]" // Added custom teal color on group-hover
-            style={{ '--tw-text-opacity': 1, color: 'inherit' }} // Ensures the hover style applies correctly
-          />
+          <Bell className="h-5 w-5 text-white group-hover:text-[#008080]" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
@@ -148,7 +142,7 @@ export const NotificationBell = () => {
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
           )}
-        </Button>
+        </button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
