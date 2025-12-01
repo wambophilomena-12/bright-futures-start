@@ -9,18 +9,23 @@ import { ArrowLeft } from "lucide-react";
 // Import components. The `rounded-none` class is applied below where possible.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// Assuming these forms accept primaryColor and primaryHoverColor props
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignupForm } from "@/components/auth/SignupForm";
 
-// Define the specified TEAL color (#008080)
-const TEAL_COLOR = "#008080";
+/**
+ * Define the specified TEAL colors.
+ * Standard Teal (#008080) and a darker shade for hover/active states.
+ */
+const TEAL_COLOR = "#008080"; // RGB (0, 128, 128)
 const TEAL_HOVER_COLOR = "#005555"; // A darker shade of teal for hover
 
 const Auth = () => {
-  const [activeTab, setActiveTab] = useState("login");
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
+  // Redirects authenticated users to the home page
   useEffect(() => {
     if (!loading && user) {
       navigate("/");
@@ -41,20 +46,20 @@ const Auth = () => {
       <Header />
       
       <main className="container px-4 py-8 max-w-md mx-auto">
-        {/* Back Button styling uses TEAL color */}
+        {/* Back Button styled with TEAL color */}
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(-1)}
           className="mb-4"
-          style={{ color: TEAL_COLOR }} // Uses TEAL_COLOR
+          // Inlining style for the teal text color
+          style={{ color: TEAL_COLOR }} 
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          {/* TabsList and TabsTrigger control styling typically managed by Tailwind configuration */}
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "signup")}>
           <TabsList className="grid w-full grid-cols-2 rounded-none">
             <TabsTrigger value="login" className="rounded-none">Login</TabsTrigger>
             <TabsTrigger value="signup" className="rounded-none">Sign Up</TabsTrigger>
@@ -72,8 +77,8 @@ const Auth = () => {
                 {/* Passes TEAL color properties for the Login button */}
                 <LoginForm 
                   onSwitchToSignup={() => handleSwitchTab("signup")} 
-                  primaryColor={TEAL_COLOR} // Passes TEAL_COLOR
-                  primaryHoverColor={TEAL_HOVER_COLOR} // Passes TEAL_HOVER_COLOR
+                  primaryColor={TEAL_COLOR} 
+                  primaryHoverColor={TEAL_HOVER_COLOR}
                 />
               </CardContent>
             </Card>
@@ -91,8 +96,8 @@ const Auth = () => {
                 {/* Passes TEAL color properties for the Sign Up button */}
                 <SignupForm 
                   onSwitchToLogin={() => handleSwitchTab("login")} 
-                  primaryColor={TEAL_COLOR} // Passes TEAL_COLOR
-                  primaryHoverColor={TEAL_HOVER_COLOR} // Passes TEAL_HOVER_COLOR
+                  primaryColor={TEAL_COLOR} 
+                  primaryHoverColor={TEAL_HOVER_COLOR}
                 />
               </CardContent>
             </Card>
@@ -101,7 +106,6 @@ const Auth = () => {
       </main>
 
       <MobileBottomBar />
-      {/* Footer is not shown, but Header/MobileBottomBar might need similar styling if they contain blue elements */}
       <Footer />
     </div>
   );
