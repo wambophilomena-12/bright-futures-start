@@ -106,16 +106,46 @@ serve(async (req) => {
     const stkData = await stkResponse.json();
     console.log('STK Push response:', stkData);
 
-    if (!stkResponse.ok || stkData.ResponseCode !== '0') {
-      throw new Error(stkData.ResponseDescription || 'STK Push failed');
-    }
-
-    // Save pending payment to database
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Handle non-zero ResponseCode - FAILED immediately
+    if (!stkResponse.ok || stkData.ResponseCode !== '0') {
+      console.error('❌ STK Push failed with ResponseCode:', stkData.ResponseCode);
+      
+      // Save failed payment record to database for tracking
+      await supabaseClient.from('pending_payments').insert({
+        checkout_request_id: stkData.CheckoutRequestID || `FAILED-${Date.now()}`,
+        merchant_request_id: stkData.MerchantRequestID || null,
+        phone_number: formattedPhone,
+        amount: Math.round(amount),
+        account_reference: accountReference,
+        transaction_desc: transactionDesc,
+        booking_data: bookingData,
+        payment_status: 'failed',
+        result_code: stkData.ResponseCode || 'HTTP_ERROR',
+        result_desc: stkData.ResponseDescription || stkData.errorMessage || 'STK Push request failed',
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: stkData.ResponseDescription || stkData.errorMessage || 'STK Push failed',
+          responseCode: stkData.ResponseCode,
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
+
+    // ResponseCode = 0: Success - Set status to PENDING and wait for callback
+    console.log('✅ STK Push successful, setting status to PENDING');
+    
     const { error: dbError } = await supabaseClient.from('pending_payments').insert({
       checkout_request_id: stkData.CheckoutRequestID,
       merchant_request_id: stkData.MerchantRequestID,
@@ -124,6 +154,7 @@ serve(async (req) => {
       account_reference: accountReference,
       transaction_desc: transactionDesc,
       booking_data: bookingData,
+      payment_status: 'pending',
     });
 
     if (dbError) {
