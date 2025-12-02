@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Download, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -14,6 +15,7 @@ export function InstallPrompt() {
   const [showInstallDialog, setShowInstallDialog] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Check if already installed
@@ -97,8 +99,8 @@ export function InstallPrompt() {
     localStorage.setItem('installPromptShown', 'true');
   };
 
-  // Don't show if already installed
-  if (isInstalled) {
+  // Don't show if already installed or not on mobile
+  if (isInstalled || !isMobile) {
     return null;
   }
 
