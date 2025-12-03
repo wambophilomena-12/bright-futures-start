@@ -29,6 +29,7 @@ const CategoryDetail = () => {
   const [isSearchVisible, setIsSearchVisible] = useState(true);
   const [showSearchIcon, setShowSearchIcon] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const categoryConfig: {
     [key: string]: {
@@ -302,16 +303,24 @@ const CategoryDetail = () => {
             value={searchQuery}
             onChange={setSearchQuery}
             onSubmit={handleSearch}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            onBack={() => {
+              setIsSearchFocused(false);
+              setSearchQuery("");
+            }}
+            showBackButton={isSearchFocused}
           />
         </div>
       </div>
 
-      {/* Filter Bar - Sticky on mobile when scrolled */}
+      {/* Filter Bar - Sticky on mobile when scrolled, hidden when search suggestions are open */}
       <div 
         ref={filterRef}
         className={cn(
           "bg-background border-b transition-all duration-300",
-          isSticky && "sticky top-16 z-30 shadow-md md:relative md:shadow-none"
+          isSticky && "sticky top-16 z-30 shadow-md md:relative md:shadow-none",
+          isSearchFocused && "hidden"
         )}
       >
         <div className="container px-4 py-4">

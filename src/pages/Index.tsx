@@ -15,6 +15,8 @@ import { getUserId } from "@/lib/sessionManager";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 import { ListingSkeleton } from "@/components/ui/listing-skeleton";
 import { useSavedItems } from "@/hooks/useSavedItems";
+import { getCachedHomePageData, setCachedHomePageData } from "@/hooks/useHomePageCache";
+
 const Index = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -329,14 +331,46 @@ const Index = () => {
     }
   };
   useEffect(() => {
+    // Load from cache first for instant display
+    const cachedData = getCachedHomePageData();
+    if (cachedData) {
+      setListings(cachedData.listings || []);
+      setScrollableRows(cachedData.scrollableRows || {
+        trips: [],
+        hotels: [],
+        attractions: [],
+        campsites: [],
+        events: []
+      });
+      setNearbyPlacesHotels(cachedData.nearbyPlacesHotels || []);
+      setBookingStats(cachedData.bookingStats || {});
+      setLoading(false);
+      setLoadingScrollable(false);
+      setLoadingNearby(false);
+    }
+
+    // Then fetch fresh data in background
     fetchAllData();
     fetchScrollableRows();
+    
     const initUserId = async () => {
       const id = await getUserId();
       setUserId(id);
     };
     initUserId();
   }, []);
+
+  // Update cache when data changes
+  useEffect(() => {
+    if (!loading && !loadingScrollable && listings.length > 0) {
+      setCachedHomePageData({
+        scrollableRows,
+        listings,
+        nearbyPlacesHotels,
+        bookingStats
+      });
+    }
+  }, [loading, loadingScrollable, listings, scrollableRows, nearbyPlacesHotels, bookingStats]);
   useEffect(() => {
     if (position) {
       fetchNearbyPlacesAndHotels();

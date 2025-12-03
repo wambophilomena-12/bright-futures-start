@@ -6,9 +6,9 @@ import { ListingCard } from "@/components/ListingCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getUserId } from "@/lib/sessionManager";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Trash2, CheckCircle } from "lucide-react";
+import { Trash2, CheckCircle, LogIn } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   AlertDialog,
@@ -21,10 +21,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useSavedItems } from "@/hooks/useSavedItems";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Saved = () => {
   const [savedListings, setSavedListings] = useState<any[]>([]);
   const { savedItems, handleSave } = useSavedItems();
+  const { user, loading: authLoading } = useAuth();
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -35,21 +37,20 @@ const Saved = () => {
 
   useEffect(() => {
     const initializeData = async () => {
+      // Wait for auth to finish loading
+      if (authLoading) return;
+      
       const uid = await getUserId();
       if (!uid) {
-        toast({
-          title: "Login required",
-          description: "Please log in to view saved items",
-          variant: "destructive",
-        });
-        navigate("/auth");
+        // User not logged in - show empty state with login prompt
+        setIsLoading(false);
         return;
       }
       setUserId(uid);
       fetchSavedItems(uid);
     };
     initializeData();
-  }, []);
+  }, [authLoading]);
 
   // Refetch when savedItems changes (realtime updates)
   useEffect(() => {
@@ -240,7 +241,7 @@ const Saved = () => {
           )}
         </div>
         
-        {isLoading ? (
+        {isLoading || authLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="space-y-3">
@@ -249,6 +250,17 @@ const Saved = () => {
                 <Skeleton className="h-4 w-1/2" />
               </div>
             ))}
+          </div>
+        ) : !user ? (
+          <div className="text-center py-16">
+            <p className="text-xl text-muted-foreground">No saved items</p>
+            <p className="text-muted-foreground mt-2 mb-6">Log in to see your saved items</p>
+            <Link to="/auth">
+              <Button className="gap-2">
+                <LogIn className="h-4 w-4" />
+                Log in
+              </Button>
+            </Link>
           </div>
         ) : savedListings.length === 0 ? (
           <div className="text-center py-16">
