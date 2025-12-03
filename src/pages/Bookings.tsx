@@ -8,8 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, DollarSign, Users, MapPin, CalendarClock } from "lucide-react";
+import { Calendar, DollarSign, Users, MapPin, CalendarClock, RefreshCw } from "lucide-react";
 import { RescheduleBookingDialog } from "@/components/booking/RescheduleBookingDialog";
+import { toast } from "sonner";
 
 interface Booking {
   id: string;
@@ -26,6 +27,8 @@ interface Booking {
   visit_date: string | null;
   item_id: string;
   isPending?: boolean;
+  payment_phone?: string;
+  pendingPaymentId?: string;
 }
 
 const Bookings = () => {
@@ -34,6 +37,7 @@ const Bookings = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
+  const [retryingPaymentId, setRetryingPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -84,6 +88,8 @@ const Bookings = () => {
         visit_date: pp.booking_data?.visit_date || null,
         item_id: pp.booking_data?.item_id || "",
         isPending: true,
+        payment_phone: pp.phone_number,
+        pendingPaymentId: pp.id,
       }));
 
       // Combine and sort by date
@@ -137,6 +143,70 @@ const Bookings = () => {
 
   const getTypeLabel = (type: string) => {
     return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
+  const retryPayment = async (booking: Booking) => {
+    if (!booking.payment_phone || !booking.pendingPaymentId) {
+      toast.error("Unable to retry payment. Missing payment information.");
+      return;
+    }
+
+    setRetryingPaymentId(booking.pendingPaymentId);
+
+    try {
+      // Get the pending payment to retrieve booking data
+      const { data: pendingPayment, error: fetchError } = await supabase
+        .from("pending_payments")
+        .select("*")
+        .eq("id", booking.pendingPaymentId)
+        .single();
+
+      if (fetchError || !pendingPayment) {
+        throw new Error("Could not find payment record");
+      }
+
+      // Call M-Pesa STK Push
+      const { data, error } = await supabase.functions.invoke("mpesa-stk-push", {
+        body: {
+          phoneNumber: pendingPayment.phone_number,
+          amount: pendingPayment.amount,
+          accountReference: pendingPayment.account_reference,
+          transactionDesc: `Retry: ${pendingPayment.transaction_desc || "Booking Payment"}`,
+          bookingData: pendingPayment.booking_data,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        // Update pending payment with new checkout request ID
+        await supabase
+          .from("pending_payments")
+          .update({
+            checkout_request_id: data.checkoutRequestId,
+            merchant_request_id: data.merchantRequestId,
+            payment_status: "pending",
+            result_code: null,
+            result_desc: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", booking.pendingPaymentId);
+
+        toast.success("Payment request sent! Please check your phone for the M-Pesa prompt.");
+        
+        // Refresh bookings after a delay
+        setTimeout(() => {
+          fetchBookings();
+        }, 3000);
+      } else {
+        throw new Error(data?.error || "Failed to initiate payment");
+      }
+    } catch (error: any) {
+      console.error("Error retrying payment:", error);
+      toast.error(error.message || "Failed to retry payment. Please try again.");
+    } finally {
+      setRetryingPaymentId(null);
+    }
   };
 
   if (authLoading || loading) {
@@ -266,6 +336,20 @@ const Bookings = () => {
                       <DollarSign className="h-5 w-5 text-primary" />
                       <span className="text-2xl font-bold">KSh {booking.total_amount}</span>
                     </div>
+                    
+                    {/* Retry Payment Button for failed/cancelled/timeout payments */}
+                    {booking.isPending && ['failed', 'cancelled', 'timeout'].includes(booking.payment_status) && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => retryPayment(booking)}
+                        disabled={retryingPaymentId === booking.pendingPaymentId}
+                        className="w-fit"
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${retryingPaymentId === booking.pendingPaymentId ? 'animate-spin' : ''}`} />
+                        {retryingPaymentId === booking.pendingPaymentId ? 'Retrying...' : 'Retry Payment'}
+                      </Button>
+                    )}
                     
                     {booking.visit_date && booking.status !== 'cancelled' && booking.payment_status === 'paid' && (
                       <Button
