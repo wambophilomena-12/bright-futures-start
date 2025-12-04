@@ -122,10 +122,56 @@ export const MultiStepBooking = ({
 
     let pollInterval: NodeJS.Timeout;
     let pollCount = 0;
-    const maxPolls = 8; // Poll for ~40 seconds (5s * 8)
+    const maxPolls = 12; // Poll for ~60 seconds (5s * 12)
+    let stopped = false;
+
+    // Function to handle result codes
+    const handleResultCode = (resultCode: string | number, resultDesc?: string) => {
+      const code = String(resultCode);
+      
+      switch (code) {
+        case '0':
+          setPaymentStatus('success');
+          setPaymentMessage('Payment Successful! Your booking is confirmed.');
+          return true; // Final state
+        case '1':
+          setPaymentStatus('error');
+          setPaymentMessage('Insufficient balance in your M-Pesa account.');
+          return true;
+        case '1025':
+          setPaymentStatus('error');
+          setPaymentMessage('Wrong PIN entered. Please try again.');
+          return true;
+        case '1032':
+          setPaymentStatus('cancelled');
+          setPaymentMessage('Payment was cancelled. Please try again if you wish to complete your booking.');
+          return true;
+        case '1037':
+          setPaymentStatus('timeout');
+          setPaymentMessage('Payment timed out. You did not enter your PIN in time.');
+          return true;
+        case '1001':
+          setPaymentStatus('error');
+          setPaymentMessage('Unable to process - your phone is busy with another session.');
+          return true;
+        case '2':
+          setPaymentStatus('error');
+          setPaymentMessage('Transaction type not supported.');
+          return true;
+        case '2001':
+          setPaymentStatus('error');
+          setPaymentMessage('Invalid transaction request.');
+          return true;
+        default:
+          // Still pending or unknown
+          return false;
+      }
+    };
 
     // Function to query M-Pesa status
     const queryPaymentStatus = async () => {
+      if (stopped) return;
+      
       try {
         console.log(`Polling M-Pesa status (${pollCount + 1}/${maxPolls})...`);
         const { data, error } = await supabase.functions.invoke('mpesa-stk-query', {
@@ -134,57 +180,55 @@ export const MultiStepBooking = ({
 
         if (error) {
           console.error('STK Query error:', error);
+          pollCount++;
           return;
         }
 
         console.log('STK Query response:', data);
 
-        // Check result code from query response
-        if (data?.resultCode === '0' || data?.resultCode === 0) {
-          setPaymentStatus('success');
-          setPaymentMessage('Payment Successful! Your booking is confirmed.');
+        // Handle rate limit
+        if (data?.resultCode === 'RATE_LIMIT') {
+          console.log('Rate limited, will retry...');
+          pollCount++;
+          return;
+        }
+
+        // Check if we got a final result
+        const isFinal = handleResultCode(data?.resultCode, data?.resultDesc);
+        
+        if (isFinal) {
+          stopped = true;
           clearInterval(pollInterval);
           
-          // Redirect after delay
-          setTimeout(() => {
-            if (user) {
-              navigate('/bookings');
-            }
-          }, 2500);
-        } else if (data?.resultCode === '1032') {
-          // Still pending - continue polling
-          console.log('Payment still pending...');
-        } else if (data?.resultCode === '1') {
-          setPaymentStatus('error');
-          setPaymentMessage('Insufficient balance in your M-Pesa account.');
-          clearInterval(pollInterval);
-        } else if (data?.resultCode === '2001') {
-          setPaymentStatus('error');
-          setPaymentMessage('Unable to Process. Wrong PIN entered.');
-          clearInterval(pollInterval);
-        } else if (data?.resultCode && data.resultCode !== '1032') {
-          setPaymentStatus('failed');
-          setPaymentMessage(data?.resultDesc || 'Payment failed. Please try again.');
-          clearInterval(pollInterval);
+          // Redirect on success after delay
+          if (data?.resultCode === '0' || data?.resultCode === 0) {
+            setTimeout(() => {
+              if (user) {
+                navigate('/bookings');
+              }
+            }, 2500);
+          }
         }
 
         pollCount++;
-        if (pollCount >= maxPolls) {
+        if (pollCount >= maxPolls && !stopped) {
           clearInterval(pollInterval);
-          if (paymentStatus !== 'success') {
-            setPaymentStatus('failed');
-            setPaymentMessage('Payment confirmation timeout. Please check your M-Pesa messages or try again.');
-          }
+          stopped = true;
+          setPaymentStatus('timeout');
+          setPaymentMessage('Payment confirmation timeout. Please check your M-Pesa messages or visit My Bookings to see the status.');
         }
       } catch (err) {
         console.error('Error querying payment status:', err);
+        pollCount++;
       }
     };
 
     // Start polling after 5 seconds delay (give user time to enter PIN)
     const startDelay = setTimeout(() => {
-      queryPaymentStatus(); // Initial query
-      pollInterval = setInterval(queryPaymentStatus, 5000); // Poll every 5 seconds
+      if (!stopped) {
+        queryPaymentStatus(); // Initial query
+        pollInterval = setInterval(queryPaymentStatus, 5000); // Poll every 5 seconds
+      }
     }, 5000);
 
     // Also listen for real-time updates as backup
@@ -199,32 +243,37 @@ export const MultiStepBooking = ({
           filter: `checkout_request_id=eq.${checkoutRequestId}`,
         },
         (payload: any) => {
+          if (stopped) return;
+          
           const newData = payload.new;
-          if (newData && newData.payment_status) {
-            const status = newData.payment_status;
+          if (newData && (newData.payment_status || newData.result_code)) {
             const resultCode = newData.result_code;
             
-            if (status === 'completed' || resultCode === '0') {
+            if (resultCode) {
+              const isFinal = handleResultCode(resultCode, newData.result_desc);
+              
+              if (isFinal) {
+                stopped = true;
+                clearInterval(pollInterval);
+                
+                if (resultCode === '0') {
+                  setTimeout(() => {
+                    if (user) {
+                      navigate('/bookings');
+                    }
+                  }, 2500);
+                }
+              }
+            } else if (newData.payment_status === 'completed') {
+              stopped = true;
               setPaymentStatus('success');
               setPaymentMessage('Payment Successful! Your booking is confirmed.');
               clearInterval(pollInterval);
-              
-              // Redirect after delay
               setTimeout(() => {
                 if (user) {
                   navigate('/bookings');
                 }
               }, 2500);
-            } else if (resultCode === '1032') {
-              // Still pending
-            } else if (resultCode === '2001') {
-              setPaymentStatus('error');
-              setPaymentMessage('Unable to Process. Wrong PIN entered.');
-              clearInterval(pollInterval);
-            } else if (status === 'failed') {
-              setPaymentStatus('failed');
-              setPaymentMessage('Payment Failed. Please try again or contact support.');
-              clearInterval(pollInterval);
             }
           }
         }
@@ -232,11 +281,12 @@ export const MultiStepBooking = ({
       .subscribe();
 
     return () => {
+      stopped = true;
       clearTimeout(startDelay);
       clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
-  }, [checkoutRequestId, isProcessing, user, navigate, paymentStatus]);
+  }, [checkoutRequestId, isProcessing, user, navigate]);
 
   // Total steps including the conditional guest info step
   const totalSteps = 5;
