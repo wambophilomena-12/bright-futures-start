@@ -7,7 +7,8 @@ import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Share2, Calendar, Mail, ArrowLeft, Heart, Copy } from "lucide-react";
-import { generateReferralLink, trackReferralClick, getReferralTrackingId } from "@/lib/referralUtils";
+import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
+import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -150,6 +151,8 @@ const TripDetail = () => {
     }
   };
 
+  const { submitBooking } = useBookingSubmit();
+
   const handleBookingSubmit = async (data: BookingFormData) => {
     if (!trip) return;
     
@@ -160,43 +163,29 @@ const TripDetail = () => {
                          data.selectedActivities.reduce((sum, a) => sum + (a.price * a.numberOfPeople), 0);
       const totalPeople = data.num_adults + data.num_children;
 
-      // Save booking as pending
-      const { error } = await supabase.from('pending_payments').insert([{
-        checkout_request_id: `BOOKING-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        phone_number: data.guest_phone || '',
-        amount: totalAmount,
-        account_reference: `TRIP-${trip.id}`,
-        transaction_desc: `Booking for ${trip.name}`,
-        payment_status: 'pending',
-        user_id: user?.id || null,
-        host_id: trip.created_by,
-        booking_data: {
-          user_id: user?.id || null,
-          booking_type: 'trip',
-          item_id: id,
-          total_amount: totalAmount,
-          is_guest_booking: !user,
-          guest_name: data.guest_name,
-          guest_email: data.guest_email,
-          guest_phone: data.guest_phone,
-          slots_booked: totalPeople,
-          visit_date: trip.date,
-          referral_tracking_id: getReferralTrackingId(),
-          booking_details: {
-            trip_name: trip.name,
-            date: trip.date,
-            adults: data.num_adults,
-            children: data.num_children,
-            activities: data.selectedActivities
-          }
+      await submitBooking({
+        itemId: trip.id,
+        itemName: trip.name,
+        bookingType: 'trip',
+        totalAmount,
+        slotsBooked: totalPeople,
+        visitDate: trip.date,
+        guestName: data.guest_name,
+        guestEmail: data.guest_email,
+        guestPhone: data.guest_phone,
+        hostId: trip.created_by,
+        bookingDetails: {
+          trip_name: trip.name,
+          date: trip.date,
+          adults: data.num_adults,
+          children: data.num_children,
+          activities: data.selectedActivities
         }
-      }]);
-
-      if (error) throw error;
+      });
       
       setIsProcessing(false);
       setIsCompleted(true);
-      toast({ title: "Booking Submitted", description: "Your booking has been saved. Payment is pending." });
+      toast({ title: "Booking Submitted", description: "Your booking has been saved. Check your email for confirmation." });
     } catch (error: any) {
       console.error('Booking error:', error);
       toast({ title: "Booking failed", description: error.message || "Failed to create booking", variant: "destructive" });

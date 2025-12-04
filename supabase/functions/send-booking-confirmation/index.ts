@@ -79,23 +79,25 @@ const handler = async (req: Request): Promise<Response> => {
           <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .header { background: #008080; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
             .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-            .detail-box { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #4F46E5; }
+            .detail-box { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #008080; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
             h1 { margin: 0; font-size: 24px; }
-            h2 { color: #4F46E5; font-size: 20px; margin-top: 0; }
-            .amount { font-size: 28px; color: #4F46E5; font-weight: bold; }
+            h2 { color: #008080; font-size: 20px; margin-top: 0; }
+            .amount { font-size: 28px; color: #008080; font-weight: bold; }
+            .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin-top: 10px; }
+            .status-pending { background: #FFF3CD; color: #856404; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h1>🎉 Booking Confirmed!</h1>
+              <h1>📋 Booking Submitted!</h1>
             </div>
             <div class="content">
               <p>Dear ${guestName},</p>
-              <p>Thank you for your booking! We're excited to confirm your reservation.</p>
+              <p>Thank you for your booking! Your reservation has been submitted successfully.</p>
               
               <div class="detail-box">
                 <h2>Booking Details</h2>
@@ -107,11 +109,12 @@ const handler = async (req: Request): Promise<Response> => {
                 ${bookingDetails.phone ? `<p><strong>Phone:</strong> ${bookingDetails.phone}</p>` : ''}
                 ${detailsHTML}
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-                <p class="amount">Total Amount: ${totalAmount.toFixed(2)}</p>
+                <p class="amount">Total Amount: KES ${totalAmount.toFixed(2)}</p>
+                <span class="status-badge status-pending">Payment Pending</span>
               </div>
 
+              <p>Please complete your payment to confirm your booking. The host will be notified once payment is received.</p>
               <p>If you have any questions about your booking, please don't hesitate to contact us.</p>
-              <p>We look forward to serving you!</p>
             </div>
             <div class="footer">
               <p>This is an automated confirmation email. Please do not reply to this message.</p>

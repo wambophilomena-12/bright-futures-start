@@ -16,7 +16,8 @@ import { ReviewSection } from "@/components/ReviewSection";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import { useAuth } from "@/contexts/AuthContext";
 import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiStepBooking";
-import { generateReferralLink, trackReferralClick, getReferralTrackingId } from "@/lib/referralUtils";
+import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
+import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 
 // Define the specific colors
 const TEAL_COLOR = "#008080"; // Icons, Links, Book Button, and now FACILITIES
@@ -147,6 +148,8 @@ const AdventurePlaceDetail = () => {
     }
   };
 
+  const { submitBooking } = useBookingSubmit();
+
   const handleBookingSubmit = async (data: BookingFormData) => {
     if (!place) return;
     setIsProcessing(true);
@@ -164,43 +167,29 @@ const AdventurePlaceDetail = () => {
                          data.selectedActivities.reduce((sum, a) => sum + (a.price * a.numberOfPeople), 0);
       const totalPeople = data.num_adults + data.num_children;
 
-      // Save booking as pending
-      const { error } = await supabase.from('pending_payments').insert([{
-        checkout_request_id: `BOOKING-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        phone_number: data.guest_phone || '',
-        amount: totalAmount,
-        account_reference: `ADVENTURE-${place.id}`,
-        transaction_desc: `Booking for ${place.name}`,
-        payment_status: 'pending',
-        user_id: user?.id || null,
-        host_id: place.created_by,
-        booking_data: {
-          user_id: user?.id || null,
-          booking_type: 'adventure_place',
-          item_id: id,
-          total_amount: totalAmount,
-          is_guest_booking: !user,
-          guest_name: data.guest_name,
-          guest_email: data.guest_email,
-          guest_phone: data.guest_phone,
-          slots_booked: totalPeople,
-          visit_date: data.visit_date,
-          referral_tracking_id: getReferralTrackingId(),
-          booking_details: {
-            place_name: place.name,
-            adults: data.num_adults,
-            children: data.num_children,
-            facilities: data.selectedFacilities,
-            activities: data.selectedActivities
-          }
+      await submitBooking({
+        itemId: place.id,
+        itemName: place.name,
+        bookingType: 'adventure_place',
+        totalAmount,
+        slotsBooked: totalPeople,
+        visitDate: data.visit_date,
+        guestName: data.guest_name,
+        guestEmail: data.guest_email,
+        guestPhone: data.guest_phone,
+        hostId: place.created_by,
+        bookingDetails: {
+          place_name: place.name,
+          adults: data.num_adults,
+          children: data.num_children,
+          facilities: data.selectedFacilities,
+          activities: data.selectedActivities
         }
-      }]);
-
-      if (error) throw error;
+      });
       
       setIsProcessing(false);
       setIsCompleted(true);
-      toast({ title: "Booking Submitted", description: "Your booking has been saved. Payment is pending." });
+      toast({ title: "Booking Submitted", description: "Your booking has been saved. Check your email for confirmation." });
     } catch (error: any) {
       toast({ title: "Booking failed", description: error.message, variant: "destructive" });
       setIsProcessing(false);
