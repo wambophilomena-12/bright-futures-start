@@ -99,7 +99,7 @@ export const ListingCard = ({
       className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border rounded-lg bg-card shadow-sm
                    w-full" 
     >
-      <div className="relative overflow-hidden m-0" style={{ paddingBottom: '75%' }}>
+      <div className="relative overflow-hidden m-0" style={{ paddingBottom: '65%' }}>
         <img
           src={optimizeSupabaseImage(imageUrl, { width: 640, height: 480, quality: 85 })}
           srcSet={generateImageSrcSet(imageUrl, [320, 640, 960])}
@@ -175,27 +175,27 @@ export const ListingCard = ({
         )}
       </div>
       
-      <div className="p-3 md:p-4 flex flex-col space-y-2">
-        <h3 className="font-bold text-sm md:text-base line-clamp-2">
+      <div className="p-2 md:p-4 flex flex-col space-y-1 md:space-y-2">
+        <h3 className="font-bold text-xs md:text-base line-clamp-2">
           {name}
         </h3>
         
         <div className="flex items-center gap-1">
           {/* --- MODIFICATION: MapPin Icon Color now uses custom Teal (0, 128, 128) --- */}
-          <MapPin className={cn("h-3 w-3 md:h-4 md:w-4 flex-shrink-0", tealTextClass)} />
+          <MapPin className={cn("h-3 w-3 flex-shrink-0", tealTextClass)} />
           {/* --- END MODIFICATION --- */}
-          <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">
+          <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1">
             {location}, {country}
           </p>
         </div>
 
         {/* Activities Section - displayed in rows */}
         {activityNames.length > 0 && (
-          <div className="flex flex-wrap gap-1 pt-1">
+          <div className="flex flex-wrap gap-0.5 md:gap-1 pt-0.5 md:pt-1">
             {activityNames.map((activity, index) => (
               <span 
                 key={index} 
-                className={cn("text-[10px] md:text-xs px-1.5 py-0.5 rounded-full bg-muted", tealTextClass)}
+                className={cn("text-[8px] md:text-xs px-1 md:px-1.5 py-0.5 rounded-full bg-muted", tealTextClass)}
               >
                 {activity}
               </span>
