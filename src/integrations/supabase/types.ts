@@ -38,6 +38,7 @@ export type Database = {
           image_url: string
           images: string[] | null
           is_hidden: boolean | null
+          local_name: string | null
           location: string
           map_link: string | null
           name: string
@@ -69,6 +70,7 @@ export type Database = {
           image_url: string
           images?: string[] | null
           is_hidden?: boolean | null
+          local_name?: string | null
           location: string
           map_link?: string | null
           name: string
@@ -100,6 +102,7 @@ export type Database = {
           image_url?: string
           images?: string[] | null
           is_hidden?: boolean | null
+          local_name?: string | null
           location?: string
           map_link?: string | null
           name?: string
@@ -443,6 +446,7 @@ export type Database = {
           image_url: string
           images: string[] | null
           is_hidden: boolean | null
+          local_name: string | null
           location: string
           map_link: string | null
           name: string
@@ -473,6 +477,7 @@ export type Database = {
           image_url: string
           images?: string[] | null
           is_hidden?: boolean | null
+          local_name?: string | null
           location: string
           map_link?: string | null
           name: string
@@ -503,6 +508,7 @@ export type Database = {
           image_url?: string
           images?: string[] | null
           is_hidden?: boolean | null
+          local_name?: string | null
           location?: string
           map_link?: string | null
           name?: string

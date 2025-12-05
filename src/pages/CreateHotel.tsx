@@ -289,7 +289,8 @@ const CreateHotel = () => {
       const { error } = await supabase
         .from("hotels")
         .insert([{
-          name: formData.localName || formData.registrationName,
+        name: formData.registrationName,
+        local_name: formData.localName || null,
           registration_number: formData.registrationNumber,
           location: formData.locationName,
           place: formData.place || formData.locationName,
