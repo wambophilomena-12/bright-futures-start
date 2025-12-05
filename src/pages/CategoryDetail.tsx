@@ -291,14 +291,16 @@ const CategoryDetail = () => {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header onSearchClick={handleSearchIconClick} showSearchIcon={showSearchIcon} />
       
-      {/* Search Bar - Shows when visible */}
+      {/* Search Bar - Shows when visible, suggestions appear over everything */}
       <div 
         ref={searchRef}
-        className={`bg-background border-b transition-all duration-300 ${
-          isSearchVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full h-0 overflow-hidden'
-        }`}
+        className={cn(
+          "bg-background border-b transition-all duration-300",
+          isSearchVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full h-0 overflow-hidden',
+          isSearchFocused && "relative z-[300]"
+        )}
       >
-        <div className="container px-4 py-4 relative z-[200]">
+        <div className="container px-4 py-4">
           <SearchBarWithSuggestions
             value={searchQuery}
             onChange={setSearchQuery}
@@ -371,6 +373,7 @@ const CategoryDetail = () => {
                 onSave={handleSave}
                 isSaved={savedItems.has(item.id)}
                 amenities={item.amenities}
+                activities={item.activities}
                 showBadge={false}
               />
             )})

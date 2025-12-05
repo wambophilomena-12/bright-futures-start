@@ -19,6 +19,7 @@ interface ListingCardProps {
     onSave?: (id: string, type: string) => void;
     isSaved?: boolean;
     amenities?: string[];
+    activities?: any[];
     hidePrice?: boolean;
     availableTickets?: number;
     bookedTickets?: number;
@@ -39,12 +40,24 @@ export const ListingCard = ({
   onSave,
   isSaved = false,
   amenities,
+  activities,
   hidePrice = false,
   availableTickets,
   bookedTickets,
   showBadge = false,
   priority = false,
 }: ListingCardProps) => {
+
+  // Extract activity names from activities array
+  const getActivityNames = (activities: any[] | undefined): string[] => {
+    if (!activities || !Array.isArray(activities)) return [];
+    return activities
+      .map(item => typeof item === 'object' && item.name ? item.name : (typeof item === 'string' ? item : null))
+      .filter(Boolean)
+      .slice(0, 4) as string[];
+  };
+
+  const activityNames = getActivityNames(activities);
   const navigate = useNavigate();
 
   const handleCardClick = () => {
@@ -175,6 +188,20 @@ export const ListingCard = ({
             {location}, {country}
           </p>
         </div>
+
+        {/* Activities Section - displayed in rows */}
+        {activityNames.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-1">
+            {activityNames.map((activity, index) => (
+              <span 
+                key={index} 
+                className={cn("text-[10px] md:text-xs px-1.5 py-0.5 rounded-full bg-muted", tealTextClass)}
+              >
+                {activity}
+              </span>
+            ))}
+          </div>
+        )}
         
         {type === "TRIP" && availableTickets !== undefined && (availableTickets - (bookedTickets || 0)) < 20 && (
           <div className="flex items-center justify-between pt-1 border-t border-border/50">
