@@ -43,10 +43,24 @@ export const extractIdFromSlug = (slugWithId: string): string => {
     return slugWithId;
   }
   
-  // Otherwise extract the last 8 chars as ID prefix
-  const lastHyphenIndex = slugWithId.lastIndexOf('-');
+  // Clean up slug - remove leading/trailing hyphens and collapse multiple hyphens
+  const cleanSlug = slugWithId.replace(/^-+|-+$/g, '').replace(/-+/g, '-');
+  
+  // Extract the last segment as ID prefix (typically 8 chars)
+  const lastHyphenIndex = cleanSlug.lastIndexOf('-');
   if (lastHyphenIndex !== -1) {
-    return slugWithId.substring(lastHyphenIndex + 1);
+    const idPart = cleanSlug.substring(lastHyphenIndex + 1);
+    // Return if it looks like a valid ID prefix (alphanumeric)
+    if (idPart && /^[0-9a-f]+$/i.test(idPart)) {
+      return idPart;
+    }
   }
-  return slugWithId;
+  
+  // If no hyphen or invalid format, check if the whole string is a potential ID
+  const cleanedId = cleanSlug.replace(/-/g, '');
+  if (/^[0-9a-f]+$/i.test(cleanedId)) {
+    return cleanedId.substring(0, 8);
+  }
+  
+  return cleanSlug;
 };
