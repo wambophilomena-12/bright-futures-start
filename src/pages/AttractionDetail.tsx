@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiStepBooking";
 import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
+import { extractIdFromSlug } from "@/lib/slugUtils";
 
 interface Facility {
   name: string;
@@ -60,7 +61,8 @@ const ORANGE_COLOR = "#FF9800";
 const RED_COLOR = "#EF4444"; // Using a strong red for visibility
 
 const AttractionDetail = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
+  const id = slug ? extractIdFromSlug(slug) : null;
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -86,8 +88,22 @@ const AttractionDetail = () => {
   }, [id]);
 
   const fetchAttraction = async () => {
+    if (!id) return;
     try {
-      const { data, error } = await supabase.from("attractions").select("*").eq("id", id).single();
+      let { data, error } = await supabase.from("attractions").select("*").eq("id", id).single();
+      
+      if (error && id.length === 8) {
+        const { data: prefixData, error: prefixError } = await supabase
+          .from("attractions")
+          .select("*")
+          .ilike("id", `${id}%`)
+          .single();
+        if (!prefixError) {
+          data = prefixData;
+          error = null;
+        }
+      }
+      
       if (error) throw error;
       setAttraction(data as any);
     } catch (error) {

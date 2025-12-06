@@ -18,6 +18,7 @@ import { ReviewSection } from "@/components/ReviewSection";
 import Autoplay from "embla-carousel-autoplay";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiStepBooking";
+import { extractIdFromSlug } from "@/lib/slugUtils";
 
 // Define the specific colors
 const TEAL_COLOR = "#008080"; // 0,128,128
@@ -52,7 +53,8 @@ interface Trip {
 }
 
 const TripDetail = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
+  const id = slug ? extractIdFromSlug(slug) : null;
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -84,8 +86,24 @@ const TripDetail = () => {
   };
 
   const fetchTrip = async () => {
+    if (!id) return;
     try {
-      const { data, error } = await supabase.from("trips").select("*").eq("id", id).single();
+      // Try exact match first, then prefix match for slug-based IDs
+      let { data, error } = await supabase.from("trips").select("*").eq("id", id).single();
+      
+      if (error && id.length === 8) {
+        // Try prefix match for shortened IDs
+        const { data: prefixData, error: prefixError } = await supabase
+          .from("trips")
+          .select("*")
+          .ilike("id", `${id}%`)
+          .single();
+        if (!prefixError) {
+          data = prefixData;
+          error = null;
+        }
+      }
+      
       if (error) throw error;
       setTrip(data as any);
     } catch (error) {

@@ -221,7 +221,7 @@ const ForgotPassword = () => {
   };
 
   const handleGeneratePassword = () => {
-    const newPassword = generateStrongPassword(12, true, true, true, true); // Increased length and complexity
+    const newPassword = generateStrongPassword(); // Generate strong password
     setNewPassword(newPassword);
     setConfirmPassword(newPassword);
     setShowPassword(true);

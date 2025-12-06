@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, optimizeSupabaseImage, generateImageSrcSet } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-
+import { createDetailPath } from "@/lib/slugUtils";
 // Note: Assuming ListingCardProps interface is defined elsewhere
 interface ListingCardProps {
     id: string;
@@ -69,7 +69,8 @@ export const ListingCard = ({
             "ACCOMMODATION": "accommodation",
             "ATTRACTION": "attraction"
         };
-        navigate(`/${typeMap[type]}/${id}`);
+        const path = createDetailPath(typeMap[type], id, name, location);
+        navigate(path);
     };
 
     const formatDate = (dateString: string | undefined) => {

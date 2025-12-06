@@ -18,6 +18,7 @@ import { useSavedItems } from "@/hooks/useSavedItems";
 import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiStepBooking";
 import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
+import { extractIdFromSlug } from "@/lib/slugUtils";
 
 interface Activity {
   name: string;
@@ -50,9 +51,8 @@ const TEAL_COLOR = "#008080";
 const ORANGE_COLOR = "#FF9800";
 
 const EventDetail = () => {
-  const {
-    id
-  } = useParams();
+  const { slug } = useParams();
+  const id = slug ? extractIdFromSlug(slug) : null;
   const navigate = useNavigate();
   const {
     user
@@ -86,11 +86,23 @@ const EventDetail = () => {
   }, [id]);
 
   const fetchEvent = async () => {
+    if (!id) return;
     try {
-      const {
-        data,
-        error
-      } = await supabase.from("trips").select("*").eq("id", id).eq("type", "event").single();
+      let { data, error } = await supabase.from("trips").select("*").eq("id", id).eq("type", "event").single();
+      
+      if (error && id.length === 8) {
+        const { data: prefixData, error: prefixError } = await supabase
+          .from("trips")
+          .select("*")
+          .ilike("id", `${id}%`)
+          .eq("type", "event")
+          .single();
+        if (!prefixError) {
+          data = prefixData;
+          error = null;
+        }
+      }
+      
       if (error) throw error;
       setEvent(data as any);
     } catch (error) {

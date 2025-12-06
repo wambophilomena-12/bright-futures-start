@@ -80,11 +80,11 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/vlog" element={<Vlog />} />
               <Route path="/category/:category" element={<CategoryDetail />} />
-              <Route path="/trip/:id" element={<TripDetail />} />
-              <Route path="/event/:id" element={<EventDetail />} />
-              <Route path="/hotel/:id" element={<HotelDetail />} />
-              <Route path="/adventure/:id" element={<AdventurePlaceDetail />} />
-              <Route path="/attraction/:id" element={<AttractionDetail />} />
+              <Route path="/trip/:slug" element={<TripDetail />} />
+              <Route path="/event/:slug" element={<EventDetail />} />
+              <Route path="/hotel/:slug" element={<HotelDetail />} />
+              <Route path="/adventure/:slug" element={<AdventurePlaceDetail />} />
+              <Route path="/attraction/:slug" element={<AttractionDetail />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/edit" element={<ProfileEdit />} />
