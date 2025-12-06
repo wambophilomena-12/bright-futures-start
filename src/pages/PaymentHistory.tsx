@@ -64,7 +64,7 @@ export default function PaymentHistory() {
         {
           event: '*',
           schema: 'public',
-          table: 'pending_payments'
+          table: 'payments'
         },
         (payload) => {
           console.log('Payment update received:', payload);
@@ -102,16 +102,16 @@ export default function PaymentHistory() {
         formattedPhone = "254" + formattedPhone;
       }
 
-      // Fetch payments
+      // Fetch payments from the payments table (using type assertion for renamed table)
       const { data, error } = await supabase
-        .from("pending_payments")
+        .from("payments" as any)
         .select("*")
         .eq("phone_number", formattedPhone)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      setPayments(data || []);
+      setPayments((data as unknown as Payment[]) || []);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching payments:", error);

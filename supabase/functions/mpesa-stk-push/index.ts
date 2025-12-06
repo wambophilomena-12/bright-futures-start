@@ -117,7 +117,7 @@ serve(async (req) => {
       console.error('❌ STK Push failed with ResponseCode:', stkData.ResponseCode);
       
       // Save failed payment record to database for tracking
-      await supabaseClient.from('pending_payments').insert({
+      await supabaseClient.from('payments').insert({
         checkout_request_id: stkData.CheckoutRequestID || `FAILED-${Date.now()}`,
         merchant_request_id: stkData.MerchantRequestID || null,
         phone_number: formattedPhone,
@@ -143,7 +143,7 @@ serve(async (req) => {
       );
     }
 
-    // ResponseCode = 0: Success - Create booking with PENDING status and save to pending_payments
+    // ResponseCode = 0: Success - Create booking with PENDING status and save to payments
     console.log('✅ STK Push successful, creating pending booking');
     
     // Create booking with pending payment status
@@ -176,8 +176,8 @@ serve(async (req) => {
       console.log('✅ Pending booking created:', booking.id);
     }
 
-    // Save to pending_payments for callback tracking (include booking_id)
-    const { error: dbError } = await supabaseClient.from('pending_payments').insert({
+    // Save to payments table for callback tracking (include booking_id)
+    const { error: dbError } = await supabaseClient.from('payments').insert({
       checkout_request_id: stkData.CheckoutRequestID,
       merchant_request_id: stkData.MerchantRequestID,
       phone_number: formattedPhone,
@@ -194,7 +194,7 @@ serve(async (req) => {
     });
 
     if (dbError) {
-      console.error('Error saving pending payment:', dbError);
+      console.error('Error saving payment:', dbError);
     }
 
     // Send payment initiation email for guest bookings

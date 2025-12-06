@@ -61,24 +61,25 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Determine payment status based on result code
-    const paymentStatus = resultCode === '0' ? 'paid' : 'failed';
+    // Determine payment status: pending -> completed or failed
+    const paymentStatus = resultCode === '0' ? 'completed' : 'failed';
     const bookingStatus = resultCode === '0' ? 'confirmed' : 'cancelled';
+    const bookingPaymentStatus = resultCode === '0' ? 'paid' : 'failed';
 
-    // First, get the pending payment to access booking_data
-    const { data: pendingPayment, error: fetchError } = await supabaseClient
-      .from('pending_payments')
+    // First, get the payment record to access booking_data
+    const { data: payment, error: fetchError } = await supabaseClient
+      .from('payments')
       .select('*')
       .eq('checkout_request_id', checkoutRequestId)
       .single();
 
     if (fetchError) {
-      console.error('Error fetching pending payment:', fetchError);
+      console.error('Error fetching payment:', fetchError);
     }
 
-    // Update pending_payments table
+    // Update payments table with result
     const { error: updateError } = await supabaseClient
-      .from('pending_payments')
+      .from('payments')
       .update({
         payment_status: paymentStatus,
         result_code: resultCode,
@@ -89,21 +90,21 @@ Deno.serve(async (req) => {
       .eq('checkout_request_id', checkoutRequestId);
 
     if (updateError) {
-      console.error('Error updating pending payment:', updateError);
+      console.error('Error updating payment:', updateError);
     } else {
       console.log(`✅ Payment status updated to ${paymentStatus} for ${checkoutRequestId}`);
     }
 
     // Update the existing booking with payment result
-    if (pendingPayment?.booking_data?.booking_id) {
-      const bookingId = pendingPayment.booking_data.booking_id;
+    if (payment?.booking_data?.booking_id) {
+      const bookingId = payment.booking_data.booking_id;
       
-      console.log(`Updating booking ${bookingId} with status: ${paymentStatus}`);
+      console.log(`Updating booking ${bookingId} with status: ${bookingPaymentStatus}`);
       
       const { error: bookingUpdateError } = await supabaseClient
         .from('bookings')
         .update({
-          payment_status: paymentStatus,
+          payment_status: bookingPaymentStatus,
           status: bookingStatus,
           updated_at: new Date().toISOString(),
         })
@@ -112,41 +113,23 @@ Deno.serve(async (req) => {
       if (bookingUpdateError) {
         console.error('Error updating booking:', bookingUpdateError);
       } else {
-        console.log(`✅ Booking ${bookingId} updated to ${paymentStatus}/${bookingStatus}`);
+        console.log(`✅ Booking ${bookingId} updated to ${bookingPaymentStatus}/${bookingStatus}`);
         
-        // If payment was successful, send notifications
+        // If payment was successful, send notifications and emails
         if (resultCode === '0') {
-          const bookingData = pendingPayment.booking_data;
+          const bookingData = payment.booking_data;
           
           await sendNotificationsAndEmails(
             supabaseClient,
             { id: bookingId, ...bookingData },
             bookingData,
-            pendingPayment,
+            payment,
             mpesaReceiptNumber
           );
         }
       }
     } else {
-      console.error('No booking_id found in pending payment data');
-    }
-
-    // Log callback for audit
-    try {
-      await supabaseClient
-        .from('mpesa_callback_log')
-        .insert({
-          checkout_request_id: checkoutRequestId,
-          merchant_request_id: merchantRequestId,
-          result_code: resultCode,
-          result_desc: resultDesc,
-          mpesa_receipt_number: mpesaReceiptNumber,
-          amount: paidAmount,
-          phone_number: phoneNumber || pendingPayment?.phone_number,
-          raw_callback: callbackData,
-        });
-    } catch (logError) {
-      console.error('Error inserting callback log:', logError);
+      console.error('No booking_id found in payment data');
     }
 
     console.log('CheckoutRequestID:', checkoutRequestId, 'ResultCode:', resultCode, 'Status:', paymentStatus);
@@ -179,7 +162,7 @@ async function sendNotificationsAndEmails(
   supabase: any,
   booking: any,
   bookingData: any,
-  pendingPayment: any,
+  payment: any,
   mpesaReceiptNumber: string | null
 ) {
   try {
@@ -232,7 +215,7 @@ async function sendNotificationsAndEmails(
     }
 
     // Create notification for host and send email
-    const hostId = bookingData.host_id || pendingPayment.host_id;
+    const hostId = bookingData.host_id || payment.host_id;
     if (hostId) {
       // Create in-app notification for host
       const { error: hostNotifError } = await supabase
