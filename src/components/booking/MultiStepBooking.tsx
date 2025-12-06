@@ -3,12 +3,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Users, Loader2, CheckCircle2, Phone } from "lucide-react";
+import { Calendar, Users, Loader2, CheckCircle2, Phone, CreditCard } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentStatusDialog } from "./PaymentStatusDialog";
 import { useMpesaPayment } from "@/hooks/useMpesaPayment";
+import { cn } from "@/lib/utils"; // Assuming you have a cn utility
+
 interface Facility {
   name: string;
   price: number;
@@ -51,6 +53,9 @@ export interface BookingFormData {
   mpesa_phone: string;
 }
 
+// Custom Teal color
+const TEAL_COLOR = "#008080";
+
 export const MultiStepBooking = ({
   onSubmit,
   facilities = [],
@@ -86,6 +91,9 @@ export const MultiStepBooking = ({
     guest_phone: "",
     mpesa_phone: "",
   });
+
+  // NEW STATE: Payment Method
+  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
 
   // M-Pesa payment integration
   const { paymentStatus, errorMessage, initiatePayment, resetPayment, isPaymentInProgress } = useMpesaPayment({
@@ -131,7 +139,7 @@ export const MultiStepBooking = ({
     if (currentStep === 1 && !formData.visit_date && !skipDateSelection) return;
     if (currentStep === 2 && formData.num_adults === 0 && formData.num_children === 0) return;
     
-    if (currentStep === 3 && !skipFacilitiesAndActivities && formData.selectedFacilities.length > 0 && !areFacilityDatesValid()) {
+    if (currentStep === 3 && !skipFacilitiesAndActivities && !user && formData.selectedFacilities.length > 0 && !areFacilityDatesValid()) {
       return;
     }
     
@@ -166,6 +174,16 @@ export const MultiStepBooking = ({
       await onSubmit(formData);
       return;
     }
+    
+    if (paymentMethod === 'card') {
+        // NOTE: In a real application, 'card' submission would trigger a payment gateway redirect (e.g., Stripe, PayPal).
+        // For this example, we'll simulate a simple form submission for card.
+        // You would typically call a `handleCardPayment` function here.
+        alert("Card payment selected. Integration required.");
+        // For now, we will stop here to only focus on M-Pesa.
+        return;
+    }
+
 
     // Initiate M-Pesa payment
     const bookingData = {
@@ -277,7 +295,7 @@ export const MultiStepBooking = ({
   if (isProcessing) {
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary" style={{ color: TEAL_COLOR }} />
         <p className="text-lg font-semibold">Saving your booking...</p>
         <p className="text-sm text-muted-foreground">Please wait</p>
       </div>
@@ -299,6 +317,11 @@ export const MultiStepBooking = ({
     );
   }
 
+  const isMpesaSelected = calculateTotal() > 0 && paymentMethod === 'mpesa';
+  const isCardSelected = calculateTotal() > 0 && paymentMethod === 'card';
+  
+  const total = calculateTotal();
+
   return (
     <div className="space-y-6 max-w-lg mx-auto p-4 sm:p-6 border rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold text-center">Book Your Visit to {itemName}</h2>
@@ -311,6 +334,7 @@ export const MultiStepBooking = ({
             className={`h-2 flex-1 mx-1 rounded-full transition-colors duration-300 ${
               step <= currentStep ? 'bg-primary' : 'bg-muted'
             }`}
+            style={{ backgroundColor: step <= currentStep ? TEAL_COLOR : undefined }}
           />
         ))}
       </div>
@@ -319,7 +343,7 @@ export const MultiStepBooking = ({
       {currentStep === 1 && !skipDateSelection && (
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-4">
-            <Calendar className="h-5 w-5 text-primary" />
+            <Calendar className="h-5 w-5" style={{ color: TEAL_COLOR }} />
             <h3 className="text-lg font-semibold">Step 1: Select Visit Date</h3>
           </div>
           <div>
@@ -341,7 +365,7 @@ export const MultiStepBooking = ({
       {currentStep === 2 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-4">
-            <Users className="h-5 w-5 text-primary" />
+            <Users className="h-5 w-5" style={{ color: TEAL_COLOR }} />
             <h3 className="text-lg font-semibold">Step 2: Number of Guests</h3>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -413,7 +437,7 @@ export const MultiStepBooking = ({
                             {facility.name}
                           </Label>
                         </div>
-                        <span className="text-sm font-bold text-primary">KES {facility.price} / day</span>
+                        <span className="text-sm font-bold" style={{ color: TEAL_COLOR }}>KES {facility.price} / day</span>
                       </div>
                       {selected && (
                         <div className="ml-6 pt-2">
@@ -471,7 +495,7 @@ export const MultiStepBooking = ({
                             {activity.name}
                           </Label>
                         </div>
-                        <span className="text-sm font-bold text-primary">KES {activity.price} / person</span>
+                        <span className="text-sm font-bold" style={{ color: TEAL_COLOR }}>KES {activity.price} / person</span>
                       </div>
                       {selected && (
                         <div className="ml-6 pt-2">
@@ -502,9 +526,9 @@ export const MultiStepBooking = ({
             </div>
           )}
 
-          <div className="p-4 bg-primary/10 rounded-lg">
-            <p className="text-sm font-medium text-primary">Total Add-ons:</p>
-            <p className="text-sm text-primary/80">
+          <div className="p-4 rounded-lg" style={{ backgroundColor: `${TEAL_COLOR}1A` }}>
+            <p className="text-sm font-medium" style={{ color: TEAL_COLOR }}>Total Add-ons:</p>
+            <p className="text-sm" style={{ color: TEAL_COLOR }}>
               {formData.selectedFacilities.length} Facility(s), {formData.selectedActivities.length} Activity(s)
             </p>
           </div>
@@ -521,19 +545,19 @@ export const MultiStepBooking = ({
           </p>
           
           {/* Booking Summary */}
-          <div className="p-4 bg-primary/10 rounded-lg space-y-2 border border-primary">
-            <p className="text-sm font-medium text-primary">Booking for {itemName}</p>
-            <p className="text-sm text-primary/80">Date: {formData.visit_date}</p>
-            <p className="text-sm text-primary/80">
+          <div className="p-4 rounded-lg space-y-2 border" style={{ backgroundColor: `${TEAL_COLOR}1A`, borderColor: TEAL_COLOR }}>
+            <p className="text-sm font-medium" style={{ color: TEAL_COLOR }}>Booking for {itemName}</p>
+            <p className="text-sm" style={{ color: TEAL_COLOR }}>Date: {formData.visit_date}</p>
+            <p className="text-sm" style={{ color: TEAL_COLOR }}>
               Guests: {formData.num_adults} Adult(s), {formData.num_children} Child(ren)
             </p>
             {(formData.selectedFacilities.length > 0 || formData.selectedActivities.length > 0) && (
-              <p className="text-xs text-primary/70">
+              <p className="text-xs opacity-80" style={{ color: TEAL_COLOR }}>
                 {formData.selectedFacilities.length} Facility(s), {formData.selectedActivities.length} Activity(s) added
               </p>
             )}
-            <div className="border-t border-primary/30 pt-2 mt-2">
-              <p className="text-xl font-bold text-primary">Total: KES {calculateTotal().toLocaleString()}</p>
+            <div className="border-t pt-2 mt-2" style={{ borderColor: `${TEAL_COLOR}80` }}>
+              <p className="text-xl font-bold" style={{ color: TEAL_COLOR }}>Total: KES {total.toLocaleString()}</p>
             </div>
           </div>
 
@@ -544,22 +568,47 @@ export const MultiStepBooking = ({
             {formData.guest_phone && <p><span className="text-muted-foreground">Phone:</span> {formData.guest_phone}</p>}
           </div>
 
-          {/* M-Pesa Payment */}
-          {calculateTotal() > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Phone className="h-5 w-5 text-primary" />
-                <Label htmlFor="mpesa_phone_logged">M-Pesa Phone Number *</Label>
+          {/* Payment Method Selection */}
+          {total > 0 && (
+            <div className="space-y-3 pt-3 border-t">
+              <h4 className="font-semibold">Select Payment Method *</h4>
+              <div className="flex gap-4">
+                <Button
+                  onClick={() => setPaymentMethod('mpesa')}
+                  variant={paymentMethod === 'mpesa' ? 'default' : 'outline'}
+                  className={cn("flex-1 text-base h-12", paymentMethod === 'mpesa' ? "text-white" : "border-gray-300")}
+                  style={{ backgroundColor: paymentMethod === 'mpesa' ? TEAL_COLOR : undefined, borderColor: paymentMethod === 'mpesa' ? TEAL_COLOR : undefined }}
+                >
+                  <Phone className="mr-2 h-5 w-5" /> M-Pesa
+                </Button>
+                <Button
+                  onClick={() => setPaymentMethod('card')}
+                  variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                  className={cn("flex-1 text-base h-12", paymentMethod === 'card' ? "text-white" : "border-gray-300")}
+                  style={{ backgroundColor: paymentMethod === 'card' ? TEAL_COLOR : undefined, borderColor: paymentMethod === 'card' ? TEAL_COLOR : undefined }}
+                  disabled // Card payment is not yet implemented
+                >
+                  <CreditCard className="mr-2 h-5 w-5" /> Card
+                </Button>
               </div>
-              <Input
-                id="mpesa_phone_logged"
-                type="tel"
-                value={formData.mpesa_phone}
-                onChange={(e) => setFormData({ ...formData, mpesa_phone: e.target.value })}
-                placeholder="e.g., 0712345678"
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground">Enter the phone number to receive M-Pesa payment prompt</p>
+
+              {isMpesaSelected && (
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="mpesa_phone_logged">M-Pesa Phone Number *</Label>
+                  <Input
+                    id="mpesa_phone_logged"
+                    type="tel"
+                    value={formData.mpesa_phone}
+                    onChange={(e) => setFormData({ ...formData, mpesa_phone: e.target.value })}
+                    placeholder="e.g., 0712345678"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground">Enter the phone number to receive M-Pesa payment prompt</p>
+                </div>
+              )}
+              {isCardSelected && (
+                  <p className="text-sm text-yellow-600">Card payment selected. You will be redirected to the payment gateway on submission.</p>
+              )}
             </div>
           )}
         </div>
@@ -610,38 +659,63 @@ export const MultiStepBooking = ({
           </div>
           
           {/* Booking Summary */}
-          <div className="p-4 bg-primary/10 rounded-lg space-y-2 border border-primary">
-            <p className="text-sm font-medium text-primary">Booking for {itemName}</p>
-            <p className="text-sm text-primary/80">Date: {formData.visit_date}</p>
-            <p className="text-sm text-primary/80">
+          <div className="p-4 rounded-lg space-y-2 border" style={{ backgroundColor: `${TEAL_COLOR}1A`, borderColor: TEAL_COLOR }}>
+            <p className="text-sm font-medium" style={{ color: TEAL_COLOR }}>Booking for {itemName}</p>
+            <p className="text-sm" style={{ color: TEAL_COLOR }}>Date: {formData.visit_date}</p>
+            <p className="text-sm" style={{ color: TEAL_COLOR }}>
               Guests: {formData.num_adults} Adult(s), {formData.num_children} Child(ren)
             </p>
             {(formData.selectedFacilities.length > 0 || formData.selectedActivities.length > 0) && (
-              <p className="text-xs text-primary/70">
+              <p className="text-xs opacity-80" style={{ color: TEAL_COLOR }}>
                 {formData.selectedFacilities.length} Facility(s), {formData.selectedActivities.length} Activity(s) added
               </p>
             )}
-            <div className="border-t border-primary/30 pt-2 mt-2">
-              <p className="text-xl font-bold text-primary">Total: KES {calculateTotal().toLocaleString()}</p>
+            <div className="border-t pt-2 mt-2" style={{ borderColor: `${TEAL_COLOR}80` }}>
+              <p className="text-xl font-bold" style={{ color: TEAL_COLOR }}>Total: KES {total.toLocaleString()}</p>
             </div>
           </div>
 
-          {/* M-Pesa Payment */}
-          {calculateTotal() > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Phone className="h-5 w-5 text-primary" />
-                <Label htmlFor="mpesa_phone_guest">M-Pesa Phone Number *</Label>
+          {/* Payment Method Selection */}
+          {total > 0 && (
+            <div className="space-y-3 pt-3 border-t">
+              <h4 className="font-semibold">Select Payment Method *</h4>
+              <div className="flex gap-4">
+                <Button
+                  onClick={() => setPaymentMethod('mpesa')}
+                  variant={paymentMethod === 'mpesa' ? 'default' : 'outline'}
+                  className={cn("flex-1 text-base h-12", paymentMethod === 'mpesa' ? "text-white" : "border-gray-300")}
+                  style={{ backgroundColor: paymentMethod === 'mpesa' ? TEAL_COLOR : undefined, borderColor: paymentMethod === 'mpesa' ? TEAL_COLOR : undefined }}
+                >
+                  <Phone className="mr-2 h-5 w-5" /> M-Pesa
+                </Button>
+                <Button
+                  onClick={() => setPaymentMethod('card')}
+                  variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                  className={cn("flex-1 text-base h-12", paymentMethod === 'card' ? "text-white" : "border-gray-300")}
+                  style={{ backgroundColor: paymentMethod === 'card' ? TEAL_COLOR : undefined, borderColor: paymentMethod === 'card' ? TEAL_COLOR : undefined }}
+                  disabled // Card payment is not yet implemented
+                >
+                  <CreditCard className="mr-2 h-5 w-5" /> Card
+                </Button>
               </div>
-              <Input
-                id="mpesa_phone_guest"
-                type="tel"
-                value={formData.mpesa_phone}
-                onChange={(e) => setFormData({ ...formData, mpesa_phone: e.target.value })}
-                placeholder="e.g., 0712345678"
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground">Enter the phone number to receive M-Pesa payment prompt</p>
+              
+              {isMpesaSelected && (
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="mpesa_phone_guest">M-Pesa Phone Number *</Label>
+                  <Input
+                    id="mpesa_phone_guest"
+                    type="tel"
+                    value={formData.mpesa_phone}
+                    onChange={(e) => setFormData({ ...formData, mpesa_phone: e.target.value })}
+                    placeholder="e.g., 0712345678"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground">Enter the phone number to receive M-Pesa payment prompt</p>
+                </div>
+              )}
+              {isCardSelected && (
+                  <p className="text-sm text-yellow-600">Card payment selected. You will be redirected to the payment gateway on submission.</p>
+              )}
             </div>
           )}
         </div>
@@ -660,6 +734,7 @@ export const MultiStepBooking = ({
             type="button"
             onClick={handleNext}
             className={`w-24 ${currentStep === 1 || currentStep === 2 ? 'ml-auto' : ''}`}
+            style={{ backgroundColor: TEAL_COLOR }}
             disabled={
               (currentStep === 1 && !formData.visit_date && !skipDateSelection) ||
               (currentStep === 2 && formData.num_adults === 0 && formData.num_children === 0) ||
@@ -673,18 +748,19 @@ export const MultiStepBooking = ({
             type="button"
             onClick={handleSubmit}
             className="ml-auto w-40"
+            style={{ backgroundColor: TEAL_COLOR }}
             disabled={
               isProcessing || 
               isPaymentInProgress ||
               !formData.guest_name || 
               !formData.guest_email ||
-              (calculateTotal() > 0 && !formData.mpesa_phone)
+              (isMpesaSelected && !formData.mpesa_phone)
             }
           >
             {isProcessing || isPaymentInProgress ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : calculateTotal() > 0 ? (
-              'Pay with M-Pesa'
+            ) : total > 0 ? (
+                paymentMethod === 'mpesa' ? 'Pay with M-Pesa' : 'Proceed to Card Payment'
             ) : (
               'Confirm Booking'
             )}
