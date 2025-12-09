@@ -97,14 +97,19 @@ export const MultiStepBooking = ({
     // NEW STATE: Payment Method
     const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
 
-    // Track if payment succeeded for dialog close handling
+    // Track if payment succeeded for dialog close handling - persists even after reset
     const [paymentSucceeded, setPaymentSucceeded] = useState(false);
 
     // M-Pesa payment integration
     const { paymentStatus, errorMessage, initiatePayment, resetPayment, isPaymentInProgress } = useMpesaPayment({
-        onSuccess: () => {
+        onSuccess: (bookingId) => {
             // Mark payment as succeeded so we can handle dialog close properly
+            console.log('✅ Payment succeeded for booking:', bookingId);
             setPaymentSucceeded(true);
+        },
+        onError: (error) => {
+            console.log('❌ Payment failed:', error);
+            setPaymentSucceeded(false);
         },
     });
 
@@ -703,16 +708,21 @@ export const MultiStepBooking = ({
 
             {/* Payment Status Dialog */}
             <PaymentStatusDialog
-                open={paymentStatus !== 'idle'}
-                status={paymentStatus}
+                open={paymentStatus !== 'idle' || paymentSucceeded}
+                status={paymentSucceeded ? 'success' : paymentStatus}
                 errorMessage={errorMessage}
                 onClose={() => {
                     // Check if payment succeeded before resetting
                     const wasSuccessful = paymentSucceeded || paymentStatus === 'success';
+                    console.log('Dialog closing - wasSuccessful:', wasSuccessful, 'paymentSucceeded:', paymentSucceeded, 'paymentStatus:', paymentStatus);
+                    
+                    // Reset states
                     resetPayment();
+                    setPaymentSucceeded(false);
+                    
                     // If payment was successful, call the parent's close function
                     if (wasSuccessful && onPaymentSuccess) {
-                        setPaymentSucceeded(false);
+                        console.log('Calling onPaymentSuccess callback');
                         onPaymentSuccess(); 
                     }
                 }}
