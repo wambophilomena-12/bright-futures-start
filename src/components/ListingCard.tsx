@@ -54,7 +54,7 @@ export const ListingCard = ({
         return activities
             .map(item => typeof item === 'object' && item.name ? item.name : (typeof item === 'string' ? item : null))
             .filter(Boolean)
-            .slice(0, 5) as string[]; // <-- MODIFIED: Changed 4 to 5
+            .slice(0, 5) as string[];
     };
 
     const activityNames = getActivityNames(activities);
@@ -104,18 +104,17 @@ export const ListingCard = ({
         remainingTickets > 0 && 
         remainingTickets <= 20;
 
-    // --- MODIFICATION: Remove fixed-height classes for activity container and warning slot
-    const warningSlotClass = "pt-1 overflow-hidden"; 
-
     // Determine if the card is a type that uses the special price/date and ticket warning logic
     const isTripOrEvent = type === "TRIP" || type === "EVENT";
 
     return (
         <Card
             onClick={handleCardClick}
+            // MODIFIED: Added flex and h-full to the card itself, along with fixed height classes
             className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border rounded-lg bg-card shadow-sm
-                        w-full"
+                        w-full flex flex-col h-[280px] sm:h-[300px] lg:h-[320px]" 
         >
+            {/* Image Container */}
             <div className="relative overflow-hidden m-0" style={{ paddingBottom: '65%' }}>
                 <img
                     src={optimizeSupabaseImage(imageUrl, { width: 640, height: 480, quality: 85 })}
@@ -172,7 +171,8 @@ export const ListingCard = ({
                 )}
             </div>
             
-            <div className="p-2 md:p-4 flex flex-col space-y-1 md:space-y-2">
+            {/* Content Area - MODIFIED: Added flex-1 to make it take up remaining space */}
+            <div className="p-2 md:p-4 flex flex-col space-y-1 md:space-y-2 flex-1"> 
                 <h3 className="font-bold text-xs md:text-base line-clamp-2">
                     {name}
                 </h3>
@@ -186,37 +186,44 @@ export const ListingCard = ({
                     </p>
                 </div>
 
-                {/* --- Activities Section for NON-TRIP/EVENT types --- */}
-                {/* Only render if NOT Trip/Event AND activities exist. */}
-                {!isTripOrEvent && activityNames.length > 0 && (
-                    <div className="flex flex-wrap gap-0.5 md:gap-1 pt-0.5 md:pt-1">
-                        {activityNames.map((activity, index) => (
-                            <span
-                                key={index}
-                                className={cn("text-[8px] md:text-xs px-1 md:px-1.5 py-0.5 rounded-full bg-muted", tealTextClass)}
-                            >
-                                {activity}
-                            </span>
-                        ))}
-                    </div>
-                )}
+                {/* --- Activities/Amenities/Warning Section Wrapper --- */}
+                {/* This section is set to automatically take up the remaining space using flex-grow/flex-1 */}
+                <div className="flex-1 min-h-0 overflow-hidden"> 
+                    
+                    {/* --- Activities Section for NON-TRIP/EVENT types --- */}
+                    {/* Only render if NOT Trip/Event AND activities exist. */}
+                    {!isTripOrEvent && activityNames.length > 0 && (
+                        <div className="flex flex-wrap gap-0.5 md:gap-1 pt-0.5 md:pt-1">
+                            {activityNames.map((activity, index) => (
+                                <span
+                                    key={index}
+                                    className={cn("text-[8px] md:text-xs px-1 md:px-1.5 py-0.5 rounded-full bg-muted", tealTextClass)}
+                                >
+                                    {activity}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                    
+                    {/* --- New Section for "Few slots remaining" for TRIP/EVENT types --- */}
+                    {isTripOrEvent && (
+                         // MODIFIED: Use `h-full` when few slots are remaining, otherwise set a small fixed height to ensure it doesn't disappear.
+                        <div className={cn("pt-1 h-6 transition-opacity", fewSlotsRemaining ? "opacity-100" : "opacity-0")}>
+                            {fewSlotsRemaining && (
+                                <span className="text-xs md:text-sm font-semibold text-destructive px-2 py-1 bg-destructive/10 rounded-sm">
+                                    Few slots remaining!
+                                </span>
+                            )}
+                        </div>
+                    )}
+
+                </div>
                 {/* ------------------------------------------------------------------ */}
                 
-                {/* --- New Section for "Few slots remaining" for TRIP/EVENT types --- */}
-                {isTripOrEvent && (
-                    <div className={cn(warningSlotClass, fewSlotsRemaining ? "opacity-100" : "h-0 opacity-0")}>
-                        {fewSlotsRemaining && (
-                            <span className="text-xs md:text-sm font-semibold text-destructive px-2 py-1 bg-destructive/10 rounded-sm">
-                                Few slots remaining!
-                            </span>
-                        )}
-                    </div>
-                )}
-                {/* ----------------------------------------------------------- */}
-
                 {/* Price and Date Info for Trips/Events - Only render for these types */}
+                {/* MODIFIED: Added mt-auto to push this section to the bottom */}
                 {isTripOrEvent && (
-                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/50">
+                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/50 mt-auto"> 
                         {!hidePrice && price !== undefined && price > 0 && (
                             <span className="text-[10px] md:text-xs font-bold text-[rgb(200,0,0)]">
                                 KSh {price.toLocaleString()}
