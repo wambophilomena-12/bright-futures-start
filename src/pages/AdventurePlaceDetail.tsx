@@ -22,7 +22,7 @@ import { extractIdFromSlug } from "@/lib/slugUtils";
 
 // Define the specific colors
 const TEAL_COLOR = "#008080"; // Icons, Links, Book Button, and now FACILITIES
-const RED_COLOR = "#FF0000"; // New color for AMENITIES
+const RED_COLOR = "#FF0000"; // New color for AMENITIES, now also for Entry Fee price
 const ORANGE_COLOR = "#FF9800"; // Activities
 
 interface Facility { name: string; price: number; capacity?: number; }
@@ -218,12 +218,12 @@ const AdventurePlaceDetail = () => {
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
-      <main className="container px-4 py-6 **sm:py-4** max-w-6xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 **sm:mb-2**">
+      <main className="container px-4 py-6 sm:py-4 max-w-6xl mx-auto">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 sm:mb-2">
           <ArrowLeft className="mr-2 h-4 w-4" />Back
         </Button>
         
-        <div className="grid lg:grid-cols-[2fr,1fr] gap-6 **sm:gap-4**">
+        <div className="grid lg:grid-cols-[2fr,1fr] gap-6 sm:gap-4">
           <div className="w-full relative">
             <Carousel opts={{ loop: true }} plugins={[Autoplay({ delay: 3000 })]} className="w-full rounded-2xl overflow-hidden">
               <CarouselContent>
@@ -240,42 +240,42 @@ const AdventurePlaceDetail = () => {
             {/* START: Description Section with slide-down effect and border radius */}
             {place.description && (
               <div 
-                className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm text-white p-4 **sm:p-3** z-10 
+                className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm text-white p-4 sm:p-3 z-10 
                            rounded-b-2xl 
                            shadow-lg 
                            transform translate-y-2" // The key styling for the "slide down" effect
               >
-                <h2 className="text-lg **sm:text-base** font-semibold mb-2 **sm:mb-1**">About This Place</h2>
+                <h2 className="text-lg sm:text-base font-semibold mb-2 sm:mb-1">About This Place</h2>
                 <p className="text-sm line-clamp-3">{place.description}</p>
               </div>
             )}
             {/* END: Description Section */}
           </div>
           
-          <div className="space-y-4 **sm:space-y-3**">
+          <div className="space-y-4 sm:space-y-3">
             <div>
-              <h1 className="text-3xl **sm:text-2xl** font-bold mb-2">{place.name}</h1>
+              <h1 className="text-3xl sm:text-2xl font-bold mb-2">{place.name}</h1>
               {place.local_name && (
-                <p className="text-lg **sm:text-base** text-muted-foreground mb-2">"{place.local_name}"</p>
+                <p className="text-lg sm:text-base text-muted-foreground mb-2">"{place.local_name}"</p>
               )}
               <div className="flex items-center gap-2 text-muted-foreground mb-2">
                 {/* Location Icon Teal */}
                 <MapPin className="h-4 w-4" style={{ color: TEAL_COLOR }} />
-                <span className="**sm:text-sm**">{place.location}, {place.country}</span>
+                <span className="sm:text-sm">{place.location}, {place.country}</span>
               </div>
               {place.place && (
-                <p className="text-sm **sm:text-xs** text-muted-foreground mb-4 **sm:mb-2**">Place: {place.place}</p>
+                <p className="text-sm sm:text-xs text-muted-foreground mb-4 sm:mb-2">Place: {place.place}</p>
               )}
             </div>
 
-            <div className="space-y-3 p-4 **sm:p-3** border bg-card">
+            <div className="space-y-3 p-4 sm:p-3 border bg-card">
               {(place.opening_hours || place.closing_hours) && (
                 <div className="flex items-center gap-2">
                   {/* Clock Icon Teal */}
                   <Clock className="h-5 w-5" style={{ color: TEAL_COLOR }} />
                   <div>
-                    <p className="text-sm **sm:text-xs** text-muted-foreground">Operating Hours</p>
-                    <p className="font-semibold **sm:text-sm**">{place.opening_hours} - {place.closing_hours}</p>
+                    <p className="text-sm sm:text-xs text-muted-foreground">Operating Hours</p>
+                    <p className="font-semibold sm:text-sm">{place.opening_hours} - {place.closing_hours}</p>
                     {place.days_opened && place.days_opened.length > 0 && (
                       <p className="text-xs text-muted-foreground mt-1">{place.days_opened.join(', ')}</p>
                     )}
@@ -283,21 +283,24 @@ const AdventurePlaceDetail = () => {
                 </div>
               )}
               
-              <div className={`${place.opening_hours || place.closing_hours ? 'border-t pt-3 **sm:pt-2**' : ''}`}>
-                <p className="text-sm **sm:text-xs** text-muted-foreground mb-1">Entry Fee</p>
-                <p className="text-2xl **sm:text-xl** font-bold">
+              <div className={`${place.opening_hours || place.closing_hours ? 'border-t pt-3 sm:pt-2' : ''}`}>
+                <p className="text-sm sm:text-xs text-muted-foreground mb-1">Entry Fee</p>
+                <p 
+                  className="text-2xl sm:text-xl font-bold"
+                  style={{ color: RED_COLOR }} // **Applied red color here**
+                >
                   {place.entry_fee_type === 'free' ? 'Free Entry' : 
                    place.entry_fee ? `KSh ${place.entry_fee}` : 'Contact for pricing'}
                 </p>
                 {place.available_slots !== null && place.available_slots !== undefined && (
-                   <p className="text-sm **sm:text-xs** text-muted-foreground mt-2 **sm:mt-1**">Available Slots: {place.available_slots}</p>
+                   <p className="text-sm sm:text-xs text-muted-foreground mt-2 sm:mt-1">Available Slots: {place.available_slots}</p>
                 )}
               </div>
 
               {/* Book Now Button Teal and dark hover */}
               <Button 
                 size="lg" 
-                className="w-full text-white **h-10 sm:h-9**" 
+                className="w-full text-white h-10 sm:h-9" 
                 onClick={() => setBookingOpen(true)}
                 style={{ backgroundColor: TEAL_COLOR }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#005555')}
@@ -313,7 +316,7 @@ const AdventurePlaceDetail = () => {
                 variant="outline" 
                 size="sm" 
                 onClick={openInMaps} 
-                className="flex-1 **h-9**"
+                className="flex-1 h-9"
                 style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
               >
                 <MapPin className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
@@ -324,7 +327,7 @@ const AdventurePlaceDetail = () => {
                 variant="outline" 
                 size="sm" 
                 onClick={handleCopyLink} 
-                className="flex-1 **h-9**"
+                className="flex-1 h-9"
                 style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
               >
                 <Copy className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
@@ -335,7 +338,7 @@ const AdventurePlaceDetail = () => {
                 variant="outline" 
                 size="sm" 
                 onClick={handleShare} 
-                className="flex-1 **h-9**"
+                className="flex-1 h-9"
                 style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
               >
                 <Share2 className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
@@ -346,7 +349,7 @@ const AdventurePlaceDetail = () => {
                 variant="outline" 
                 size="icon" 
                 onClick={handleSave} 
-                className={`**h-9 w-9** ${isSaved ? "bg-red-500 text-white hover:bg-red-600" : ""}`}
+                className={`h-9 w-9 ${isSaved ? "bg-red-500 text-white hover:bg-red-600" : ""}`}
                 style={{ borderColor: TEAL_COLOR, color: isSaved ? 'white' : TEAL_COLOR }}
               >
                 <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
@@ -357,14 +360,14 @@ const AdventurePlaceDetail = () => {
 
         {/* --- Amenities Section (RED) --- */}
         {place.amenities && place.amenities.length > 0 && (
-          <div className="mt-6 **sm:mt-4** p-6 **sm:p-3** border bg-card">
-            <h2 className="text-xl **sm:text-lg** font-semibold mb-4 **sm:mb-2**">Amenities</h2>
-            <div className="flex flex-wrap gap-2 **sm:gap-1**">
+          <div className="mt-6 sm:mt-4 p-6 sm:p-3 border bg-card">
+            <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-2">Amenities</h2>
+            <div className="flex flex-wrap gap-2 sm:gap-1">
               {place.amenities.map((amenity: any, idx: number) => (
                 // Amenities Badge RED
                 <div 
                   key={idx} 
-                  className="px-4 py-2 **sm:px-3 sm:py-1** text-primary-foreground rounded-full text-sm **sm:text-xs**"
+                  className="px-4 py-2 sm:px-3 sm:py-1 text-primary-foreground rounded-full text-sm sm:text-xs"
                   style={{ backgroundColor: RED_COLOR }} 
                 >
                   {amenity}
@@ -376,14 +379,14 @@ const AdventurePlaceDetail = () => {
 
         {/* --- Facilities Section (TEAL) --- */}
         {place.facilities && place.facilities.length > 0 && (
-          <div className="mt-6 **sm:mt-4** p-6 **sm:p-3** border bg-card">
-            <h2 className="text-xl **sm:text-lg** font-semibold mb-4 **sm:mb-2**">Facilities (Rentable Spaces)</h2>
-            <div className="flex flex-wrap gap-2 **sm:gap-1**">
+          <div className="mt-6 sm:mt-4 p-6 sm:p-3 border bg-card">
+            <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-2">Facilities (Rentable Spaces)</h2>
+            <div className="flex flex-wrap gap-2 sm:gap-1">
               {place.facilities.map((facility: Facility, idx: number) => (
                 // Facilities Badge TEAL
                 <div 
                   key={idx} 
-                  className="px-4 py-2 **sm:px-3 sm:py-1** text-primary-foreground rounded-full text-sm **sm:text-xs** flex items-center gap-2 **sm:gap-1**"
+                  className="px-4 py-2 sm:px-3 sm:py-1 text-primary-foreground rounded-full text-sm sm:text-xs flex items-center gap-2 sm:gap-1"
                   style={{ backgroundColor: TEAL_COLOR }} 
                 >
                   <span className="font-medium">{facility.name}</span>
@@ -397,14 +400,14 @@ const AdventurePlaceDetail = () => {
 
         {/* --- Activities Section (ORANGE) --- */}
         {place.activities && place.activities.length > 0 && (
-          <div className="mt-6 **sm:mt-4** p-6 **sm:p-3** border bg-card">
-            <h2 className="text-xl **sm:text-lg** font-semibold mb-4 **sm:mb-2**">Activities (Bookable Experiences)</h2>
-            <div className="flex flex-wrap gap-2 **sm:gap-1**">
+          <div className="mt-6 sm:mt-4 p-6 sm:p-3 border bg-card">
+            <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-2">Activities (Bookable Experiences)</h2>
+            <div className="flex flex-wrap gap-2 sm:gap-1">
               {place.activities.map((activity: Activity, idx: number) => (
                 // Activities Badge Orange
                 <div 
                   key={idx} 
-                  className="px-4 py-2 **sm:px-3 sm:py-1** text-primary-foreground rounded-full text-sm **sm:text-xs** flex items-center gap-2 **sm:gap-1**"
+                  className="px-4 py-2 sm:px-3 sm:py-1 text-primary-foreground rounded-full text-sm sm:text-xs flex items-center gap-2 sm:gap-1"
                   style={{ backgroundColor: ORANGE_COLOR }}
                 >
                   <span className="font-medium">{activity.name}</span>
@@ -417,11 +420,11 @@ const AdventurePlaceDetail = () => {
 
         {/* --- Contact Information Section --- */}
         {(place.phone_numbers || place.email) && (
-          <div className="mt-6 **sm:mt-4** p-6 **sm:p-3** border bg-card">
-            <h2 className="text-xl **sm:text-lg** font-semibold mb-3 **sm:mb-2**">Contact Information</h2>
-            <div className="space-y-2 **sm:space-y-1**">
+          <div className="mt-6 sm:mt-4 p-6 sm:p-3 border bg-card">
+            <h2 className="text-xl sm:text-lg font-semibold mb-3 sm:mb-2">Contact Information</h2>
+            <div className="space-y-2 sm:space-y-1">
               {place.phone_numbers?.map((phone, idx) => (
-                <p key={idx} className="flex items-center gap-2 **sm:text-sm**">
+                <p key={idx} className="flex items-center gap-2 sm:text-sm">
                   {/* Phone Icon Teal */}
                   <Phone className="h-4 w-4" style={{ color: TEAL_COLOR }} />
                   {/* Phone Link Teal */}
@@ -429,7 +432,7 @@ const AdventurePlaceDetail = () => {
                 </p>
               ))}
               {place.email && (
-                <p className="flex items-center gap-2 **sm:text-sm**">
+                <p className="flex items-center gap-2 sm:text-sm">
                   {/* Mail Icon Teal */}
                   <Mail className="h-4 w-4" style={{ color: TEAL_COLOR }} />
                   {/* Mail Link Teal */}
@@ -441,7 +444,7 @@ const AdventurePlaceDetail = () => {
         )}
 
         {/* --- Review Section --- */}
-        <div className="mt-6 **sm:mt-4**">
+        <div className="mt-6 sm:mt-4">
           <ReviewSection itemId={place.id} itemType="adventure_place" />
         </div>
 
