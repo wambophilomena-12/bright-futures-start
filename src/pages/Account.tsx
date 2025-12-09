@@ -6,7 +6,7 @@ import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { ChevronRight, User, Briefcase, CreditCard, Shield, LogOut, UserCog, Users, ArrowLeft, Receipt } from "lucide-react";
+import { ChevronRight, User, Briefcase, CreditCard, Shield, LogOut, UserCog, Users, ArrowLeft, Receipt, CalendarCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
@@ -127,6 +127,12 @@ export default function Account() {
       icon: Shield,
       label: "Set Referral Commission",
       path: "/admin/referral-settings",
+      show: userRole === "admin",
+    },
+    {
+      icon: CalendarCheck,
+      label: "All Bookings",
+      path: "/admin/all-bookings",
       show: userRole === "admin",
     },
   ];
