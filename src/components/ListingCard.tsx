@@ -98,16 +98,13 @@ export const ListingCard = ({
     const showTicketsRemaining = type === "TRIP" && availableTickets !== undefined && (availableTickets - (bookedTickets || 0)) < 20;
 
     // --- MODIFICATION: Define a fixed height for the activities container to ensure height consistency ---
-    // The max activity section height is based on the max content (e.g., one line of badges) + padding/margin.
-    // Let's use Tailwind's h-6 (1.5rem / 24px) to reserve space for activities (or h-8 for a safer two lines).
-    // Using h-6 looks appropriate for a single row of small badges.
-    const activityContainerClass = "h-6 md:h-7"; // Adjusted for potential one line of badges + padding
+    const activityContainerClass = "h-6 md:h-7";
 
     return (
         <Card
             onClick={handleCardClick}
             className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border rounded-lg bg-card shadow-sm
-                       w-full"
+                        w-full"
         >
             <div className="relative overflow-hidden m-0" style={{ paddingBottom: '65%' }}>
                 <img
@@ -122,7 +119,7 @@ export const ListingCard = ({
                     decoding="async"
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 m-0 p-0"
                 />
-               
+                
                 {/* Category Badges use Teal BG (0, 128, 128) */}
                 {type === "TRIP" && (
                     <Badge className={cn("absolute top-2 left-2 backdrop-blur text-xs font-bold z-10 px-2 py-1", tealBgClass)}>
@@ -164,7 +161,8 @@ export const ListingCard = ({
                     </Button>
                 )}
 
-                {/* Price as a Red Button (from previous request) */}
+                {/* --- START OF REMOVALS --- */}
+                {/* // Removed the Price Button over the image: 
                 {!hidePrice && price !== undefined && (type === "TRIP" || type === "EVENT") && (
                     <Button
                         className="absolute bottom-2 left-2 bg-[rgb(200,0,0)] hover:bg-[rgb(255,0,0)] text-primary-foreground px-3 py-1.5 md:px-2 md:py-1 rounded-md shadow-lg z-10 h-auto"
@@ -175,7 +173,9 @@ export const ListingCard = ({
                         </p>
                     </Button>
                 )}
+                */}
 
+                {/* // Removed the Date/Custom Date overlay: 
                 {(date || isCustomDate) && (
                     <div className="absolute bottom-2 right-2 bg-background/90 backdrop-blur text-foreground px-2 py-1 rounded-md shadow-md z-10">
                         <p className="text-xs font-semibold">
@@ -183,13 +183,16 @@ export const ListingCard = ({
                         </p>
                     </div>
                 )}
+                */}
+                {/* --- END OF REMOVALS --- */}
+
             </div>
-           
+            
             <div className="p-2 md:p-4 flex flex-col space-y-1 md:space-y-2">
                 <h3 className="font-bold text-xs md:text-base line-clamp-2">
                     {name}
                 </h3>
-               
+                
                 <div className="flex items-center gap-1">
                     {/* MapPin Icon Color now uses custom Teal (0, 128, 128) */}
                     <MapPin className={cn("h-3 w-3 flex-shrink-0", tealTextClass)} />
@@ -198,7 +201,7 @@ export const ListingCard = ({
                     </p>
                 </div>
 
-                {/* Price and Date Info for Trips/Events - displayed prominently */}
+                {/* Price and Date Info for Trips/Events - now only displayed here */}
                 {(type === "TRIP" || type === "EVENT") && (
                     <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/50">
                         {!hidePrice && price !== undefined && price > 0 && (
@@ -232,7 +235,7 @@ export const ListingCard = ({
                         ))
                     )}
                 </div>
-               
+                
                 {showTicketsRemaining && (
                     <div className="flex items-center justify-between pt-1 border-t border-border/50">
                         <p className="text-xs md:text-sm font-medium text-muted-foreground">
