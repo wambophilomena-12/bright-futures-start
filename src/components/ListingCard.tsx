@@ -27,6 +27,7 @@ interface ListingCardProps {
     priority?: boolean;
     minimalDisplay?: boolean; // Only show name and location
     hideEmptySpace?: boolean; // Hide space when no content to display
+    compact?: boolean; // Smaller height, hide location
 }
 
 export const ListingCard = ({
@@ -50,6 +51,7 @@ export const ListingCard = ({
     priority = false,
     minimalDisplay = false,
     hideEmptySpace = false,
+    compact = false,
 }: ListingCardProps) => {
 
     // Extract activity names from activities array
@@ -114,9 +116,10 @@ export const ListingCard = ({
     return (
         <Card
             onClick={handleCardClick}
-            // MODIFIED: Added flex and h-full to the card itself, along with fixed height classes
-            className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border rounded-lg bg-card shadow-sm
-                        w-full flex flex-col h-[280px] sm:h-[300px] lg:h-[320px]" 
+            className={cn(
+                "group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border rounded-lg bg-card shadow-sm w-full flex flex-col",
+                compact ? "h-[180px] sm:h-[200px]" : "h-[280px] sm:h-[300px] lg:h-[320px]"
+            )}
         >
             {/* Image Container */}
             <div className="relative overflow-hidden m-0" style={{ paddingBottom: '65%' }}>
@@ -181,14 +184,15 @@ export const ListingCard = ({
                     {name}
                 </h3>
                 
-                {/* Location - Placed below Name */}
-                <div className="flex items-center gap-1">
-                    {/* MapPin Icon Color now uses custom Teal (0, 128, 128) */}
-                    <MapPin className={cn("h-3 w-3 flex-shrink-0", tealTextClass)} />
-                    <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1">
-                        {location}, {country}
-                    </p>
-                </div>
+                {/* Location - Placed below Name, hidden in compact mode */}
+                {!compact && (
+                    <div className="flex items-center gap-1">
+                        <MapPin className={cn("h-3 w-3 flex-shrink-0", tealTextClass)} />
+                        <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1">
+                            {location}, {country}
+                        </p>
+                    </div>
+                )}
 
                 {/* --- Activities Section for NON-TRIP/EVENT types --- */}
                 {!minimalDisplay && !isTripOrEvent && activityNames.length > 0 && (
