@@ -135,13 +135,13 @@ export const ListingCard = ({
                     {name}
                 </h3>
                 
-                {/* Location - Placed below Name, hidden in compact mode */}
-                {!compact && <div className="flex items-center gap-1">
-                        <MapPin className={cn("h-3 w-3 flex-shrink-0", tealTextClass)} />
-                        <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1">
-                            {location}, {country}
-                        </p>
-                    </div>}
+                {/* Location - Placed below Name */}
+                <div className="flex items-center gap-1">
+                    <MapPin className={cn("h-3 w-3 flex-shrink-0", tealTextClass)} />
+                    <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1">
+                        {location}, {country}
+                    </p>
+                </div>
 
                 {/* --- Activities Section for NON-TRIP/EVENT types --- */}
                 {!minimalDisplay && !isTripOrEvent && activityNames.length > 0 && <div className="flex-wrap gap-0.5 md:gap-1 pt-0.5 md:pt-1 flex-1 min-h-0 overflow-hidden flex items-start justify-start">
