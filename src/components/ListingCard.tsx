@@ -25,6 +25,8 @@ interface ListingCardProps {
     bookedTickets?: number;
     showBadge?: boolean;
     priority?: boolean;
+    minimalDisplay?: boolean; // Only show name and location
+    hideEmptySpace?: boolean; // Hide space when no content to display
 }
 
 export const ListingCard = ({
@@ -46,6 +48,8 @@ export const ListingCard = ({
     bookedTickets,
     showBadge = false,
     priority = false,
+    minimalDisplay = false,
+    hideEmptySpace = false,
 }: ListingCardProps) => {
 
     // Extract activity names from activities array
@@ -187,8 +191,9 @@ export const ListingCard = ({
                 </div>
 
                 {/* --- Activities/Amenities/Warning Section Wrapper --- */}
-                {/* This section is set to automatically take up the remaining space using flex-grow/flex-1 */}
-                <div className="flex-1 min-h-0 overflow-hidden"> 
+                {/* Hide if minimalDisplay is true */}
+                {!minimalDisplay && (
+                <div className={`flex-1 min-h-0 overflow-hidden ${hideEmptySpace && !isTripOrEvent && activityNames.length === 0 ? 'hidden' : ''}`}> 
                     
                     {/* --- Activities Section for NON-TRIP/EVENT types --- */}
                     {/* Only render if NOT Trip/Event AND activities exist. */}
@@ -208,7 +213,7 @@ export const ListingCard = ({
                     {/* --- New Section for "Few slots remaining" for TRIP/EVENT types --- */}
                     {isTripOrEvent && (
                          // MODIFIED: Use `h-full` when few slots are remaining, otherwise set a small fixed height to ensure it doesn't disappear.
-                        <div className={cn("pt-1 h-6 transition-opacity", fewSlotsRemaining ? "opacity-100" : "opacity-0")}>
+                        <div className={cn("pt-1 h-6 transition-opacity", fewSlotsRemaining ? "opacity-100" : "opacity-0", hideEmptySpace && !fewSlotsRemaining ? "hidden" : "")}>
                             {fewSlotsRemaining && (
                                 <span className="text-xs md:text-sm font-semibold text-destructive px-2 py-1 bg-destructive/10 rounded-sm">
                                     Few slots remaining!
@@ -218,12 +223,13 @@ export const ListingCard = ({
                     )}
 
                 </div>
+                )}
                 {/* ------------------------------------------------------------------ */}
                 
-                {/* Price and Date Info for Trips/Events - Only render for these types */}
+                {/* Price and Date Info for Trips/Events - Only render for these types and not in minimal mode */}
                 {/* MODIFIED: Added mt-auto to push this section to the bottom */}
-                {isTripOrEvent && (
-                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/50 mt-auto"> 
+                {isTripOrEvent && !minimalDisplay && (
+                    <div className={`flex flex-wrap items-center gap-2 pt-1 border-t border-border/50 mt-auto ${hideEmptySpace && hidePrice && !date ? 'hidden' : ''}`}> 
                         {!hidePrice && price !== undefined && price > 0 && (
                             <span className="text-[10px] md:text-xs font-bold text-[rgb(200,0,0)]">
                                 KSh {price.toLocaleString()}

@@ -291,14 +291,13 @@ const Saved = () => {
                 <ListingCard
                   id={item.id}
                   type={item.savedType.replace("_", " ").toUpperCase() as any}
-                  name={item.name}
-                  imageUrl={item.image_url}
-                  location={item.location}
+                  name={item.name || item.local_name || item.location_name}
+                  imageUrl={item.image_url || item.photo_urls?.[0] || ""}
+                  location={item.location || item.location_name}
                   country={item.country}
-                  price={item.price}
-                  date={item.date}
                   onSave={() => handleSave(item.id, item.savedType)}
                   isSaved={true}
+                  minimalDisplay={true}
                 />
               </div>
             ))}

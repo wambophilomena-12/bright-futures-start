@@ -375,6 +375,7 @@ const CategoryDetail = () => {
                 amenities={item.amenities}
                 activities={item.activities}
                 showBadge={false}
+                hideEmptySpace={true}
               />
             )})
           )}

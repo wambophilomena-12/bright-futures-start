@@ -743,7 +743,7 @@ const Index = () => {
                             Near You
                         </h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                            {loadingNearby ? [...Array(12)].map((_, i) => <ListingSkeleton key={i} />) : nearbyPlacesHotels.length > 0 ? nearbyPlacesHotels.map(item => <ListingCard key={item.id} id={item.id} type={item.type} name={item.name} imageUrl={item.image_url} location={item.location} country={item.country} price={item.type === "HOTEL" ? 0 : item.entry_fee || item.price_adult || 0} onSave={handleSave} isSaved={savedItems.has(item.id)} hidePrice={true} showBadge={true} />) : <p className="col-span-full text-muted-foreground text-center">No nearby places found</p>}
+                            {loadingNearby ? [...Array(12)].map((_, i) => <ListingSkeleton key={i} />) : nearbyPlacesHotels.length > 0 ? nearbyPlacesHotels.map(item => <ListingCard key={item.id} id={item.id} type={item.type} name={item.name} imageUrl={item.image_url} location={item.location} country={item.country} price={0} onSave={handleSave} isSaved={savedItems.has(item.id)} hidePrice={true} showBadge={true} minimalDisplay={true} />) : <p className="col-span-full text-muted-foreground text-center">No nearby places found</p>}
                         </div>
                     </section>
 
