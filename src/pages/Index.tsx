@@ -713,17 +713,6 @@ const Index = () => {
                         </div>
                     </section>
 
-                    <hr className="border-t border-gray-200 my-4 md:my-8" />
-
-                    {/* Nearby Places/Hotels */}
-                    <section className="mb-8">
-                        <h2 className="text-sm md:text-2xl font-bold mb-4 whitespace-nowrap overflow-hidden text-ellipsis">
-                            Near You
-                        </h2>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                            {loadingNearby ? [...Array(12)].map((_, i) => <ListingSkeleton key={i} />) : nearbyPlacesHotels.length > 0 ? nearbyPlacesHotels.map(item => <ListingCard key={item.id} id={item.id} type={item.type} name={item.name} imageUrl={item.image_url} location={item.location} country={item.country} price={0} onSave={handleSave} isSaved={savedItems.has(item.id)} hidePrice={true} showBadge={true} minimalDisplay={true} compact={true} />) : <p className="col-span-full text-muted-foreground text-center">No nearby places found</p>}
-                        </div>
-                    </section>
 
                     {/* Vlogs Section */}
                     <section className="mb-8">
