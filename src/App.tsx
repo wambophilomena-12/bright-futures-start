@@ -60,6 +60,8 @@ import VerificationDetail from "./pages/admin/VerificationDetail";
 import PaymentHistory from "./pages/PaymentHistory";
 import Install from "./pages/Install";
 import AllBookings from "./pages/admin/AllBookings";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -128,6 +130,8 @@ const App = () => (
               <Route path="/install" element={<Install />} />
               <Route path="/host-bookings" element={<HostBookings />} />
               <Route path="/host-bookings/:itemType/:id" element={<HostBookingDetails />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

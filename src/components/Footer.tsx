@@ -149,6 +149,14 @@ export const Footer = ({
         </div>
         
         <div className="border-t border-gray-300 mt-8 pt-6 text-center text-sm text-gray-600">
+          <div className="flex justify-center gap-6 mb-3">
+            <Link to="/terms-of-service" className="hover:text-blue-600 transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/privacy-policy" className="hover:text-blue-600 transition-colors">
+              Privacy Policy
+            </Link>
+          </div>
           <p>© 2025 TripTrac. All rights reserved.</p>
         </div>
       </div>

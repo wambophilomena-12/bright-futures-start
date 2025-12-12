@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Bell } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Bell, Shield, FileText } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -11,10 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface Notification {
   id: string;
@@ -26,6 +27,9 @@ interface Notification {
   created_at: string;
 }
 
+// Notification sound URL (using a free notification sound)
+const NOTIFICATION_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
+
 export const NotificationBell = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -33,10 +37,42 @@ export const NotificationBell = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const previousUnreadCountRef = useRef<number>(0);
+
+  // Initialize audio element
+  useEffect(() => {
+    audioRef.current = new Audio(NOTIFICATION_SOUND_URL);
+    audioRef.current.volume = 0.5;
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Play notification sound
+  const playNotificationSound = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(console.error);
+    }
+  }, []);
+
+  // Show in-app toast notification
+  const showInAppNotification = useCallback((notification: Notification) => {
+    toast({
+      title: notification.title,
+      description: notification.message,
+    });
+  }, []);
+
   useEffect(() => {
     if (!user) {
       setNotifications([]);
       setUnreadCount(0);
+      previousUnreadCountRef.current = 0;
       return;
     }
 
@@ -48,7 +84,24 @@ export const NotificationBell = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          // Play sound and show toast for new notifications
+          playNotificationSound();
+          if (payload.new) {
+            showInAppNotification(payload.new as Notification);
+          }
+          fetchNotifications();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
           schema: 'public',
           table: 'notifications',
           filter: `user_id=eq.${user.id}`
@@ -62,7 +115,7 @@ export const NotificationBell = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, playNotificationSound, showInAppNotification]);
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -159,7 +212,7 @@ export const NotificationBell = () => {
           </div>
         </SheetHeader>
 
-        <ScrollArea className="h-[calc(100vh-120px)] mt-4">
+        <ScrollArea className="h-[calc(100vh-180px)] mt-4">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bell className="h-12 w-12 text-muted-foreground mb-4" />
@@ -194,6 +247,27 @@ export const NotificationBell = () => {
             </div>
           )}
         </ScrollArea>
+
+        {/* Terms of Service and Privacy Policy */}
+        <Separator className="my-4" />
+        <div className="flex flex-col gap-2 px-2">
+          <Link 
+            to="/terms-of-service" 
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            <FileText className="h-4 w-4" />
+            Terms of Service
+          </Link>
+          <Link 
+            to="/privacy-policy" 
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            <Shield className="h-4 w-4" />
+            Privacy Policy
+          </Link>
+        </div>
       </SheetContent>
     </Sheet>
   );
