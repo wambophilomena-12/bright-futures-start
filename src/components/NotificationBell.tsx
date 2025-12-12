@@ -28,10 +28,6 @@ interface Notification {
 // Notification sound URL (using a free notification sound)
 const NOTIFICATION_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
 
-// Custom Tailwind Classes for Teal (#008080)
-const TEAL_HOVER_10 = 'hover:bg-[#008080]/10'; // Read/Bell hover (lighter)
-const TEAL_BG_20_HOVER_30 = 'bg-[#008080]/20 hover:bg-[#008080]/30'; // Unread background/hover (darker)
-
 export const NotificationBell = () => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -184,7 +180,7 @@ export const NotificationBell = () => {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <button className={`rounded-full h-10 w-10 flex items-center justify-center transition-colors bg-header-foreground/10 ${TEAL_HOVER_10} group relative`}>
+        <button className="rounded-full h-10 w-10 flex items-center justify-center transition-colors bg-header-foreground/10 hover:bg-header-foreground group relative">
           <Bell className="h-5 w-5 text-header-foreground group-hover:text-header" />
           {unreadCount > 0 && (
             <Badge
@@ -227,8 +223,8 @@ export const NotificationBell = () => {
                   onClick={() => handleNotificationClick(notification)}
                   className={`w-full text-left p-4 rounded-lg border transition-colors ${
                     notification.is_read
-                      ? `bg-background ${TEAL_HOVER_10}` // Read state: background with teal hover
-                      : TEAL_BG_20_HOVER_30 // Unread state: teal background with darker teal hover
+                      ? 'bg-background hover:bg-header/10'
+                      : 'bg-header/20 hover:bg-header/30'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
