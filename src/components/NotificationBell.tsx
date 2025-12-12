@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Bell, Shield, FileText } from "lucide-react";
+import { Bell } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -11,11 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 
 interface Notification {
   id: string;
@@ -32,7 +30,6 @@ const NOTIFICATION_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/2869
 
 export const NotificationBell = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -247,27 +244,6 @@ export const NotificationBell = () => {
             </div>
           )}
         </ScrollArea>
-
-        {/* Terms of Service and Privacy Policy */}
-        <Separator className="my-4" />
-        <div className="flex flex-col gap-2 px-2">
-          <Link 
-            to="/terms-of-service" 
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            <FileText className="h-4 w-4" />
-            Terms of Service
-          </Link>
-          <Link 
-            to="/privacy-policy" 
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            <Shield className="h-4 w-4" />
-            Privacy Policy
-          </Link>
-        </div>
       </SheetContent>
     </Sheet>
   );
