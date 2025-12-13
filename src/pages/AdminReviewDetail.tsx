@@ -471,48 +471,58 @@ const AdminReviewDetail = () => {
                 <User className="h-5 w-5" />
                 Creator Details
               </h3>
-              <div className="space-y-3">
-                {creator?.name && (
-                  <div>
-                    <p className="text-sm font-medium">Name</p>
-                    <p className="text-sm text-muted-foreground">{creator.name}</p>
-                  </div>
-                )}
-                {creator?.email && (
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a href={`mailto:${creator.email}`} className="text-sm hover:underline">
-                      {creator.email}
-                    </a>
-                  </div>
-                )}
-                {creator?.phone_number && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <a href={`tel:${creator.phone_number}`} className="text-sm hover:underline">
-                      {creator.phone_number}
-                    </a>
-                  </div>
-                )}
-                {creator?.country && (
-                  <div>
-                    <p className="text-sm font-medium">Country</p>
-                    <p className="text-sm text-muted-foreground">{creator.country}</p>
-                  </div>
-                )}
-                {creator?.gender && (
-                  <div>
-                    <p className="text-sm font-medium">Gender</p>
-                    <p className="text-sm text-muted-foreground capitalize">{creator.gender}</p>
-                  </div>
-                )}
-                {creator?.date_of_birth && (
-                  <div>
-                    <p className="text-sm font-medium">Date of Birth</p>
-                    <p className="text-sm text-muted-foreground">{new Date(creator.date_of_birth).toLocaleDateString()}</p>
-                  </div>
-                )}
-              </div>
+              {creator ? (
+                <div className="space-y-3">
+                  {creator?.name && (
+                    <div>
+                      <p className="text-sm font-medium">Name</p>
+                      <p className="text-sm text-muted-foreground">{creator.name}</p>
+                    </div>
+                  )}
+                  {creator?.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <a href={`mailto:${creator.email}`} className="text-sm hover:underline">
+                        {creator.email}
+                      </a>
+                    </div>
+                  )}
+                  {creator?.phone_number && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <a href={`tel:${creator.phone_number}`} className="text-sm hover:underline">
+                        {creator.phone_number}
+                      </a>
+                    </div>
+                  )}
+                  {creator?.country && (
+                    <div>
+                      <p className="text-sm font-medium">Country</p>
+                      <p className="text-sm text-muted-foreground">{creator.country}</p>
+                    </div>
+                  )}
+                  {creator?.gender && (
+                    <div>
+                      <p className="text-sm font-medium">Gender</p>
+                      <p className="text-sm text-muted-foreground capitalize">{creator.gender}</p>
+                    </div>
+                  )}
+                  {creator?.date_of_birth && (
+                    <div>
+                      <p className="text-sm font-medium">Date of Birth</p>
+                      <p className="text-sm text-muted-foreground">{new Date(creator.date_of_birth).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  {item.created_by ? (
+                    <p>Creator profile not found (ID: {item.created_by.substring(0, 8)}...)</p>
+                  ) : (
+                    <p>No creator information available</p>
+                  )}
+                </div>
+              )}
             </Card>
 
             {/* Contact Information */}
