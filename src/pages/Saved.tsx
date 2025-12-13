@@ -191,9 +191,7 @@ const Saved = () => {
       <Header />
       
       <main className="container px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">Saved Items</h1>
-          
+        <div className="flex items-center justify-between mb-8">          
           {savedListings.length > 0 && (
             <div className="flex gap-2">
               {!isSelectionMode ? (
