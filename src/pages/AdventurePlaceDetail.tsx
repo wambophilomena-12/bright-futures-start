@@ -19,6 +19,7 @@ import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiSte
 import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
+import { useGeolocation } from "@/hooks/useGeolocation";
 
 // Define the specific colors
 const TEAL_COLOR = "#008080"; // Icons, Links, Book Button, and now FACILITIES
@@ -61,6 +62,7 @@ const AdventurePlaceDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { position } = useGeolocation();
   const [place, setPlace] = useState<AdventurePlace | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookingOpen, setBookingOpen] = useState(false);

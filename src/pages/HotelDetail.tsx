@@ -20,6 +20,7 @@ import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiSte
 import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
+import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 
 interface Facility {
   name: string;
@@ -62,19 +63,20 @@ const ORANGE_COLOR = "#FF9800";
 const RED_COLOR = "#EF4444"; 
 
 const HotelDetail = () => {
-  const { slug } = useParams();
-  const id = slug ? extractIdFromSlug(slug) : null;
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const [hotel, setHotel] = useState<Hotel | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const { savedItems, handleSave: handleSaveItem } = useSavedItems();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const isSaved = savedItems.has(id || "");
+  const { slug } = useParams();
+  const id = slug ? extractIdFromSlug(slug) : null;
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const { position } = useGeolocation();
+  const [hotel, setHotel] = useState<Hotel | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const { savedItems, handleSave: handleSaveItem } = useSavedItems();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const isSaved = savedItems.has(id || "");
 
   useEffect(() => {
     fetchHotel();
@@ -295,11 +297,11 @@ const HotelDetail = () => {
               {hotel.local_name && (
                 <p className="text-lg sm:text-base text-muted-foreground mb-2">"{hotel.local_name}"</p>
               )}
-              <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                {/* MapPin Icon Teal */}
-                <MapPin className="h-4 w-4" style={{ color: TEAL_COLOR }} />
-                <span className="sm:text-sm">{hotel.location}, {hotel.country}</span>
-              </div>
+              <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                {/* MapPin Icon Teal */}
+                <MapPin className="h-4 w-4" style={{ color: TEAL_COLOR }} />
+                <span className="sm:text-sm">{hotel.location}, {hotel.country}</span>
+              </div>
               {hotel.place && (
                 <p className="text-sm text-muted-foreground mb-4 sm:mb-2">Place: {hotel.place}</p>
               )}

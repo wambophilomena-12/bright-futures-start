@@ -20,6 +20,7 @@ import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiSte
 import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
+import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 
 interface Facility {
   name: string;
@@ -33,26 +34,28 @@ interface Activity {
 }
 
 interface Attraction {
-  id: string;
-  location_name: string;
-  local_name: string | null;
-  country: string;
-  photo_urls: string[];
-  gallery_images: string[];
-  description: string;
-  entrance_type: string;
-  price_adult: number;
-  price_child: number;
-  phone_number: string;
-  email: string;
-  facilities: Facility[];
-  activities: Activity[];
-  amenities: string[];
-  opening_hours: string | null;
-  closing_hours: string | null;
-  days_opened: string[] | null;
-  location_link: string | null;
-  created_by: string | null;
+  id: string;
+  location_name: string;
+  local_name: string | null;
+  country: string;
+  photo_urls: string[];
+  gallery_images: string[];
+  description: string;
+  entrance_type: string;
+  price_adult: number;
+  price_child: number;
+  phone_number: string;
+  email: string;
+  facilities: Facility[];
+  activities: Activity[];
+  amenities: string[];
+  opening_hours: string | null;
+  closing_hours: string | null;
+  days_opened: string[] | null;
+  location_link: string | null;
+  created_by: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 // Define the Teal color for repeated use (0,128,128)
@@ -61,20 +64,26 @@ const ORANGE_COLOR = "#FF9800";
 const RED_COLOR = "#EF4444"; // Using a strong red for visibility
 
 const AttractionDetail = () => {
-  const { slug } = useParams();
-  const id = slug ? extractIdFromSlug(slug) : null;
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const [attraction, setAttraction] = useState<Attraction | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const { savedItems, handleSave: handleSaveItem } = useSavedItems();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
-  
-  const isSaved = savedItems.has(id || "");
+  const { slug } = useParams();
+  const id = slug ? extractIdFromSlug(slug) : null;
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const { position } = useGeolocation();
+  const [attraction, setAttraction] = useState<Attraction | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const { savedItems, handleSave: handleSaveItem } = useSavedItems();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
+  
+  // Calculate distance if position and attraction coordinates available
+  const distance = position && attraction?.latitude && attraction?.longitude
+    ? calculateDistance(position.latitude, position.longitude, attraction.latitude, attraction.longitude)
+    : undefined;
+  
+  const isSaved = savedItems.has(id || "");
 
   useEffect(() => {
     fetchAttraction();
@@ -283,11 +292,16 @@ const AttractionDetail = () => {
             <div>
               <h1 className="text-3xl sm:text-2xl font-bold mb-2">{attraction.location_name}</h1>
               {attraction.local_name && <p className="text-xl sm:text-base text-muted-foreground mb-2">{attraction.local_name}</p>}
-              <div className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-2">
-                {/* Location Icon Teal */}
-                <MapPin className="h-4 w-4" style={{ color: TEAL_COLOR }} /> 
-                <span className="sm:text-sm">{attraction.country}</span>
-              </div>
+              <div className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-2">
+                {/* Location Icon Teal */}
+                <MapPin className="h-4 w-4" style={{ color: TEAL_COLOR }} /> 
+                <span className="sm:text-sm">{attraction.country}</span>
+                {distance !== undefined && (
+                  <span className="text-sm font-medium ml-auto" style={{ color: TEAL_COLOR }}>
+                    {distance < 1 ? `${Math.round(distance * 1000)}m away` : `${distance.toFixed(1)}km away`}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Price and Operating Card */}

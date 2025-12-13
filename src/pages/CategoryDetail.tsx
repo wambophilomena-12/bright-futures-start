@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getUserId } from "@/lib/sessionManager";
 import { cn } from "@/lib/utils";
 import { useSavedItems } from "@/hooks/useSavedItems";
+import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 const CategoryDetail = () => {
   const {
     category
@@ -31,6 +32,7 @@ const CategoryDetail = () => {
   const {
     toast
   } = useToast();
+  const { position } = useGeolocation();
   const [isSticky, setIsSticky] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
   const [isSearchVisible, setIsSearchVisible] = useState(true);
@@ -283,7 +285,11 @@ const CategoryDetail = () => {
           const isAttraction = item.table === "attractions";
           const isEvent = item.table === "trips" && (item.type === "event" || category === "events");
           const isTripOrEvent = item.table === "trips";
-          return <ListingCard key={item.id} id={item.id} type={item.table === "trips" ? isEvent ? "EVENT" : "TRIP" : item.table === "hotels" ? "HOTEL" : isAttraction ? "ATTRACTION" : "ADVENTURE PLACE"} name={isAttraction ? item.local_name || item.location_name : item.name} imageUrl={isAttraction ? item.photo_urls?.[0] || "" : item.image_url} location={isAttraction ? item.location_name : item.location} country={item.country} price={isAttraction ? item.price_adult || 0 : item.price || item.entry_fee || 0} date={item.date} isCustomDate={item.is_custom_date} onSave={handleSave} isSaved={savedItems.has(item.id)} amenities={item.amenities} activities={item.activities} showBadge={false} hideEmptySpace={true} />;
+          // Calculate distance for attractions with coordinates
+          const itemDistance = position && isAttraction && item.latitude && item.longitude
+            ? calculateDistance(position.latitude, position.longitude, item.latitude, item.longitude)
+            : undefined;
+          return <ListingCard key={item.id} id={item.id} type={item.table === "trips" ? isEvent ? "EVENT" : "TRIP" : item.table === "hotels" ? "HOTEL" : isAttraction ? "ATTRACTION" : "ADVENTURE PLACE"} name={isAttraction ? item.local_name || item.location_name : item.name} imageUrl={isAttraction ? item.photo_urls?.[0] || "" : item.image_url} location={isAttraction ? item.location_name : item.location} country={item.country} price={isAttraction ? item.price_adult || 0 : item.price || item.entry_fee || 0} date={item.date} isCustomDate={item.is_custom_date} onSave={handleSave} isSaved={savedItems.has(item.id)} amenities={item.amenities} activities={item.activities} showBadge={false} hideEmptySpace={true} distance={itemDistance} />;
         })}
         </div>
       </main>
