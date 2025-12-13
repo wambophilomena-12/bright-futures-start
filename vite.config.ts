@@ -27,6 +27,11 @@ export default defineConfig(({ mode }) => ({
         theme_color: '#008080',
         background_color: '#008080',
         display: 'standalone',
+        display_override: ['standalone', 'minimal-ui'],
+        start_url: '/',
+        scope: '/',
+        orientation: 'portrait-primary',
+        prefer_related_applications: false,
         icons: [
           {
             src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" fill="%23008080"/><text x="96" y="130" font-size="120" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-weight="bold">T</text></svg>',
