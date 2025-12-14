@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn, optimizeSupabaseImage } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { createDetailPath } from "@/lib/slugUtils";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 
 interface ListingCardProps {
   id: string;
@@ -58,6 +59,15 @@ export const ListingCard = ({
 }: ListingCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  
+  // Use intersection observer for lazy loading - load when 200px before entering viewport
+  const { ref: imageContainerRef, isIntersecting } = useIntersectionObserver({
+    rootMargin: '200px',
+    triggerOnce: true,
+  });
+
+  // For priority images, always load immediately
+  const shouldLoadImage = priority || isIntersecting;
 
   const getActivityNames = (activities: any[] | undefined): string[] => {
     if (!activities || !Array.isArray(activities)) return [];
@@ -111,29 +121,30 @@ export const ListingCard = ({
   });
 
   return <Card onClick={handleCardClick} className={cn("group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border rounded-lg bg-card shadow-sm w-full flex flex-col", compact ? "h-auto" : "h-auto")}>
-            {/* Image Container with skeleton */}
-            <div className="relative overflow-hidden m-0 bg-muted" style={{ paddingBottom: '50%' }}>
-                {/* Skeleton placeholder */}
-                {!imageLoaded && !imageError && (
+            {/* Image Container with intersection observer */}
+            <div ref={imageContainerRef} className="relative overflow-hidden m-0 bg-muted" style={{ paddingBottom: '50%' }}>
+                {/* Skeleton placeholder - show when not loading or image not loaded */}
+                {(!shouldLoadImage || (!imageLoaded && !imageError)) && (
                     <div className="absolute inset-0 bg-muted animate-pulse" />
                 )}
                 
-                {/* Actual image */}
-                <img 
-                  src={optimizedImageUrl}
-                  alt={name} 
-                  width={320} 
-                  height={200} 
-                  loading={priority ? "eager" : "lazy"} 
-                  fetchPriority={priority ? "high" : "auto"} 
-                  decoding="async"
-                  onLoad={() => setImageLoaded(true)}
-                  onError={() => setImageError(true)}
-                  className={cn(
-                    "absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-all duration-500 m-0 p-0",
-                    imageLoaded ? "opacity-100" : "opacity-0"
-                  )} 
-                />
+                {/* Actual image - only render when in viewport */}
+                {shouldLoadImage && (
+                  <img 
+                    src={optimizedImageUrl}
+                    alt={name} 
+                    width={320} 
+                    height={200} 
+                    loading="lazy"
+                    decoding="async"
+                    onLoad={() => setImageLoaded(true)}
+                    onError={() => setImageError(true)}
+                    className={cn(
+                      "absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-all duration-300 m-0 p-0",
+                      imageLoaded ? "opacity-100" : "opacity-0"
+                    )} 
+                  />
+                )}
                 
                 {/* Error fallback */}
                 {imageError && (
