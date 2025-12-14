@@ -528,7 +528,7 @@ const Index = () => {
                 <div className={`px-4 ${isSearchFocused ? 'hidden' : ''}`}>
                     {/* Near You / Latest - Show nearby items if location is on, otherwise show latest */}
                     <section className="mb-2 md:mb-6">
-                        <div className="mb-1.5 md:mb-3 mt-1 md:mt-0 flex items-start justify-between">
+                        <div className="mb-1.5 md:mb-3 mt-1 md:mt-0 px-0 mx-[10px] items-end justify-between flex flex-row my-[5px]">
                             <h2 className="text-xs md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
                                 {searchQuery ? 'Search Results' : position ? 'Near You' : 'Latest'}
                             </h2>
