@@ -131,16 +131,16 @@ export const ListingCard = ({
                     </Button>}
             </div>
             
-            {/* Content Area - MODIFIED: Added flex-1 to make it take up remaining space */}
+            {/* Content Area */}
             <div className="p-2 md:p-4 flex flex-col space-y-1 md:space-y-2 flex-1"> 
-                <h3 className="font-bold text-xs md:text-base line-clamp-2 py-[5px] my-px">
+                <h3 className="font-bold text-xs md:text-base line-clamp-2">
                     {name}
                 </h3>
                 
-                {/* Location and Distance - Placed below Name */}
+                {/* Location - Always visible */}
                 <div className="flex items-center gap-1 flex-wrap">
                     <MapPin className={cn("h-3 w-3 flex-shrink-0", tealTextClass)} />
-                    <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1">
+                    <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1 flex-1">
                         {location}
                     </p>
                     {/* Distance inline for non-trip/event types */}
@@ -151,9 +151,9 @@ export const ListingCard = ({
                     )}
                 </div>
 
-                {/* --- Activities Section for NON-TRIP/EVENT types --- */}
-                {!minimalDisplay && !isTripOrEvent && activityNames.length > 0 && (
-                    <div className="flex flex-wrap gap-0.5 md:gap-1 pt-0.5 md:pt-1 flex-1 min-h-0 overflow-hidden items-start justify-start">
+                {/* Activities Section - Always visible when activities exist */}
+                {activityNames.length > 0 && (
+                    <div className="flex flex-wrap gap-0.5 md:gap-1 flex-1 min-h-0 overflow-hidden items-start justify-start">
                         {activityNames.slice(0, 3).map((activity, index) => (
                             <span key={index} className={cn("text-[7px] md:text-[10px] px-1 md:px-1.5 py-0.5 rounded-full bg-muted", tealTextClass)}>
                                 {activity}
