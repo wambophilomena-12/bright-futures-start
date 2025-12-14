@@ -113,19 +113,16 @@ export const ListingCard = ({
   const fewSlotsRemaining = (type === "TRIP" || type === "EVENT") && remainingTickets !== undefined && remainingTickets > 0 && remainingTickets <= 20;
   const isTripOrEvent = type === "TRIP" || type === "EVENT";
 
-  // Optimized image URL - adjusted height for a taller card image (4:3 aspect ratio)
+  // Optimized image URL - smaller size for faster loading
   const optimizedImageUrl = optimizeSupabaseImage(imageUrl, {
     width: 320,
-    height: 240, // Adjusted from 200 to 240
+    height: 200,
     quality: 70
   });
 
-  return <Card onClick={handleCardClick} className={cn(
-        "group overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer border rounded-xl bg-card shadow-lg w-full flex flex-col min-h-[400px] h-full", // Card is now bigger and has a stronger hover effect
-        compact ? "h-auto" : "h-full"
-    )}>
+  return <Card onClick={handleCardClick} className={cn("group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border rounded-lg bg-card shadow-sm w-full flex flex-col", compact ? "h-auto" : "h-auto")}>
             {/* Image Container with intersection observer */}
-            <div ref={imageContainerRef} className="relative overflow-hidden m-0 bg-muted" style={{ paddingBottom: '75%' }}> {/* CHANGED: Increased paddingBottom from 50% to 75% for a taller image */}
+            <div ref={imageContainerRef} className="relative overflow-hidden m-0 bg-muted" style={{ paddingBottom: '50%' }}>
                 {/* Skeleton placeholder - show when not loading or image not loaded */}
                 {(!shouldLoadImage || (!imageLoaded && !imageError)) && (
                     <div className="absolute inset-0 bg-muted animate-pulse" />
@@ -137,7 +134,7 @@ export const ListingCard = ({
                     src={optimizedImageUrl}
                     alt={name} 
                     width={320} 
-                    height={240} // Adjusted to match optimizedImageUrl
+                    height={200} 
                     loading="lazy"
                     decoding="async"
                     onLoad={() => setImageLoaded(true)}
