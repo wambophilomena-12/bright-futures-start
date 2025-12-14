@@ -375,8 +375,8 @@ const Bookings = () => {
         const { data } = await supabase.from('adventure_places').select('created_by').eq('id', bookingToCancel.item_id).single();
         creatorId = data?.created_by;
       } else if (bookingToCancel.booking_type === 'attraction') {
-        const { data } = await supabase.from('attractions').select('created_by').eq('id', bookingToCancel.item_id).single();
-        creatorId = data?.created_by;
+        // Attractions table doesn't exist - skip
+        creatorId = null;
       }
 
       if (creatorId) {

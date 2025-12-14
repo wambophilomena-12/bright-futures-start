@@ -117,11 +117,20 @@ const EditListing = () => {
 
   const fetchListing = async () => {
     try {
-      let table: "hotels" | "adventure_places" | "trips" | "attractions" = "hotels";
+      let table: "hotels" | "adventure_places" | "trips" = "hotels";
       if (type === "hotel") table = "hotels";
       else if (type === "adventure") table = "adventure_places";
       else if (type === "trip") table = "trips";
-      else if (type === "attraction") table = "attractions";
+      else if (type === "attraction") {
+        // Attractions table doesn't exist
+        toast({
+          title: "Not Supported",
+          description: "Attractions are not supported",
+          variant: "destructive",
+        });
+        navigate("/become-host");
+        return;
+      }
 
       const { data, error } = await supabase
         .from(table)
@@ -382,11 +391,20 @@ const EditListing = () => {
   const handleSaveField = async (field: string) => {
     setSaving(true);
     try {
-      let table: "hotels" | "adventure_places" | "trips" | "attractions" = "hotels";
+      let table: "hotels" | "adventure_places" | "trips" = "hotels";
       if (type === "hotel") table = "hotels";
       else if (type === "adventure") table = "adventure_places";
       else if (type === "trip") table = "trips";
-      else if (type === "attraction") table = "attractions";
+      else if (type === "attraction") {
+        // Attractions table doesn't exist
+        toast({
+          title: "Not Supported",
+          description: "Attractions are not supported",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
 
       let updateData: any = {};
 
@@ -527,22 +545,26 @@ const EditListing = () => {
         return;
       }
 
-      let table: "hotels" | "adventure_places" | "trips" | "attractions" = "hotels";
+      let table: "hotels" | "adventure_places" | "trips" = "hotels";
       if (type === "hotel") table = "hotels";
       else if (type === "adventure") table = "adventure_places";
       else if (type === "trip") table = "trips";
-      else if (type === "attraction") table = "attractions";
+      else if (type === "attraction") {
+        // Attractions table doesn't exist
+        toast({
+          title: "Not Supported",
+          description: "Attractions are not supported",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
 
       let updateData: any = {
         gallery_images: allImages,
+        image_url: allImages[0] || existingImages[0],
+        images: allImages,
       };
-
-      if (type === "attraction") {
-        updateData.photo_urls = allImages;
-      } else {
-        updateData.image_url = allImages[0] || existingImages[0];
-        updateData.images = allImages;
-      }
 
       const { error } = await supabase
         .from(table)

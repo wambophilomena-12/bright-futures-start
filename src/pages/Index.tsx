@@ -259,38 +259,25 @@ const Index = () => {
         type: "EVENT"
       }));
     };
-    const fetchTable = async (table: "hotels" | "adventure_places" | "attractions", type: string) => {
+    const fetchTable = async (table: "hotels" | "adventure_places", type: string) => {
       let dbQuery = supabase.from(table).select("*").eq("approval_status", "approved").eq("is_hidden", false);
       if (query) {
         const searchPattern = `%${query}%`;
-        if (table === "attractions") {
-          dbQuery = dbQuery.or(`location_name.ilike.${searchPattern},country.ilike.${searchPattern}`);
-        } else {
-          dbQuery = dbQuery.or(`name.ilike.${searchPattern},location.ilike.${searchPattern},country.ilike.${searchPattern}`);
-        }
+        dbQuery = dbQuery.or(`name.ilike.${searchPattern},location.ilike.${searchPattern},country.ilike.${searchPattern}`);
       }
       dbQuery = dbQuery.range(offset, offset + limit - 1);
       const {
         data
       } = await dbQuery;
-      if (table === "attractions") {
-        return (data || []).map((item: any) => ({
-          ...item,
-          type,
-          name: item.local_name || item.location_name,
-          location: item.location_name,
-          image_url: item.photo_urls?.[0] || ""
-        }));
-      }
       return (data || []).map((item: any) => ({
         ...item,
         type
       }));
     };
-    const [events, hotels, adventures, attractions] = await Promise.all([fetchEvents(), fetchTable("hotels", "HOTEL"), fetchTable("adventure_places", "ADVENTURE PLACE"), fetchTable("attractions", "ATTRACTION")]);
+    const [events, hotels, adventures] = await Promise.all([fetchEvents(), fetchTable("hotels", "HOTEL"), fetchTable("adventure_places", "ADVENTURE PLACE")]);
 
     // Filter out events and trips from Featured For You section
-    let combined = [...hotels, ...adventures, ...attractions];
+    let combined = [...hotels, ...adventures];
 
     // Fetch booking statistics for events
     const eventIds = events.map((event: any) => event.id);

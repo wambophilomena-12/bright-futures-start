@@ -80,10 +80,14 @@ const AdminReviewDetail = () => {
         if (error) throw error;
         itemData = data;
       } else if (type === "attraction") {
-        tableName = "attractions";
-        const { data, error } = await supabase.from("attractions").select("*").eq("id", id).maybeSingle();
-        if (error) throw error;
-        itemData = data;
+        // Attractions table doesn't exist - redirect
+        toast({
+          title: "Not Found",
+          description: "Attractions are not supported",
+          variant: "destructive",
+        });
+        navigate("/admin");
+        return;
       }
 
       if (!itemData) {

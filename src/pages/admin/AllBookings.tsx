@@ -150,12 +150,8 @@ const AllBookings = () => {
             .single();
           data = adventureData;
         } else if (item.type === "attraction") {
-          const { data: attractionData } = await supabase
-            .from("attractions")
-            .select("location_name")
-            .eq("id", item.id)
-            .single();
-          data = attractionData ? { name: attractionData.location_name } : null;
+          // Attractions table doesn't exist - skip
+          data = null;
         }
 
         if (data) {

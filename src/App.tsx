@@ -57,7 +57,6 @@ const ApprovedItems = lazy(() => import("./pages/admin/ApprovedItems"));
 const RejectedItems = lazy(() => import("./pages/admin/RejectedItems"));
 const CategoryTrips = lazy(() => import("./pages/host/CategoryTrips"));
 const CategoryHotels = lazy(() => import("./pages/host/CategoryHotels"));
-const CategoryAttractions = lazy(() => import("./pages/host/CategoryAttractions"));
 const CategoryExperiences = lazy(() => import("./pages/host/CategoryExperiences"));
 const VerificationList = lazy(() => import("./pages/admin/VerificationList"));
 const VerificationDetail = lazy(() => import("./pages/admin/VerificationDetail"));
@@ -128,7 +127,6 @@ const App = () => {
                     <Route path="/host/bookings/:itemType/:id" element={<HostBookingDetails />} />
                     <Route path="/host/trips" element={<CategoryTrips />} />
                     <Route path="/host/hotels" element={<CategoryHotels />} />
-                    <Route path="/host/attractions" element={<CategoryAttractions />} />
                     <Route path="/host/experiences" element={<CategoryExperiences />} />
                     <Route path="/my-listing" element={<MyListing />} />
                     <Route path="/creator-dashboard" element={<CreatorDashboard />} />
