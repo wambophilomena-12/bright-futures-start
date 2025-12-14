@@ -1,5 +1,59 @@
-// Service Worker for Push Notifications
+// Service Worker for Push Notifications and Image Caching
 
+const CACHE_NAME = 'triptrac-images-v1';
+const IMAGE_CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// Image URL patterns to cache
+const IMAGE_PATTERNS = [
+  /supabase\.co\/storage\/v1\/object\/public\//,
+  /images\.unsplash\.com/,
+];
+
+// Check if URL should be cached
+function shouldCacheImage(url) {
+  return IMAGE_PATTERNS.some(pattern => pattern.test(url));
+}
+
+// Fetch event - intercept image requests
+self.addEventListener('fetch', function(event) {
+  const url = event.request.url;
+  
+  // Only handle image requests
+  if (event.request.destination === 'image' || shouldCacheImage(url)) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(function(cache) {
+        return cache.match(event.request).then(function(cachedResponse) {
+          if (cachedResponse) {
+            // Return cached response and update cache in background
+            event.waitUntil(
+              fetch(event.request).then(function(networkResponse) {
+                if (networkResponse.ok) {
+                  cache.put(event.request, networkResponse.clone());
+                }
+              }).catch(function() {
+                // Network failed, cached response is still valid
+              })
+            );
+            return cachedResponse;
+          }
+          
+          // Not in cache, fetch from network
+          return fetch(event.request).then(function(networkResponse) {
+            if (networkResponse.ok) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(function() {
+            // Return placeholder if offline and no cache
+            return new Response('', { status: 503 });
+          });
+        });
+      })
+    );
+  }
+});
+
+// Push notification handler
 self.addEventListener('push', function(event) {
   if (!event.data) {
     return;
