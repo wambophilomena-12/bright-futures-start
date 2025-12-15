@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { MobileBottomBar } from "@/components/MobileBottomBar";
+// import { Footer } from "@/components/Footer"; // REMOVED
+// import { MobileBottomBar } from "@/components/MobileBottomBar"; // REMOVED
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -116,8 +116,8 @@ const AdminBookings = () => {
         <main className="flex-1 container px-4 py-8">
           <p className="text-center">Loading...</p>
         </main>
-        <Footer />
-        <MobileBottomBar />
+        {/* Footer was here */}
+        {/* MobileBottomBar was here */}
       </div>
     );
   }
@@ -227,8 +227,8 @@ const AdminBookings = () => {
           </div>
         )}
       </main>
-      <Footer />
-      <MobileBottomBar />
+      {/* Footer was here */}
+      {/* MobileBottomBar was here */}
     </div>
   );
 };

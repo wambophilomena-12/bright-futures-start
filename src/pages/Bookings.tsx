@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { MobileBottomBar } from "@/components/MobileBottomBar";
+// import { Footer } from "@/components/Footer"; // REMOVED
+// import { MobileBottomBar } from "@/components/MobileBottomBar"; // REMOVED
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -347,10 +347,10 @@ const Bookings = () => {
 
       // Get item name for notification
       const itemName = bookingToCancel.booking_details.trip_name || 
-                       bookingToCancel.booking_details.event_name || 
-                       bookingToCancel.booking_details.hotel_name ||
-                       bookingToCancel.booking_details.place_name ||
-                       'Your booking';
+                        bookingToCancel.booking_details.event_name || 
+                        bookingToCancel.booking_details.hotel_name ||
+                        bookingToCancel.booking_details.place_name ||
+                        'Your booking';
 
       // Create notification for user
       await supabase.from('notifications').insert({
@@ -405,19 +405,19 @@ const Bookings = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <div className="min-h-screen bg-background"> {/* Removed pb-20 md:pb-0 */}
         <Header />
         <main className="container px-4 py-8">
           <p>Loading...</p>
         </main>
-        <Footer />
-        <MobileBottomBar />
+        {/* <Footer /> - REMOVED */}
+        {/* <MobileBottomBar /> - REMOVED */}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background"> {/* Removed pb-20 md:pb-0 */}
       <Header />
       
       <main className="container px-4 py-8 max-w-4xl mx-auto">
@@ -454,10 +454,10 @@ const Bookings = () => {
 
                     <h3 className="text-xl font-semibold">
                       {booking.booking_details.trip_name || 
-                       booking.booking_details.event_name || 
-                       booking.booking_details.hotel_name ||
-                       booking.booking_details.place_name ||
-                       'Booking'}
+                        booking.booking_details.event_name || 
+                        booking.booking_details.hotel_name ||
+                        booking.booking_details.place_name ||
+                        'Booking'}
                     </h3>
 
                     <p className="text-xs text-muted-foreground font-mono">
@@ -603,10 +603,10 @@ const Bookings = () => {
               Are you sure you want to cancel this booking for{" "}
               <span className="font-semibold">
                 {bookingToCancel?.booking_details.trip_name || 
-                 bookingToCancel?.booking_details.event_name || 
-                 bookingToCancel?.booking_details.hotel_name ||
-                 bookingToCancel?.booking_details.place_name ||
-                 'this item'}
+                  bookingToCancel?.booking_details.event_name || 
+                  bookingToCancel?.booking_details.hotel_name ||
+                  bookingToCancel?.booking_details.place_name ||
+                  'this item'}
               </span>?
               <br />
               <br />
@@ -626,8 +626,8 @@ const Bookings = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Footer />
-      <MobileBottomBar />
+      {/* <Footer /> - REMOVED */}
+      {/* <MobileBottomBar /> - REMOVED */}
     </div>
   );
 };

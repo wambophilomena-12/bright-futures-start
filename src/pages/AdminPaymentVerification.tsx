@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { MobileBottomBar } from "@/components/MobileBottomBar";
+// import { Footer } from "@/components/Footer"; // REMOVED
+// import { MobileBottomBar } from "@/components/MobileBottomBar"; // REMOVED
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -330,8 +330,8 @@ export default function AdminPaymentVerification() {
             ))}
           </div>
         </main>
-        <Footer />
-        <MobileBottomBar />
+        {/* Footer was here */}
+        {/* MobileBottomBar was here */}
       </div>
     );
   }
@@ -405,8 +405,8 @@ export default function AdminPaymentVerification() {
           </Tabs>
         </div>
       </main>
-      <Footer />
-      <MobileBottomBar />
+      {/* Footer was here */}
+      {/* MobileBottomBar was here */}
     </div>
   );
 }

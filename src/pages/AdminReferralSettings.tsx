@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { MobileBottomBar } from "@/components/MobileBottomBar";
+// import { Footer } from "@/components/Footer"; // REMOVED
+// import { MobileBottomBar } from "@/components/MobileBottomBar"; // REMOVED
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -199,8 +199,8 @@ export default function AdminReferralSettings() {
           <Skeleton className="h-12 w-48 mb-8" />
           <Skeleton className="h-96 w-full max-w-2xl mx-auto" />
         </main>
-        <Footer />
-        <MobileBottomBar />
+        {/* <Footer /> REMOVED */}
+        {/* <MobileBottomBar /> REMOVED */}
       </div>
     );
   }
@@ -473,8 +473,8 @@ export default function AdminReferralSettings() {
           </div>
         </div>
       </main>
-      <Footer />
-      <MobileBottomBar />
+      {/* <Footer /> REMOVED */}
+      {/* <MobileBottomBar /> REMOVED */}
     </div>
   );
 }

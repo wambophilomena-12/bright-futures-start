@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { MobileBottomBar } from "@/components/MobileBottomBar";
+// import { Footer } from "@/components/Footer"; // REMOVED
+// import { MobileBottomBar } from "@/components/MobileBottomBar"; // REMOVED
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -95,8 +95,8 @@ const AdminVerification = () => {
             </div>
           </Card>
         </main>
-        <Footer />
-        <MobileBottomBar />
+        {/* <Footer /> REMOVED */}
+        {/* <MobileBottomBar /> REMOVED */}
       </div>
     );
   }
@@ -164,8 +164,8 @@ const AdminVerification = () => {
           </Card>
         </div>
       </main>
-      <Footer />
-      <MobileBottomBar />
+      {/* <Footer /> REMOVED */}
+      {/* <MobileBottomBar /> REMOVED */}
     </div>
   );
 };

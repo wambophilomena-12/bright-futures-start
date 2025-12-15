@@ -246,12 +246,9 @@ export const NotificationBell = () => {
           </div>
         </SheetHeader>
 
-        {/* Small header/note added here */}
-        <p className="text-xs text-muted-foreground mt-1 mb-2 border-b pb-2">
-          You have {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}.
-        </p>
+        {/* Removed the unread count note/header text here */}
 
-        <ScrollArea className="h-[calc(100vh-180px)] mt-4">
+        <ScrollArea className="h-[calc(100vh-120px)] mt-4"> {/* Adjusted height calculation for removed element */}
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bell className="h-12 w-12 text-muted-foreground mb-4" />
@@ -299,4 +296,4 @@ export const NotificationBell = () => {
       </SheetContent>
     </Sheet>
   );
-};2
+};
