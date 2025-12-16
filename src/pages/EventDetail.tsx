@@ -5,19 +5,20 @@ import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 // Icons will be Teal: #008080
-import { MapPin, Share2, Heart, Calendar, Phone, Mail, ArrowLeft, Copy } from "lucide-react";
+import { MapPin, Share2, Heart, Calendar, Phone, Mail, ArrowLeft, Copy, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SimilarItems } from "@/components/SimilarItems";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { ReviewSection } from "@/components/ReviewSection";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiStepBooking";
 import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
+import Autoplay from "embla-carousel-autoplay"; // Added Autoplay for consistency
 
 interface Activity {
   name: string;
@@ -45,34 +46,64 @@ interface Event {
   created_by: string | null;
 }
 
-// Define the Teal and Orange colors
+// Define the custom colors
 const TEAL_COLOR = "#008080";
 const ORANGE_COLOR = "#FF9800";
-const RED_COLOR = "#FF0000"; // Added RED for pricing consistency if needed, though Event uses simple price.
+const RED_COLOR = "#EF4444"; 
+
+// --- Helper Component: Read-only Star Rating Display (Re-added for review consistency) ---
+interface StarRatingDisplayProps {
+  rating: number | null;
+  count: number | null;
+  iconSize?: number; 
+}
+
+const StarRatingDisplay = ({ rating, count, iconSize = 5 }: StarRatingDisplayProps) => {
+  if (rating === null || rating === 0) return null;
+
+  const fullStars = Math.floor(rating);
+  
+  return (
+    <div className="flex items-center gap-1">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`h-${iconSize} w-${iconSize}`}
+          style={{ color: ORANGE_COLOR }}
+          fill={i < fullStars ? ORANGE_COLOR : "transparent"} 
+          stroke={ORANGE_COLOR}
+        />
+      ))}
+      <span className="text-base font-semibold ml-1" style={{ color: ORANGE_COLOR }}>
+        {rating.toFixed(1)}
+      </span>
+      {count !== null && (
+        <span className="text-sm text-muted-foreground">
+          ({count} reviews)
+        </span>
+      )}
+    </div>
+  );
+};
+
 
 const EventDetail = () => {
-  const {
-    slug
-  } = useParams();
+  const { slug } = useParams();
   const id = slug ? extractIdFromSlug(slug) : null;
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBooking, setShowBooking] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const {
-    savedItems,
-    handleSave: handleSaveItem
-  } = useSavedItems();
+  const { savedItems, handleSave: handleSaveItem } = useSavedItems();
   const isSaved = savedItems.has(id || "");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [averageRating, setAverageRating] = useState<number | null>(null); // New State
+  const [reviewCount, setReviewCount] = useState<number | null>(null); // New State
+
 
   useEffect(() => {
     if (id) {
@@ -90,15 +121,9 @@ const EventDetail = () => {
   const fetchEvent = async () => {
     if (!id) return;
     try {
-      let {
-        data,
-        error
-      } = await supabase.from("trips").select("*").eq("id", id).eq("type", "event").single();
+      let { data, error } = await supabase.from("trips").select("*").eq("id", id).eq("type", "event").single();
       if (error && id.length === 8) {
-        const {
-          data: prefixData,
-          error: prefixError
-        } = await supabase.from("trips").select("*").ilike("id", `${id}%`).eq("type", "event").single();
+        const { data: prefixData, error: prefixError } = await supabase.from("trips").select("*").ilike("id", `${id}%`).eq("type", "event").single();
         if (!prefixError) {
           data = prefixData;
           error = null;
@@ -182,16 +207,16 @@ const EventDetail = () => {
     }
   };
 
-  const {
-    submitBooking
-  } = useBookingSubmit();
+  const { submitBooking } = useBookingSubmit();
 
   const handleBookingSubmit = async (data: BookingFormData) => {
     if (!event) return;
     setIsProcessing(true);
     try {
       const totalPeople = data.num_adults + data.num_children;
-      const totalAmount = data.num_adults * event.price + data.num_children * event.price_child + data.selectedActivities.reduce((sum, a) => sum + a.price * a.numberOfPeople, 0);
+      // Calculate total amount including activity price * number of people
+      const totalAmount = data.num_adults * event.price + data.num_children * event.price_child + data.selectedActivities.reduce((sum, a) => sum + a.price * (a.numberOfPeople || 1), 0);
+      
       await submitBooking({
         itemId: event.id,
         itemName: event.name,
@@ -256,8 +281,9 @@ const EventDetail = () => {
     <main className="container px-4 max-w-6xl mx-auto">
       {/* Main Grid: 2/3rds for Content, 1/3rd for Details/Actions on large screens */}
       <div className="grid lg:grid-cols-[2fr,1fr] gap-6 sm:gap-4">
-        {/* --- Image Carousel and Description Section (Left Column) --- */}
-        <div className="w-full">
+        
+        {/* --- Image Carousel Section & Main Content (Left Column on large screens) --- */}
+        <div className="order-1 lg:order-1 w-full"> 
           <div className="relative">
             {/* Back Button over carousel */}
             <Button
@@ -271,12 +297,25 @@ const EventDetail = () => {
             </Button>
 
             <Carousel
+              opts={{ loop: true }}
+              plugins={[Autoplay({ delay: 3000 })]}
               className="w-full overflow-hidden"
               setApi={(api) => {
                 if (api) api.on("select", () => setCurrentImageIndex(api.selectedScrollSnap()));
               }}
             >
-              <CarouselContent>
+              <CarouselContent
+                // Border radius for carousel: bottom radius for small, bottom-right radius for large
+                className={`
+                  rounded-b-lg // Bottom radius for small screens
+                  lg:rounded-b-none 
+                  lg:rounded-br-lg 
+                `}
+                style={{ 
+                  borderBottom: `2px solid ${TEAL_COLOR}`,
+                  borderRight: `2px solid ${TEAL_COLOR}`
+                }}
+              >
                 {allImages.map((img, idx) => <CarouselItem key={idx}>
                   <img src={img} alt={`${event.name} ${idx + 1}`} loading="lazy" decoding="async" className="w-full h-64 md:h-96 object-cover" />
                 </CarouselItem>)}
@@ -296,24 +335,53 @@ const EventDetail = () => {
             )}
           </div>
 
-          {/* Description Section below slideshow */}
+          {/* Description Section (Mobile Order: 6, Desktop Order: 2) */}
           {event.description && (
             <div className="bg-card border rounded-lg p-4 sm:p-3 mt-4">
               <h2 className="text-lg sm:text-base font-semibold mb-2">About This Event</h2>
               <p className="text-sm text-muted-foreground">{event.description}</p>
             </div>
           )}
-        </div>
+          
+          {/* --- Activities Section (ORANGE) (Mobile Order: 7) --- */}
+          {event.activities && event.activities.length > 0 && (
+            <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
+              <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Included Activities (Optional Add-ons)</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {event.activities.map((activity, idx) => (
+                  <div
+                    key={idx}
+                    className="px-3 py-2 text-white rounded-lg text-sm flex flex-col items-center justify-center text-center min-h-[60px]"
+                    style={{ backgroundColor: ORANGE_COLOR }}
+                  >
+                    <span className="font-medium">{activity.name}</span>
+                    <span className="text-xs opacity-90 mt-1">{activity.price > 0 ? `KSh ${activity.price}` : 'Free'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-        {/* --- Detail/Booking Section (Right Column on large screens) --- */}
-        <div className="space-y-4 sm:space-y-3">
+          {/* --- Review Section (Mobile Order: 8) --- */}
+          <div className="mt-6 sm:mt-4 rounded-none my-[10px] sm:my-[5px]">
+            <ReviewSection 
+              itemId={event.id} 
+              itemType="event"
+              onRatingsChange={({ averageRating, reviewCount }: { averageRating: number | null, reviewCount: number | null }) => {
+                  setAverageRating(averageRating);
+                  setReviewCount(reviewCount);
+              }}
+            />
+          </div>
+        </div> {/* End of Left/Full Width Column (order-1 lg:order-1) */}
+
+        {/* --- Detail/Booking Section (Right Column on large screens, Stacked on small) --- */}
+        <div className="order-2 lg:order-2 space-y-4 sm:space-y-3">
           <div>
             <h1 className="text-3xl sm:text-2xl font-bold mb-2">{event.name}</h1>
             <div className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-2">
               {/* Map Pin Icon Teal */}
-              <MapPin className="h-4 w-4" style={{
-                color: TEAL_COLOR
-              }} />
+              <MapPin className="h-4 w-4" style={{ color: TEAL_COLOR }} />
               <span className="sm:text-sm">{event.location}, {event.country}</span>
               <Badge className="ml-auto bg-primary/20 text-primary font-semibold text-xs" variant="outline">
                 {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
@@ -321,13 +389,11 @@ const EventDetail = () => {
             </div>
           </div>
 
-          {/* Price and Booking Card */}
-          <div className="space-y-3 sm:space-y-2 p-4 sm:p-3 border bg-card">
+          {/* Price and Booking Card (Mobile Order: 2) */}
+          <div className="space-y-3 sm:space-y-2 p-4 sm:p-3 border bg-card rounded-lg" style={{ borderColor: TEAL_COLOR }}>
             <div className="flex items-center gap-2">
               {/* Calendar Icon Teal */}
-              <Calendar className="h-5 w-5" style={{
-                color: TEAL_COLOR
-              }} />
+              <Calendar className="h-5 w-5" style={{ color: TEAL_COLOR }} />
               <div>
                 <p className="text-sm sm:text-xs text-muted-foreground">Event Date</p>
                 <p className="font-semibold sm:text-sm">{new Date(event.date).toLocaleDateString()}</p>
@@ -342,22 +408,30 @@ const EventDetail = () => {
               {event.price_child > 0 && <p className="text-sm sm:text-xs text-muted-foreground">Child: KSh {event.price_child}</p>}
               <p className="text-sm sm:text-xs text-muted-foreground mt-2 sm:mt-1">Available Tickets: {event.available_tickets}</p>
             </div>
-
-            {/* Book Now Button Teal and dark hover */}
-            <Button
-              size="lg"
-              className="w-full text-white h-10 sm:h-9"
-              onClick={() => { setIsCompleted(false); setShowBooking(true); }}
-              disabled={event.available_tickets <= 0}
-              style={{ backgroundColor: TEAL_COLOR }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#005555'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = TEAL_COLOR}
-            >
-              {event.available_tickets <= 0 ? "Sold Out" : "Book Now"}
-            </Button>
           </div>
+          
+          {/* --- NEW: Overall Star Rating Display (Mobile Order: 3, Above Book Now) --- */}
+          {averageRating !== null && (
+              <div className="p-2 sm:p-0">
+                  <StarRatingDisplay rating={averageRating} count={reviewCount} iconSize={6} />
+              </div>
+          )}
 
-          {/* Action Buttons */}
+          {/* Book Now Button Teal and dark hover (Mobile Order: 4) */}
+          <Button
+            size="lg"
+            className="w-full text-white h-10 sm:h-9"
+            onClick={() => { setIsCompleted(false); setShowBooking(true); }}
+            disabled={event.available_tickets <= 0}
+            style={{ backgroundColor: TEAL_COLOR }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#005555'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = TEAL_COLOR}
+          >
+            {event.available_tickets <= 0 ? "Sold Out" : "Book Now"}
+          </Button>
+          
+
+          {/* Action Buttons (Teal Borders) (Mobile Order: 5) */}
           <div className="flex gap-2">
             {/* Map Button: Border/Icon Teal */}
             <Button
@@ -404,11 +478,10 @@ const EventDetail = () => {
             </Button>
           </div>
 
-          {/* --- Contact Information Section (MOVED TO RIGHT COLUMN, STACKED VERTICALLY) --- */}
+          {/* Contact Information Section (Mobile Order: 9, after all main content) */}
           {(event.phone_number || event.email) && (
             <div className="mt-4 p-4 sm:p-3 border bg-card rounded-lg">
               <h2 className="text-xl sm:text-lg font-semibold mb-3">Contact Information</h2>
-              {/* Changed from grid-cols-2 to space-y-2 to stack vertically */}
               <div className="space-y-2">
                 {event.phone_number && (
                   <a
@@ -433,34 +506,10 @@ const EventDetail = () => {
               </div>
             </div>
           )}
-        </div>
+        </div> {/* End of Right Column (order-2 lg:order-2) */}
       </div>
 
-      {/* --- Activities Section (Moved to be full width below main grid) --- */}
-      {event.activities && event.activities.length > 0 && (
-        <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
-          <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Included Activities</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {event.activities.map((activity, idx) => (
-              <div
-                key={idx}
-                className="px-3 py-2 text-white rounded-lg text-sm flex flex-col items-center justify-center text-center min-h-[60px]"
-                style={{ backgroundColor: ORANGE_COLOR }}
-              >
-                <span className="font-medium">{activity.name}</span>
-                <span className="text-xs opacity-90 mt-1">{activity.price > 0 ? `KSh ${activity.price}` : 'Free'}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* --- Review Section --- */}
-      <div className="mt-6 sm:mt-4 rounded-none my-[10px] sm:my-[5px]">
-        <ReviewSection itemId={event.id} itemType="event" />
-      </div>
-
-      {/* --- Similar Items Section --- */}
+      {/* --- Similar Items Section (Full Width, lowest order) --- */}
       <SimilarItems currentItemId={event.id} itemType="trip" location={event.location} country={event.country} />
     </main>
 
@@ -476,7 +525,7 @@ const EventDetail = () => {
           itemName={event.name}
           skipDateSelection={true}
           fixedDate={event.date}
-          skipFacilitiesAndActivities={true}
+          skipFacilities={true} // Events usually don't have facilities
           itemId={event.id}
           bookingType="event"
           hostId={event.created_by || ""}
@@ -488,4 +537,4 @@ const EventDetail = () => {
     <MobileBottomBar />
   </div>;
 };
-export default EventDetail;1
+export default EventDetail;

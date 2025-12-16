@@ -6,11 +6,13 @@ import { Header } from "@/components/Header";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Share2, Mail, Clock, ArrowLeft, Heart, Copy } from "lucide-react";
+// Added Star icon
+import { MapPin, Phone, Share2, Mail, Clock, ArrowLeft, Heart, Copy, Star } from "lucide-react"; 
 import { SimilarItems } from "@/components/SimilarItems";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+// Removed CarouselPrevious, CarouselNext as they were not used in the previous component
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"; 
 import Autoplay from "embla-carousel-autoplay";
 import { ReviewSection } from "@/components/ReviewSection";
 import { useSavedItems } from "@/hooks/useSavedItems";
@@ -22,12 +24,12 @@ import { extractIdFromSlug } from "@/lib/slugUtils";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 
 // Define the specific colors
-const TEAL_COLOR = "#008080"; // Icons, Links, Book Button, and now FACILITIES
-const RED_COLOR = "#FF0000"; // New color for AMENITIES, now also for Entry Fee price
-const ORANGE_COLOR = "#FF9800"; // Activities
+const TEAL_COLOR = "#008080"; 
+const RED_COLOR = "#FF0000"; // Used for Amenities, Entry Fee
+const ORANGE_COLOR = "#FF9800"; // Used for Activities, Star Rating
 
 interface Facility { name: string; price: number; capacity?: number; }
-interface Activity { name: string; price: number; }
+interface Activity { name: string; price: number; numberOfPeople: number; } // Added numberOfPeople for type safety in calculation
 
 interface AdventurePlace {
   id: string;
@@ -58,6 +60,42 @@ interface AdventurePlace {
   longitude: number | null;
 }
 
+// --- Helper Component: Read-only Star Rating Display (Copied from previous answer) ---
+interface StarRatingDisplayProps {
+  rating: number | null;
+  count: number | null;
+  iconSize?: number; 
+}
+
+const StarRatingDisplay = ({ rating, count, iconSize = 5 }: StarRatingDisplayProps) => {
+  if (rating === null || rating === 0) return null;
+
+  const fullStars = Math.floor(rating);
+  
+  return (
+    <div className="flex items-center gap-1">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`h-${iconSize} w-${iconSize}`}
+          style={{ color: ORANGE_COLOR }}
+          fill={i < fullStars ? ORANGE_COLOR : "transparent"} 
+          stroke={ORANGE_COLOR}
+        />
+      ))}
+      <span className="text-base font-semibold ml-1" style={{ color: ORANGE_COLOR }}>
+        {rating.toFixed(1)}
+      </span>
+      {count !== null && (
+        <span className="text-sm text-muted-foreground">
+          ({count} reviews)
+        </span>
+      )}
+    </div>
+  );
+};
+
+
 const AdventurePlaceDetail = () => {
   const { slug } = useParams();
   const id = slug ? extractIdFromSlug(slug) : null;
@@ -65,6 +103,22 @@ const AdventurePlaceDetail = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { position, requestLocation } = useGeolocation();
+
+  const [place, setPlace] = useState<AdventurePlace | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const { savedItems, handleSave: handleSaveItem } = useSavedItems();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [averageRating, setAverageRating] = useState<number | null>(null); // New State for rating
+  const [reviewCount, setReviewCount] = useState<number | null>(null); // New State for review count
+  const isSaved = savedItems.has(id || "");
+
+  // Calculate distance if position and place coordinates available
+  const distance = position && place?.latitude && place?.longitude
+    ? calculateDistance(position.latitude, position.longitude, place.latitude, place.longitude)
+    : undefined;
 
   // Request location on first user interaction
   useEffect(() => {
@@ -80,19 +134,6 @@ const AdventurePlaceDetail = () => {
       window.removeEventListener('click', handleInteraction);
     };
   }, [requestLocation]);
-  const [place, setPlace] = useState<AdventurePlace | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const { savedItems, handleSave: handleSaveItem } = useSavedItems();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const isSaved = savedItems.has(id || "");
-
-  // Calculate distance if position and place coordinates available
-  const distance = position && place?.latitude && place?.longitude
-    ? calculateDistance(position.latitude, position.longitude, place.latitude, place.longitude)
-    : undefined;
 
   useEffect(() => {
     fetchPlace();
@@ -197,11 +238,12 @@ const AdventurePlaceDetail = () => {
       const totalAmount = (data.num_adults * (place.entry_fee_type === 'free' ? 0 : place.entry_fee)) +
         (data.num_children * (place.entry_fee_type === 'free' ? 0 : place.entry_fee)) +
         data.selectedFacilities.reduce((sum, f) => {
-          if (f.startDate && f.endDate) {
+          if ('startDate' in f && 'endDate' in f && f.startDate && f.endDate) {
+            // Calculate number of full days booked (minimum 1 day)
             const days = Math.ceil((new Date(f.endDate).getTime() - new Date(f.startDate).getTime()) / (1000 * 60 * 60 * 24));
             return sum + (f.price * Math.max(days, 1));
           }
-          return sum + f.price;
+          return sum + f.price; // Fallback if dates are missing/not applicable
         }, 0) +
         data.selectedActivities.reduce((sum, a) => sum + (a.price * a.numberOfPeople), 0);
       const totalPeople = data.num_adults + data.num_children;
@@ -235,7 +277,7 @@ const AdventurePlaceDetail = () => {
     }
   };
 
-  if (loading || !place) return <div className="min-h-screen bg-background"><Header /><div className="h-96 bg-muted animate-pulse" /><MobileBottomBar /></div>;
+  if (loading || !place) return <div className="min-h-screen bg-background pb-20 md:pb-0"><Header /><div className="container px-4 py-6"><div className="h-96 bg-muted animate-pulse rounded-lg" /></div><MobileBottomBar /></div>;
 
   const displayImages = [place.image_url, ...(place.gallery_images || []), ...(place.images || [])].filter(Boolean);
 
@@ -246,6 +288,8 @@ const AdventurePlaceDetail = () => {
       <main className="container px-4 max-w-6xl mx-auto">
         {/* Main Grid: 2/3rds for Content, 1/3rd for Details/Actions on large screens */}
         <div className="grid lg:grid-cols-[2fr,1fr] gap-6 sm:gap-4">
+          
+          {/* --- Image Carousel Section & Main Content (Left Column on large screens) --- */}
           <div className="w-full">
             <div className="relative">
               {/* Back Button over carousel */}
@@ -267,7 +311,18 @@ const AdventurePlaceDetail = () => {
                   if (api) api.on("select", () => setCurrent(api.selectedScrollSnap()));
                 }}
               >
-                <CarouselContent>
+                <CarouselContent 
+                  // Border radius for carousel
+                  className={`
+                    rounded-b-lg // Bottom radius for small screens
+                    lg:rounded-b-none 
+                    lg:rounded-br-lg // Bottom and right radius for large screens
+                  `}
+                  style={{ 
+                    borderBottom: `2px solid ${TEAL_COLOR}`,
+                    borderRight: `2px solid ${TEAL_COLOR}`
+                  }}
+                >
                   {displayImages.map((img, idx) => <CarouselItem key={idx}><img src={img} alt={`${place.name} ${idx + 1}`} loading="lazy" decoding="async" className="w-full h-64 md:h-96 object-cover" /></CarouselItem>)}
                 </CarouselContent>
               </Carousel>
@@ -293,7 +348,7 @@ const AdventurePlaceDetail = () => {
               </div>
             )}
             
-            {/* --- Amenities Section (RED) - Remain on the left side/full width --- */}
+            {/* --- Amenities Section (RED) --- */}
             {place.amenities && place.amenities.length > 0 && (
               <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
                 <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Amenities</h2>
@@ -311,7 +366,7 @@ const AdventurePlaceDetail = () => {
               </div>
             )}
 
-            {/* --- Facilities Section (TEAL) - Remain on the left side/full width --- */}
+            {/* --- Facilities Section (TEAL) --- */}
             {place.facilities && place.facilities.length > 0 && (
               <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
                 <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Facilities (Rentable Spaces)</h2>
@@ -331,7 +386,7 @@ const AdventurePlaceDetail = () => {
               </div>
             )}
 
-            {/* --- Activities Section (ORANGE) - Remain on the left side/full width --- */}
+            {/* --- Activities Section (ORANGE) --- */}
             {place.activities && place.activities.length > 0 && (
               <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
                 <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Activities (Bookable Experiences)</h2>
@@ -350,14 +405,23 @@ const AdventurePlaceDetail = () => {
               </div>
             )}
             
-             {/* --- Review Section (Moved to the left/full width column for layout coherence) --- */}
+             {/* --- Review Section (Left Column) --- */}
             <div className="mt-6 sm:mt-4">
-              <ReviewSection itemId={place.id} itemType="adventure_place" />
+              <ReviewSection 
+                itemId={place.id} 
+                itemType="adventure_place" 
+                // Handler to capture the rating for the header display
+                onRatingsChange={({ averageRating, reviewCount }: { averageRating: number | null, reviewCount: number | null }) => {
+                    setAverageRating(averageRating);
+                    setReviewCount(reviewCount);
+                }}
+              />
             </div>
 
           </div> {/* End of Left/Full Width Column */}
 
 
+          {/* --- Detail/Booking Section (Right Column on large screens) --- */}
           <div className="space-y-4 sm:space-y-3">
             <div>
               <h1 className="text-3xl sm:text-2xl font-bold mb-2">{place.name}</h1>
@@ -378,15 +442,26 @@ const AdventurePlaceDetail = () => {
                 <p className="text-sm sm:text-xs text-muted-foreground mb-4 sm:mb-2">Place: {place.place}</p>
               )}
             </div>
+            
+            {/* --- NEW: Overall Star Rating Display (Right Column) --- */}
+            {averageRating !== null && (
+                <div className="p-2 sm:p-0">
+                    <StarRatingDisplay rating={averageRating} count={reviewCount} iconSize={6} />
+                </div>
+            )}
 
-            <div className="space-y-3 p-4 sm:p-3 border bg-card">
+            <div className="space-y-3 p-4 sm:p-3 border bg-card rounded-lg" style={{ borderColor: TEAL_COLOR }}>
               {(place.opening_hours || place.closing_hours) && (
                 <div className="flex items-center gap-2">
                   {/* Clock Icon Teal */}
                   <Clock className="h-5 w-5" style={{ color: TEAL_COLOR }} />
                   <div>
                     <p className="text-sm sm:text-xs text-muted-foreground">Operating Hours</p>
-                    <p className="font-semibold sm:text-sm">{place.opening_hours} - {place.closing_hours}</p>
+                    <p className="font-semibold sm:text-sm">
+                      {(place.opening_hours || place.closing_hours) 
+                      ? `${place.opening_hours || 'N/A'} - ${place.closing_hours || 'N/A'}`
+                      : 'Not specified'}
+                    </p>
                     {place.days_opened && place.days_opened.length > 0 && (
                       <p className="text-xs text-muted-foreground mt-1">{place.days_opened.join(', ')}</p>
                     )}
@@ -398,7 +473,7 @@ const AdventurePlaceDetail = () => {
                 <p className="text-sm sm:text-xs text-muted-foreground mb-1">Entry Fee</p>
                 <p
                   className="text-2xl sm:text-xl font-bold"
-                  style={{ color: RED_COLOR }} // **Applied red color here**
+                  style={{ color: RED_COLOR }}
                 >
                   {place.entry_fee_type === 'free' ? 'Free Entry' :
                     place.entry_fee ? `KSh ${place.entry_fee}` : 'Contact for pricing'}
@@ -467,9 +542,7 @@ const AdventurePlaceDetail = () => {
               </Button>
             </div>
             
-            {/* // --- Contact Information Section (MOVED TO RIGHT COLUMN) --- 
-            // The inner layout is changed from a grid to space-y to stack vertically.
-            */}
+            {/* Contact Information Section (Right Column) */}
             {(place.phone_numbers || place.email) && (
               <div className="mt-4 p-4 sm:p-3 border bg-card rounded-lg">
                 <h2 className="text-xl sm:text-lg font-semibold mb-3">Contact Information</h2>
