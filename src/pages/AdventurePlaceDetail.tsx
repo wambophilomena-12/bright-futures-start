@@ -58,21 +58,6 @@ interface AdventurePlace {
   longitude: number | null;
 }
 
-// MODIFIED: Function for Map, Copy, Share buttons to use TEAL border and RED hover background/text
-const getActionButtonStyle = (isHovering: boolean) => ({
-  borderColor: TEAL_COLOR,
-  color: isHovering ? '#FFFFFF' : TEAL_COLOR, // White text on hover
-  backgroundColor: isHovering ? RED_COLOR : 'transparent', // RED background on hover
-  transition: 'background-color 0.2s, color 0.2s, border-color 0.2s', // Smooth transition
-});
-
-const getActionButtonIconStyle = (isHovering: boolean) => ({
-  color: isHovering ? '#FFFFFF' : TEAL_COLOR, // White icon on hover
-  transition: 'color 0.2s',
-});
-
-// NOTE: The original `getButtonStyle` and `getIconStyle` were removed/replaced by the above in the modified version.
-
 const AdventurePlaceDetail = () => {
   const { slug } = useParams();
   const id = slug ? extractIdFromSlug(slug) : null;
@@ -81,12 +66,6 @@ const AdventurePlaceDetail = () => {
   const { user } = useAuth();
   const { position, requestLocation } = useGeolocation();
   
-  // --- New State for Hover Effects ---
-  const [isMapHovering, setIsMapHovering] = useState(false);
-  const [isCopyHovering, setIsCopyHovering] = useState(false);
-  const [isShareHovering, setIsShareHovering] = useState(false);
-  // -----------------------------------
-
   useEffect(() => {
     const handleInteraction = () => {
       requestLocation();
@@ -217,12 +196,12 @@ const AdventurePlaceDetail = () => {
       const totalAmount = (data.num_adults * (place.entry_fee_type === 'free' ? 0 : place.entry_fee)) +
                          (data.num_children * (place.entry_fee_type === 'free' ? 0 : place.entry_fee)) +
                          data.selectedFacilities.reduce((sum, f) => { 
-                            if (f.startDate && f.endDate) {
-                               // Calculate number of full days booked (minimum 1 day)
-                               const days = Math.ceil((new Date(f.endDate).getTime() - new Date(f.startDate).getTime()) / (1000 * 60 * 60 * 24));
-                               return sum + (f.price * Math.max(days, 1));
-                            }
-                            return sum + f.price;
+                           if (f.startDate && f.endDate) {
+                             // Calculate number of full days booked (minimum 1 day)
+                             const days = Math.ceil((new Date(f.endDate).getTime() - new Date(f.startDate).getTime()) / (1000 * 60 * 60 * 24));
+                             return sum + (f.price * Math.max(days, 1));
+                           }
+                           return sum + f.price;
                          }, 0) +
                          data.selectedActivities.reduce((sum, a) => sum + (a.price * a.numberOfPeople), 0);
       const totalPeople = data.num_adults + data.num_children;
@@ -311,7 +290,7 @@ const AdventurePlaceDetail = () => {
                   alt={`${place.name} ${idx + 1}`} 
                   loading="lazy" 
                   decoding="async" 
-                  className="w-full h-[42vh] md:h-96 lg:h-[500px] object-cover" // <-- HEIGHT MODIFIED: h-[60vh] -> h-[42vh]
+                  className="w-full h-[60vh] md:h-96 lg:h-[500px] object-cover" // Ensure height consistency
                 />
               </CarouselItem>
             ))}
@@ -345,7 +324,7 @@ const AdventurePlaceDetail = () => {
         <div className="flex flex-col lg:grid lg:grid-cols-[2fr,1fr] gap-6 sm:gap-4">
           
           {/* Mobile Order 1: Booking Card (Working hours/Days, Price, Book Now Button) 
-              On desktop (lg), this becomes the entire right column (order-3). */}
+             On desktop (lg), this becomes the entire right column (order-3). */}
           <div className="space-y-4 sm:space-y-3 order-1 lg:order-3">
             
             {/* Booking Card (Operating Hours/Availability/Booking Button) */}
@@ -424,7 +403,7 @@ const AdventurePlaceDetail = () => {
           </div>
           
           {/* Mobile Order 2: Location/Share/About/Amenities/Facilities/Activities 
-              On desktop (lg), this becomes the entire left column (order-1). */}
+             On desktop (lg), this becomes the entire left column (order-1). */}
           <div className="w-full space-y-4 order-2 lg:order-1">
             
             {/* Location/Distance/Details section (Location link) */}
@@ -443,18 +422,16 @@ const AdventurePlaceDetail = () => {
               )}
             </div>
             
-            {/* --- Mobile Order 2.1: Action Buttons (Map, Copy, Share) - STYLED FOR RED HOVER --- */}
+            {/* Mobile Order 2.1: Action Buttons (Map, Copy, Share) */}
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={openInMaps} 
                 className="flex-1 h-9"
-                onMouseEnter={() => setIsMapHovering(true)}
-                onMouseLeave={() => setIsMapHovering(false)}
-                style={getActionButtonStyle(isMapHovering)}
+                style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
               >
-                <MapPin className="h-4 w-4 md:mr-2" style={getActionButtonIconStyle(isMapHovering)} />
+                <MapPin className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
                 <span className="hidden md:inline">Map</span>
               </Button>
               <Button 
@@ -462,11 +439,9 @@ const AdventurePlaceDetail = () => {
                 size="sm" 
                 onClick={handleCopyLink} 
                 className="flex-1 h-9"
-                onMouseEnter={() => setIsCopyHovering(true)}
-                onMouseLeave={() => setIsCopyHovering(false)}
-                style={getActionButtonStyle(isCopyHovering)}
+                style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
               >
-                <Copy className="h-4 w-4 md:mr-2" style={getActionButtonIconStyle(isCopyHovering)} />
+                <Copy className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
                 <span className="hidden md:inline">Copy Link</span>
               </Button>
               <Button 
@@ -474,11 +449,9 @@ const AdventurePlaceDetail = () => {
                 size="sm" 
                 onClick={handleShare} 
                 className="flex-1 h-9"
-                onMouseEnter={() => setIsShareHovering(true)}
-                onMouseLeave={() => setIsShareHovering(false)}
-                style={getActionButtonStyle(isShareHovering)}
+                style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
               >
-                <Share2 className="h-4 w-4 md:mr-2" style={getActionButtonIconStyle(isShareHovering)} />
+                <Share2 className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
                 <span className="hidden md:inline">Share</span>
               </Button>
             </div>
@@ -526,7 +499,7 @@ const AdventurePlaceDetail = () => {
                     </div>
                   ))}
                 </div>
-                </div>
+              </div>
             )}
 
             {/* Mobile Order 6: Activities Section (ORANGE) - Rounded Buttons */}
