@@ -23,13 +23,13 @@ import { extractIdFromSlug } from "@/lib/slugUtils";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 
 interface Facility {
-  name: string;
-  price: number;
-  capacity: number;
+  name: string;
+  price: number;
+  capacity: number;
 }
 interface Activity {
-  name: string;
-  price: number;
+  name: string;
+  price: number;
 }
 interface Hotel {
   id: string;
@@ -101,177 +101,178 @@ const HotelDetail = () => {
     : undefined;
 
   useEffect(() => {
-    fetchHotel();
-    
-    // Track referral clicks
-    const urlParams = new URLSearchParams(window.location.search);
-    const refSlug = urlParams.get("ref");
-    if (refSlug && id) {
-      trackReferralClick(refSlug, id, "hotel", "booking");
-    }
-  }, [id]);
+    fetchHotel();
+    
+    // Track referral clicks
+    const urlParams = new URLSearchParams(window.location.search);
+    const refSlug = urlParams.get("ref");
+    if (refSlug && id) {
+      trackReferralClick(refSlug, id, "hotel", "booking");
+    }
+  }, [id]);
 
-  const fetchHotel = async () => {
-    if (!id) return;
-    try {
-      let { data, error } = await supabase.from("hotels").select("*").eq("id", id).single();
-      
-      if (error && id.length === 8) {
-        const { data: prefixData, error: prefixError } = await supabase
-          .from("hotels")
-          .select("*")
-          .ilike("id", `${id}%`)
-          .single();
-        if (!prefixError) {
-          data = prefixData;
-          error = null;
-        }
-      }
-      
-      if (error) throw error;
-      setHotel(data as any);
-    } catch (error) {
-      console.error("Error fetching hotel:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load hotel details",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchHotel = async () => {
+    if (!id) return;
+    try {
+      let { data, error } = await supabase.from("hotels").select("*").eq("id", id).single();
+      
+      if (error && id.length === 8) {
+        const { data: prefixData, error: prefixError } = await supabase
+          .from("hotels")
+          .select("*")
+          .ilike("id", `${id}%`)
+          .single();
+        if (!prefixError) {
+          data = prefixData;
+          error = null;
+        }
+      }
+      
+      if (error) throw error;
+      setHotel(data as any);
+    } catch (error) {
+      console.error("Error fetching hotel:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load hotel details",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleSave = () => {
-    if (id) {
-      handleSaveItem(id, "hotel");
-    }
-  };
+  const handleSave = () => {
+    if (id) {
+      handleSaveItem(id, "hotel");
+    }
+  };
 
-  const handleCopyLink = async () => {
-    if (!hotel) {
-      toast({ title: "Unable to Copy", description: "Hotel information not available", variant: "destructive" });
-      return;
-    }
+  const handleCopyLink = async () => {
+    if (!hotel) {
+      toast({ title: "Unable to Copy", description: "Hotel information not available", variant: "destructive" });
+      return;
+    }
 
-    const refLink = await generateReferralLink(hotel.id, "hotel", hotel.id);
+    const refLink = await generateReferralLink(hotel.id, "hotel", hotel.id);
 
-    try {
-      await navigator.clipboard.writeText(refLink);
-      toast({ 
-        title: "Link Copied!", 
-        description: user 
-          ? "Share this link to earn commission on bookings!" 
-          : "Share this hotel with others!" 
-      });
-    } catch (error) {
-      toast({ 
-        title: "Copy Failed", 
-        description: "Unable to copy link to clipboard", 
-        variant: "destructive" 
-      });
-    }
-  };
+    try {
+      await navigator.clipboard.writeText(refLink);
+      toast({ 
+        title: "Link Copied!", 
+        description: user 
+          ? "Share this link to earn commission on bookings!" 
+          : "Share this hotel with others!" 
+      });
+    } catch (error) {
+      toast({ 
+        title: "Copy Failed", 
+        description: "Unable to copy link to clipboard", 
+        variant: "destructive" 
+      });
+    }
+  };
 
-  const handleShare = async () => {
-    if (!hotel) {
-      toast({ title: "Unable to Share", description: "Hotel information not available", variant: "destructive" });
-      return;
-    }
+  const handleShare = async () => {
+    if (!hotel) {
+      toast({ title: "Unable to Share", description: "Hotel information not available", variant: "destructive" });
+      return;
+    }
 
-    const refLink = await generateReferralLink(hotel.id, "hotel", hotel.id);
+    const refLink = await generateReferralLink(hotel.id, "hotel", hotel.id);
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: hotel?.name,
-          text: hotel?.description,
-          url: refLink
-        });
-      } catch (error) {
-        console.log("Share failed:", error);
-      }
-    } else {
-      await handleCopyLink();
-    }
-  };
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: hotel?.name,
+          text: hotel?.description,
+          url: refLink
+        });
+      } catch (error) {
+        console.log("Share failed:", error);
+      }
+    } else {
+      await handleCopyLink();
+    }
+  };
 
-  const openInMaps = () => {
-    if (hotel?.map_link) {
-      window.open(hotel.map_link, '_blank');
-    } else {
-      const query = encodeURIComponent(`${hotel?.name}, ${hotel?.location}, ${hotel?.country}`);
-      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
-    }
-  };
-  
-  const { submitBooking } = useBookingSubmit();
+  const openInMaps = () => {
+    if (hotel?.map_link) {
+      window.open(hotel.map_link, '_blank');
+    } else {
+      const query = encodeURIComponent(`${hotel?.name}, ${hotel?.location}, ${hotel?.country}`);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+    }
+  };
+  
+  const { submitBooking } = useBookingSubmit();
 
-  const handleBookingSubmit = async (data: BookingFormData) => {
-    if (!hotel) return;
-    setIsProcessing(true);
-    
-    try {
-      const totalAmount = data.selectedFacilities.reduce((sum, f) => { 
-        if (f.startDate && f.endDate) {
-          // Calculate number of full days booked (minimum 1 day)
-          const days = Math.ceil((new Date(f.endDate).getTime() - new Date(f.startDate).getTime()) / (1000 * 60 * 60 * 24));
-          return sum + (f.price * Math.max(days, 1));
-        }
-        return sum + f.price; // Fallback if dates are somehow missing
-      }, 0) +
-      data.selectedActivities.reduce((sum, a) => sum + (a.price * a.numberOfPeople), 0);
-      const totalPeople = data.num_adults + data.num_children;
+  const handleBookingSubmit = async (data: BookingFormData) => {
+    if (!hotel) return;
+    setIsProcessing(true);
+    
+    try {
+      const totalAmount = data.selectedFacilities.reduce((sum, f) => { 
+        if (f.startDate && f.endDate) {
+          // Calculate number of full days booked (minimum 1 day)
+          const days = Math.ceil((new Date(f.endDate).getTime() - new Date(f.startDate).getTime()) / (1000 * 60 * 60 * 24));
+          return sum + (f.price * Math.max(days, 1));
+        }
+        return sum + f.price; // Fallback if dates are somehow missing
+      }, 0) +
+      data.selectedActivities.reduce((sum, a) => sum + (a.price * a.numberOfPeople), 0);
+      const totalPeople = data.num_adults + data.num_children;
 
-      await submitBooking({
-        itemId: hotel.id,
-        itemName: hotel.name,
-        bookingType: 'hotel',
-        totalAmount,
-        slotsBooked: totalPeople,
-        visitDate: data.visit_date,
-        guestName: data.guest_name,
-        guestEmail: data.guest_email,
-        guestPhone: data.guest_phone,
-        hostId: hotel.created_by,
-        bookingDetails: {
-          hotel_name: hotel.name,
-          adults: data.num_adults,
-          children: data.num_children,
-          facilities: data.selectedFacilities,
-          activities: data.selectedActivities
-        }
-      });
-      
-      setIsProcessing(false);
-      setIsCompleted(true);
-      toast({ title: "Booking Submitted", description: "Your booking has been saved. Check your email for confirmation." });
-    } catch (error: any) {
-      toast({
-        title: "Booking failed",
-        description: error.message,
-        variant: "destructive"
-      });
-      setIsProcessing(false);
-    }
-  };
-  
-  if (loading || !hotel) {
-    return <div className="min-h-screen bg-background pb-20 md:pb-0">
-        <Header />
-        <div className="container px-4 py-6"><div className="h-96 bg-muted animate-pulse rounded-lg" /></div>
-        <MobileBottomBar />
-      </div>;
-  }
-  
-  const displayImages = [hotel.image_url, ...(hotel.gallery_images || []), ...(hotel.images || [])].filter(Boolean);
-  
+      await submitBooking({
+        itemId: hotel.id,
+        itemName: hotel.name,
+        bookingType: 'hotel',
+        totalAmount,
+        slotsBooked: totalPeople,
+        visitDate: data.visit_date,
+        guestName: data.guest_name,
+        guestEmail: data.guest_email,
+        guestPhone: data.guest_phone,
+        hostId: hotel.created_by,
+        bookingDetails: {
+          hotel_name: hotel.name,
+          adults: data.num_adults,
+          children: data.num_children,
+          facilities: data.selectedFacilities,
+          activities: data.selectedActivities
+        }
+      });
+      
+      setIsProcessing(false);
+      setIsCompleted(true);
+      toast({ title: "Booking Submitted", description: "Your booking has been saved. Check your email for confirmation." });
+    } catch (error: any) {
+      toast({
+        title: "Booking failed",
+        description: error.message,
+        variant: "destructive"
+      });
+      setIsProcessing(false);
+    }
+  };
+  
+  if (loading || !hotel) {
+    return <div className="min-h-screen bg-background pb-20 md:pb-0">
+        <Header />
+        <div className="container px-4 py-6"><div className="h-96 bg-muted animate-pulse rounded-lg" /></div>
+        <MobileBottomBar />
+      </div>;
+  }
+  
+  const displayImages = [hotel.image_url, ...(hotel.gallery_images || []), ...(hotel.images || [])].filter(Boolean);
+  
   return <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
       
       <main className="container max-w-6xl mx-auto px-4">
+        {/* Main Grid: 2/3rds for Content, 1/3rd for Details/Actions on large screens */}
         <div className="grid lg:grid-cols-[2fr,1fr] gap-6 sm:gap-4">
-          {/* --- Image Carousel Section --- */}
+          {/* --- Image Carousel Section (Left Column) --- */}
           <div className="w-full">
             <div className="relative">
               {/* Back Button over carousel */}
@@ -279,7 +280,7 @@ const HotelDetail = () => {
                 variant="ghost" 
                 onClick={() => navigate(-1)} 
                 className="absolute top-4 left-4 z-20 h-10 w-10 p-0 rounded-full text-white"
-                style={{ backgroundColor: '#008080' }}
+                style={{ backgroundColor: TEAL_COLOR }}
                 size="icon"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -321,13 +322,13 @@ const HotelDetail = () => {
             }
           </div>
 
-          {/* --- Detail/Booking Section (Right Column on large screens, Stacked on small) --- */}
-          <div className="space-y-4 sm:space-y-3">
-            <div>
-              <h1 className="text-3xl sm:text-2xl font-bold mb-2">{hotel.name}</h1>
-              {hotel.local_name && (
-                <p className="text-lg sm:text-base text-muted-foreground mb-2">"{hotel.local_name}"</p>
-              )}
+          {/* --- Detail/Booking Section (Right Column on large screens, Stacked on small) --- */}
+          <div className="space-y-4 sm:space-y-3">
+            <div>
+              <h1 className="text-3xl sm:text-2xl font-bold mb-2">{hotel.name}</h1>
+              {hotel.local_name && (
+                <p className="text-lg sm:text-base text-muted-foreground mb-2">"{hotel.local_name}"</p>
+              )}
               <div className="flex items-center gap-2 text-muted-foreground mb-2">
                 {/* MapPin Icon Teal */}
                 <MapPin className="h-4 w-4" style={{ color: TEAL_COLOR }} />
@@ -338,14 +339,15 @@ const HotelDetail = () => {
                   </span>
                 )}
               </div>
-              {hotel.place && (
-                <p className="text-sm text-muted-foreground mb-4 sm:mb-2">Place: {hotel.place}</p>
-              )}
-            </div>
+              {hotel.place && (
+                <p className="text-sm text-muted-foreground mb-4 sm:mb-2">Place: {hotel.place}</p>
+              )}
+            </div>
 
-            {/* Operating Hours/Availability Card */}
+            {/* Operating Hours/Availability Card (Teal border) */}
             <div className="p-4 sm:p-3 border bg-card mb-4 sm:mb-2" style={{ borderColor: TEAL_COLOR }}>
               <div className="flex items-center gap-2">
+                {/* Clock Icon Teal */}
                 <Clock className="h-5 w-5" style={{ color: TEAL_COLOR }} />
                 <div>
                   <p className="text-sm sm:text-xs text-muted-foreground">Working Hours & Days</p>
@@ -364,70 +366,70 @@ const HotelDetail = () => {
               </div>
             </div>
 
-            <div className="space-y-3">
-              {/* Book Now Button Teal and dark hover */}
-              <Button 
-                size="lg" 
-                className="w-full text-white h-10 sm:h-9" 
-                onClick={() => { setIsCompleted(false); setBookingOpen(true); }}
-                style={{ backgroundColor: TEAL_COLOR }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#005555')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = TEAL_COLOR)}
-              >
-                Book Now
-              </Button>
-            </div>
+            <div className="space-y-3">
+              {/* Book Now Button Teal and dark hover */}
+              <Button 
+                size="lg" 
+                className="w-full text-white h-10 sm:h-9" 
+                onClick={() => { setIsCompleted(false); setBookingOpen(true); }}
+                style={{ backgroundColor: TEAL_COLOR }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#005555')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = TEAL_COLOR)}
+              >
+                Book Now
+              </Button>
+            </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              {/* Map Button: Border/Icon Teal */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={openInMaps} 
-                className="flex-1 h-9" 
-                style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
-              >
-                <MapPin className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
-                <span className="hidden md:inline">Map</span>
-              </Button>
-              {/* Copy Link Button: Border/Icon Teal */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleCopyLink} 
-                className="flex-1 h-9"
-                style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
-              >
-                <Copy className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
-                <span className="hidden md:inline">Copy Link</span>
-              </Button>
-              {/* Share Button: Border/Icon Teal */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleShare} 
-                className="flex-1 h-9"
-                style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
-              >
-                <Share2 className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
-                <span className="hidden md:inline">Share</span>
-              </Button>
-              {/* Save Button: Border/Icon Teal (and filled red if saved) */}
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={handleSave} 
-                className={`h-9 w-9 ${isSaved ? "bg-red-500 text-white hover:bg-red-600" : ""}`}
-                style={{ borderColor: TEAL_COLOR, color: isSaved ? 'white' : TEAL_COLOR }}
-              >
-                <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
-              </Button>
-            </div>
-          </div>
-        </div>
+            {/* Action Buttons (Teal Borders) */}
+            <div className="flex gap-2">
+              {/* Map Button: Border/Icon Teal */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={openInMaps} 
+                className="flex-1 h-9" 
+                style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
+              >
+                <MapPin className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
+                <span className="hidden md:inline">Map</span>
+              </Button>
+              {/* Copy Link Button: Border/Icon Teal */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleCopyLink} 
+                className="flex-1 h-9"
+                style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
+              >
+                <Copy className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
+                <span className="hidden md:inline">Copy Link</span>
+              </Button>
+              {/* Share Button: Border/Icon Teal */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleShare} 
+                className="flex-1 h-9"
+                style={{ borderColor: TEAL_COLOR, color: TEAL_COLOR }}
+              >
+                <Share2 className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
+                <span className="hidden md:inline">Share</span>
+              </Button>
+              {/* Save Button: Border/Icon Teal (and filled red if saved) */}
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleSave} 
+                className={`h-9 w-9 ${isSaved ? "bg-red-500 text-white hover:bg-red-600" : ""}`}
+                style={{ borderColor: TEAL_COLOR, color: isSaved ? 'white' : TEAL_COLOR }}
+              >
+                <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
+              </Button>
+            </div>
+          </div>
+        </div>
 
-        {/* --- Amenities Section --- */}
+        {/* --- Amenities Section (RED) --- */}
         {hotel.amenities && hotel.amenities.length > 0 && (
           <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
             <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Amenities</h2>
@@ -445,7 +447,7 @@ const HotelDetail = () => {
           </div>
         )}
 
-        {/* --- Facilities (Room Types) Section --- */}
+        {/* --- Facilities (Room Types) Section (TEAL) --- */}
         {hotel.facilities && hotel.facilities.length > 0 && (
           <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
             <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Facilities (Room Types)</h2>
@@ -465,7 +467,7 @@ const HotelDetail = () => {
           </div>
         )}
 
-        {/* --- Activities Section --- */}
+        {/* --- Activities Section (ORANGE) --- */}
         {hotel.activities && hotel.activities.length > 0 && (
           <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
             <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Activities</h2>
@@ -484,7 +486,7 @@ const HotelDetail = () => {
           </div>
         )}
 
-        {/* --- Contact Information Section --- */}
+        {/* --- Contact Information Section (Teal Borders/Icons) --- */}
         {(hotel.phone_numbers || hotel.email) && (
           <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
             <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Contact Information</h2>
@@ -514,14 +516,14 @@ const HotelDetail = () => {
           </div>
         )}
 
-        {/* --- Review Section --- */}
-        <div className="mt-6 sm:mt-4">
-          <ReviewSection itemId={hotel.id} itemType="hotel" />
-        </div>
+        {/* --- Review Section --- */}
+        <div className="mt-6 sm:mt-4">
+          <ReviewSection itemId={hotel.id} itemType="hotel" />
+        </div>
 
-        {/* --- Similar Items Section --- */}
-        {hotel && <SimilarItems currentItemId={hotel.id} itemType="hotel" country={hotel.country} />}
-      </main>
+        {/* --- Similar Items Section --- */}
+        {hotel && <SimilarItems currentItemId={hotel.id} itemType="hotel" country={hotel.country} />}
+      </main>
 
       <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -538,9 +540,9 @@ const HotelDetail = () => {
             onPaymentSuccess={() => setIsCompleted(true)}
           />
         </DialogContent>
-      </Dialog>
+      </Dialog>
 
-      <MobileBottomBar />
-    </div>;
+      <MobileBottomBar />
+    </div>;
 };
 export default HotelDetail;
