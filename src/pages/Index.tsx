@@ -440,12 +440,9 @@ const Index = () => {
 {!isSearchFocused && (
   <div 
     ref={searchRef}
-    // Remove existing classes like h-48 md:h-72 lg:h-80 and add h-1/2 or h-screen/2 if available, 
-    // but 50vh in style is the most reliable.
-    className="relative w-full"
+    className="relative w-full h-1/2 md:h-[65vh]" // CHANGED THIS LINE
     style={{
-      height: '50vh', // <--- This sets the height to 50% of the viewport height
-      backgroundImage: `url(https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1920&h=600&fit:crop&auto=format&q:80)`,
+      backgroundImage: `url(https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1920&h=600&fit=crop&auto=format&q=80)`,
       backgroundSize: 'cover',
       backgroundPosition: 'center'
     }}
@@ -482,7 +479,7 @@ const Index = () => {
       </div>
     </div>
   </div>
- )}
+)}
             
             {/* Search Bar - Appears below header when focused on all screens */}
             {isSearchFocused && <div className="sticky top-[64px] z-[100] bg-background p-4 border-b shadow-md">
