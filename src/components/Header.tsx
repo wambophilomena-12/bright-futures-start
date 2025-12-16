@@ -30,7 +30,8 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
   const { user, signOut } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // ... (Role and User Name useEffects and getUserInitials function remain unchanged) ...
+  // --- Start of unchanged functional code ---
+
   useEffect(() => {
     const checkRole = async () => {
       if (!user) {
@@ -74,7 +75,6 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
     fetchUserProfile();
   }, [user]);
 
-  // Function to get initials from the user's name
   const getUserInitials = () => {
     if (userName) {
       const names = userName.trim().split(' ');
@@ -85,20 +85,20 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
     }
     return "U";
   };
+  // --- End of unchanged functional code ---
 
   return (
-    // 1. Mobile Header: Make it absolutely positioned, no height, no background.
+    // 1. Mobile Header: Changed position from 'absolute' to 'fixed'.
     // Desktop Header (md:): Revert to sticky, h-16, and background color.
-    <header className="absolute top-0 left-0 right-0 z-50 text-black dark:text-white md:sticky md:h-16 md:border-b md:border-border md:bg-[#008080] md:text-white dark:md:bg-[#008080] dark:md:text-white">
-      {/* 2. Mobile Container: Remove flex properties and padding. Use absolute children for positioning. 
-           Desktop Container: Keep standard flex layout for md: */}
+    <header className="fixed top-0 left-0 right-0 z-[100] text-black dark:text-white md:sticky md:h-16 md:border-b md:border-border md:bg-[#008080] md:text-white dark:md:bg-[#008080] dark:md:text-white">
+      {/* Mobile Container: No flex/padding. Desktop Container: Keep standard flex layout for md: */}
       <div className="container md:flex md:h-full md:items-center md:justify-between md:px-4">
         
-        {/* Mobile Left Icons (Menu) */}
+        {/* Mobile Left Icons (Menu) - Positioned Fixed */}
         <div className="absolute top-4 left-4 flex items-center gap-3 md:relative md:top-auto md:left-auto">
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>
-              {/* Menu Icon: Positioned top-left on mobile */}
+              {/* Menu Icon: Always visible, positioned top-left on mobile */}
               <button className="inline-flex items-center justify-center h-10 w-10 rounded-md text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors md:text-white md:hover:bg-[#006666]" aria-label="Open navigation menu">
                 <Menu className="h-5 w-5" />
               </button>
@@ -110,19 +110,45 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
           
           {/* Logo/Description: Always HIDDEN on small screens */}
           <Link to="/" className="hidden md:flex items-center gap-3">
-            {/* ... Logo HTML ... */}
+             <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center text-[#0066cc] font-bold text-lg">
+                T
+              </div>
+              <div>
+                <span className="font-bold text-base md:text-lg text-white block">
+                  TripTrac
+                </span>
+                <p className="text-xs text-white/90 block">Your journey starts now.</p>
+              </div>
           </Link>
         </div>
 
-        {/* Desktop Navigation (Centered): Always HIDDEN on small screens */}
+        {/* 2. Desktop Navigation (Centered): Visible from lg: breakpoint up */}
         <nav className="hidden lg:flex items-center gap-6">
-          {/* ... Desktop Nav Links ... */}
+          <Link to="/" className="flex items-center gap-2 font-bold hover:text-muted-foreground transition-colors">
+            <Home className="h-4 w-4" />
+            <span>Home</span>
+          </Link>
+          <Link to="/bookings" className="flex items-center gap-2 font-bold hover:text-muted-foreground transition-colors">
+            <Ticket className="h-4 w-4" />
+            <span>My Bookings</span>
+          </Link>
+          <Link to="/saved" className="flex items-center gap-2 font-bold hover:text-muted-foreground transition-colors">
+            <Heart className="h-4 w-4" />
+            <span>Wishlist</span>
+          </Link>
+          <button 
+            onClick={() => user ? navigate('/become-host') : navigate('/auth')} 
+            className="flex items-center gap-2 font-bold hover:text-muted-foreground transition-colors"
+          >
+            <FolderOpen className="h-4 w-4" />
+            <span>Become a Host</span>
+          </button>
         </nav>
 
-        {/* 3. Mobile Right Icons (Search, Notification) */}
+        {/* Mobile Right Icons (Search, Notification) - Positioned Fixed */}
         <div className="absolute top-4 right-4 flex items-center gap-2 md:relative md:top-auto md:right-auto md:flex">
           
-          {/* Search Icon Button: Always visible, positioned top-right (relative to its wrapper) */}
+          {/* Search Icon Button: Always visible */}
           {showSearchIcon && (
             <button 
               onClick={() => {
@@ -142,12 +168,10 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
           
           {/* Notification Bell with RGBA Background on Mobile */}
           <div className="flex items-center gap-2">
-            {/* WRAPPER for Notification Bell - Apply RGBA background ONLY on non-md screens */}
             <div className="rounded-full h-10 w-10 flex items-center justify-center transition-colors md:bg-transparent"
                  style={{ 
-                    // Apply rgba background color directly for mobile screens
+                    // Apply rgba background color for mobile screens (e.g., semi-transparent black)
                     backgroundColor: 'rgba(0, 0, 0, 0.1)', 
-                    // Important: Resetting the inline style for desktop is complex. Tailwind classes will override it if they specify background.
                  }}
             >
                 <NotificationBell 
