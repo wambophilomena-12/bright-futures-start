@@ -129,11 +129,15 @@ export const ListingCard = ({
             </div>}
         
         {/* Category Badges */}
-        {type === "TRIP"}
+        {type === "TRIP" && <Badge className={cn("absolute top-1.5 left-1.5 backdrop-blur text-[10px] md:text-xs font-bold z-10 px-1.5 py-0.5 md:px-2 md:py-1", tealBgClass)}>
+            TRIP
+        </Badge>}
 
         {type === "EVENT"}
 
-        {type !== "EVENT" && type !== "TRIP" && showBadge}
+        {type !== "EVENT" && type !== "TRIP" && showBadge && <Badge className={cn("absolute top-1.5 left-1.5 backdrop-blur text-[8px] md:text-[0.6rem] z-10 px-1 py-0.5 md:p-1", tealBgClass)}>
+            {type}
+        </Badge>}
 
         {onSave && <Button size="icon" onClick={handleSaveClick} aria-label={isSaved ? "Remove from wishlist" : "Add to wishlist"} className={cn("absolute top-1.5 right-1.5 z-20 h-8 w-8 md:h-8 md:w-8 p-0 bg-transparent touch-manipulation active:scale-95 transition-transform", "border-none shadow-none", "outline-none focus-visible:ring-0 focus-visible:bg-transparent hover:bg-transparent")}>
             <Heart className={cn("h-4 w-4 md:h-4 md:w-4", isSaved ? "text-red-500 fill-red-500" : "text-black stroke-[2.5] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]")} />
