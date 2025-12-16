@@ -214,6 +214,7 @@ const EventDetail = () => {
         <Header className="hidden md:block" />
         <div className="container mx-auto px-4 py-8">
           <p>Event not found</p>
+          <MobileBottomBar />
         </div>
         <MobileBottomBar />
       </div>
@@ -287,12 +288,12 @@ const EventDetail = () => {
           </CarouselContent>
         </Carousel>
 
-        {/* Name Overlay: Fading RGBA - UPDATED for bold text */}
+        {/* Name Overlay: Fading RGBA - UPDATED with 'uppercase' */}
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 z-20 text-white bg-gradient-to-t from-black/80 via-black/50 to-transparent">
-          <h1 className="text-3xl sm:text-2xl font-bold mb-0"><strong>{event.name}</strong></h1> 
+          <h1 className="text-3xl sm:text-2xl font-bold mb-0 uppercase"><strong>{event.name}</strong></h1> 
         </div>
         
-        {/* Dot indicators - UPDATED for right alignment */}
+        {/* Dot indicators - REMAINS on the right */}
         {allImages.length > 1 && (
           <div className="absolute bottom-4 right-4 flex gap-2 z-30 justify-end md:right-8">
             {allImages.map((_, idx) => (
