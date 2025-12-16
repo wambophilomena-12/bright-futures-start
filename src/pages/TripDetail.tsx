@@ -165,7 +165,8 @@ const TripDetail = () => {
       window.open(trip.map_link, '_blank');
     } else {
       const query = encodeURIComponent(`${trip?.name}, ${trip?.location}, ${trip?.country}`);
-      window.open(`https://maps.google.com/?q=${query}`, '_blank');
+      // NOTE: Removed 'https://maps.google.com/?q=$' prefix as it's likely a typo and should be 'https://www.google.com/maps/search/?api=1&query='
+      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
     }
   };
 
@@ -243,7 +244,7 @@ const TripDetail = () => {
       
       <main className="container px-4 max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-[2fr,1fr] gap-6 sm:gap-4">
-          {/* --- Image Carousel Section --- */}
+          {/* --- Image Carousel Section (Left Column) --- */}
           <div className="w-full">
             <div className="relative">
               {/* Back Button over carousel */}
@@ -251,7 +252,7 @@ const TripDetail = () => {
                 variant="ghost" 
                 onClick={() => navigate(-1)} 
                 className="absolute top-4 left-4 z-20 h-10 w-10 p-0 rounded-full text-white"
-                style={{ backgroundColor: '#008080' }}
+                style={{ backgroundColor: TEAL_COLOR }}
                 size="icon"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -300,9 +301,34 @@ const TripDetail = () => {
                 <p className="text-sm text-muted-foreground">{trip.description}</p>
               </div>
             )}
-          </div>
+            
+            {/* --- Included Activities Section (Kept in Left Column) --- */}
+            {trip.activities && trip.activities.length > 0 && (
+              <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
+                <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Included Activities</h2>
+                <div className="flex flex-wrap gap-2">
+                  {trip.activities.map((activity, idx) => (
+                    <div 
+                      key={idx} 
+                      className="px-3 py-1.5 text-white rounded-full text-xs flex flex-col items-center justify-center text-center"
+                      style={{ backgroundColor: ORANGE_COLOR }}
+                    >
+                      <span className="font-medium">{activity.name}</span>
+                      <span className="text-[10px] opacity-90">{activity.price === 0 ? 'Free' : `KSh ${activity.price}`}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* --- Review Section (Kept in Left Column) --- */}
+            <div className="mt-6 sm:mt-4">
+              <ReviewSection itemId={trip.id} itemType="trip" />
+            </div>
+            
+          </div> {/* End of Left Column */}
 
-          {/* --- Detail/Booking Section (Right Column on large screens, Stacked on small) --- */}
+          {/* --- Detail/Booking/Contact Section (Right Column on large screens) --- */}
           <div className="space-y-4 sm:space-y-3">
             <div>
               <h1 className="text-3xl sm:text-2xl font-bold mb-2">{trip.name}</h1>
@@ -335,7 +361,7 @@ const TripDetail = () => {
               <Button 
                 size="lg" 
                 className="w-full text-white h-10 sm:h-9" 
-                onClick={() => setBookingOpen(true)} 
+                onClick={() => { setIsCompleted(false); setBookingOpen(true); }}
                 disabled={trip.available_tickets <= 0}
                 style={{ backgroundColor: TEAL_COLOR }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#005555')}
@@ -391,63 +417,41 @@ const TripDetail = () => {
                 <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
               </Button>
             </div>
-          </div>
-        </div>
-
-        {/* --- Included Activities Section --- */}
-        {trip.activities && trip.activities.length > 0 && (
-          <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
-            <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Included Activities</h2>
-            <div className="flex flex-wrap gap-2">
-              {trip.activities.map((activity, idx) => (
-                <div 
-                  key={idx} 
-                  className="px-3 py-1.5 text-white rounded-full text-xs flex flex-col items-center justify-center text-center"
-                  style={{ backgroundColor: ORANGE_COLOR }}
-                >
-                  <span className="font-medium">{activity.name}</span>
-                  <span className="text-[10px] opacity-90">{activity.price === 0 ? 'Free' : `KSh ${activity.price}`}</span>
+            
+            {/* --- Contact Information Section (MOVED TO RIGHT COLUMN, STACKED VERTICALLY) --- */}
+            {(trip.phone_number || trip.email) && (
+              <div className="mt-4 p-4 sm:p-3 border bg-card rounded-lg">
+                <h2 className="text-xl sm:text-lg font-semibold mb-3">Contact Information</h2>
+                {/* Changed from grid to space-y-2 to enforce vertical stacking */}
+                <div className="space-y-2"> 
+                  {trip.phone_number && (
+                    <a 
+                      href={`tel:${trip.phone_number}`}
+                      className="flex items-center gap-2 px-4 py-3 border rounded-lg hover:bg-muted transition-colors"
+                      style={{ borderColor: TEAL_COLOR }}
+                    >
+                      <Phone className="h-4 w-4" style={{ color: TEAL_COLOR }} />
+                      <span className="text-sm" style={{ color: TEAL_COLOR }}>{trip.phone_number}</span>
+                    </a>
+                  )}
+                  {trip.email && (
+                    <a 
+                      href={`mailto:${trip.email}`}
+                      className="flex items-center gap-2 px-4 py-3 border rounded-lg hover:bg-muted transition-colors"
+                      style={{ borderColor: TEAL_COLOR }}
+                    >
+                      <Mail className="h-4 w-4" style={{ color: TEAL_COLOR }} />
+                      <span className="text-sm" style={{ color: TEAL_COLOR }}>{trip.email}</span>
+                    </a>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* --- Contact Information Section --- */}
-        {(trip.phone_number || trip.email) && (
-          <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
-            <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Contact Information</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {trip.phone_number && (
-                <a 
-                  href={`tel:${trip.phone_number}`}
-                  className="flex items-center gap-2 px-4 py-3 border rounded-lg hover:bg-muted transition-colors"
-                  style={{ borderColor: TEAL_COLOR }}
-                >
-                  <Phone className="h-4 w-4" style={{ color: TEAL_COLOR }} />
-                  <span className="text-sm" style={{ color: TEAL_COLOR }}>{trip.phone_number}</span>
-                </a>
-              )}
-              {trip.email && (
-                <a 
-                  href={`mailto:${trip.email}`}
-                  className="flex items-center gap-2 px-4 py-3 border rounded-lg hover:bg-muted transition-colors"
-                  style={{ borderColor: TEAL_COLOR }}
-                >
-                  <Mail className="h-4 w-4" style={{ color: TEAL_COLOR }} />
-                  <span className="text-sm" style={{ color: TEAL_COLOR }}>{trip.email}</span>
-                </a>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* --- Review Section --- */}
-        <div className="mt-6 sm:mt-4">
-          <ReviewSection itemId={trip.id} itemType="trip" />
+              </div>
+            )}
+            
+          </div> {/* End of Right Column */}
         </div>
 
-        {/* --- Similar Items Section --- */}
+        {/* --- Similar Items Section (Full width below the main grid) --- */}
         {trip && <SimilarItems currentItemId={trip.id} itemType="trip" country={trip.country} />}
       </main>
 
