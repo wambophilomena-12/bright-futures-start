@@ -129,9 +129,7 @@ export const ListingCard = ({
             </div>}
         
         {/* Category Badges */}
-        {type === "TRIP" && <Badge className={cn("absolute top-1.5 left-1.5 backdrop-blur text-[10px] md:text-xs font-bold z-10 px-1.5 py-0.5 md:px-2 md:py-1", tealBgClass)}>
-            TRIP
-        </Badge>}
+        {type === "TRIP"}
 
         {type === "EVENT"}
 
