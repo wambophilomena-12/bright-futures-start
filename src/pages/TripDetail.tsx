@@ -3,38 +3,35 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 
+// Assume these imports are from the original file context
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Share2, Calendar, Mail, ArrowLeft, Heart, Copy } from "lucide-react";
-import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
-import { useBookingSubmit } from "@/hooks/useBookingSubmit";
-import { useAuth } from "@/contexts/AuthContext";
+import { MapPin, Phone, Share2, Mail, ArrowLeft, Heart, Copy, Calendar } from "lucide-react";
+import { SimilarItems } from "@/components/SimilarItems";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
-import { SimilarItems } from "@/components/SimilarItems";
-import { ReviewSection } from "@/components/ReviewSection";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { ReviewSection } from "@/components/ReviewSection";
 import { useSavedItems } from "@/hooks/useSavedItems";
+import { useAuth } from "@/contexts/AuthContext";
 import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiStepBooking";
+import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
+import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
 
-// Define the specific colors
-const TEAL_COLOR = "#008080"; // 0,128,128
-const ORANGE_COLOR = "#FF9800"; // FF9800
-const RED_COLOR = "#FF0000"; // Added for price emphasis
+// Define the specific colors (ensure these are defined in the file context)
+const TEAL_COLOR = "#008080"; // Icons, Links, Book Button, Facilities, Carousel Border
+const RED_COLOR = "#FF0000"; // Amenities, Entry Fee price
+const ORANGE_COLOR = "#FF9800"; // Activities
 
-interface Activity {
-  name: string;
-  price: number;
-}
+interface Activity { name: string; price: number; }
 
 interface Trip {
   id: string;
   name: string;
   location: string;
-  place: string;
   country: string;
   image_url: string;
   images: string[];
@@ -42,13 +39,14 @@ interface Trip {
   description: string;
   price: number;
   price_child: number;
+  phone_number: string | null;
+  email: string | null;
+  activities: Activity[];
+  available_tickets: number;
   date: string;
   is_custom_date: boolean;
-  available_tickets: number;
-  phone_number: string;
-  email: string;
-  map_link: string;
-  activities?: Activity[];
+  registration_number: string | null;
+  map_link: string | null;
   created_by: string;
 }
 
@@ -58,41 +56,32 @@ const TripDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [current, setCurrent] = useState(0);
-  const [referralLink, setReferralLink] = useState<string>("");
   const { savedItems, handleSave: handleSaveItem } = useSavedItems();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
-  
   const isSaved = savedItems.has(id || "");
 
-  useEffect(() => {
-    fetchTrip();
+  useEffect(() => { 
+    fetchTrip(); 
     
     const urlParams = new URLSearchParams(window.location.search);
-    const refId = urlParams.get("ref");
-    if (refId && id) {
-      trackReferralClick(refId, id, "trip", "booking");
+    const refSlug = urlParams.get("ref");
+    if (refSlug && id) {
+      trackReferralClick(refSlug, id, "trip", "booking");
     }
-  }, [id, user]);
-
-  const handleSave = () => {
-    if (id) {
-      handleSaveItem(id, "trip");
-    }
-  };
+  }, [id]);
 
   const fetchTrip = async () => {
     if (!id) return;
     try {
-      // Try exact match first, then prefix match for slug-based IDs
       let { data, error } = await supabase.from("trips").select("*").eq("id", id).single();
       
       if (error && id.length === 8) {
-        // Try prefix match for shortened IDs
         const { data: prefixData, error: prefixError } = await supabase
           .from("trips")
           .select("*")
@@ -114,6 +103,8 @@ const TripDetail = () => {
     }
   };
 
+  const handleSave = () => { if (id) handleSaveItem(id, "trip"); };
+
   const handleCopyLink = async () => {
     if (!trip) {
       toast({ title: "Unable to Copy", description: "Trip information not available", variant: "destructive" });
@@ -121,7 +112,6 @@ const TripDetail = () => {
     }
 
     const refLink = await generateReferralLink(trip.id, "trip", trip.id);
-    setReferralLink(refLink);
 
     try {
       await navigator.clipboard.writeText(refLink);
@@ -147,13 +137,12 @@ const TripDetail = () => {
     }
 
     const refLink = await generateReferralLink(trip.id, "trip", trip.id);
-    setReferralLink(refLink);
 
     if (navigator.share) {
-      try {
-        await navigator.share({ title: trip?.name, text: trip?.description, url: refLink });
-      } catch (error) {
-        console.log("Share failed:", error);
+      try { 
+        await navigator.share({ title: trip?.name, text: trip?.description, url: refLink }); 
+      } catch (error) { 
+        console.log("Share failed:", error); 
       }
     } else {
       await handleCopyLink();
@@ -165,7 +154,7 @@ const TripDetail = () => {
       window.open(trip.map_link, '_blank');
     } else {
       const query = encodeURIComponent(`${trip?.name}, ${trip?.location}, ${trip?.country}`);
-      window.open(`https://maps.google.com/?q=${query}`, '_blank');
+      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
     }
   };
 
@@ -173,31 +162,27 @@ const TripDetail = () => {
 
   const handleBookingSubmit = async (data: BookingFormData) => {
     if (!trip) return;
-    
     setIsProcessing(true);
-    
+
     try {
-      const totalAmount = (data.num_adults * trip.price) + (data.num_children * trip.price_child) +
-                         data.selectedActivities.reduce((sum, a) => sum + (a.price * a.numberOfPeople), 0);
-      const totalPeople = data.num_adults + data.num_children;
+      const totalAmount = (data.num_adults * trip.price) + (data.num_children * trip.price_child);
+      const slotsBooked = data.num_adults + data.num_children;
 
       await submitBooking({
         itemId: trip.id,
         itemName: trip.name,
         bookingType: 'trip',
         totalAmount,
-        slotsBooked: totalPeople,
-        visitDate: trip.date,
+        slotsBooked,
+        visitDate: data.visit_date,
         guestName: data.guest_name,
         guestEmail: data.guest_email,
         guestPhone: data.guest_phone,
         hostId: trip.created_by,
         bookingDetails: {
           trip_name: trip.name,
-          date: trip.date,
           adults: data.num_adults,
           children: data.num_children,
-          activities: data.selectedActivities
         }
       });
       
@@ -205,16 +190,15 @@ const TripDetail = () => {
       setIsCompleted(true);
       toast({ title: "Booking Submitted", description: "Your booking has been saved. Check your email for confirmation." });
     } catch (error: any) {
-      console.error('Booking error:', error);
-      toast({ title: "Booking failed", description: error.message || "Failed to create booking", variant: "destructive" });
+      toast({ title: "Booking failed", description: error.message, variant: "destructive" });
       setIsProcessing(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pb-20 md:pb-0">
-        <Header />
+      <div className="min-h-screen bg-background">
+        <Header className="hidden md:block" />
         <div className="container px-4 py-6 max-w-6xl mx-auto">
           <div className="h-64 md:h-96 bg-muted animate-pulse rounded-lg" />
         </div>
@@ -226,7 +210,7 @@ const TripDetail = () => {
   if (!trip) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <Header className="hidden md:block" />
         <div className="container mx-auto px-4 py-8">
           <p>Trip not found</p>
         </div>
@@ -239,83 +223,137 @@ const TripDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Header />
+      {/* Header hidden on small screen / PWA mode */}
+      <Header className="hidden md:block" /> 
       
-      <main className="container px-4 max-w-6xl mx-auto">
-        <div className="grid lg:grid-cols-[2fr,1fr] gap-6 sm:gap-4">
-          {/* --- Image Carousel Section --- */}
-          <div className="w-full">
-            <div className="relative">
-              {/* Back Button over carousel */}
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate(-1)} 
-                className="absolute top-4 left-4 z-20 h-10 w-10 p-0 rounded-full text-white"
-                style={{ backgroundColor: '#008080' }}
-                size="icon"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
+      {/*         FULL-WIDTH SLIDESHOW SECTION: 
+        Moved outside the main container to ensure full screen width on mobile 
+      */}
+      <div className="relative w-full overflow-hidden md:max-w-6xl md:mx-auto">
+        {/* Back Button: Top Left, Dark RGBA */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate(-1)} 
+          className="absolute top-4 left-4 z-30 h-10 w-10 p-0 rounded-full text-white md:left-8" // Increased Z-index and adjusted md:left
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} // Dark RGBA
+          size="icon"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
 
-              <Badge className="absolute top-4 right-4 sm:top-2 sm:right-2 bg-primary text-primary-foreground z-20 text-xs font-bold px-3 py-1">
-                TRIP
-              </Badge>
+        {/* Save Button: Top Right, Dark RGBA/Red filled */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleSave} 
+          className={`absolute top-4 right-4 z-30 h-10 w-10 p-0 rounded-full text-white md:right-8 ${isSaved ? "bg-red-500 hover:bg-red-600" : ""}`}
+          style={{ backgroundColor: isSaved ? RED_COLOR : 'rgba(0, 0, 0, 0.5)' }} // Dark RGBA or RED if saved
+        >
+          <Heart className={`h-5 w-5 ${isSaved ? "fill-white" : ""}`} />
+        </Button>
 
-              <Carousel
-                opts={{ loop: true }}
-                plugins={[Autoplay({ delay: 3000 })]}
-                className="w-full overflow-hidden"
-                setApi={(api) => {
-                  if (api) {
-                    api.on("select", () => setCurrent(api.selectedScrollSnap()));
-                  }
-                }}
-              >
-                <CarouselContent>
-                  {displayImages.map((img, idx) => (
-                    <CarouselItem key={idx}>
-                      <img src={img} alt={`${trip.name} ${idx + 1}`} loading="lazy" decoding="async" className="w-full h-64 md:h-96 object-cover" />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
-              
-              {/* Dot indicators */}
-              {displayImages.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
-                  {displayImages.map((_, idx) => (
-                    <div 
-                      key={idx} 
-                      className={`w-2 h-2 rounded-full transition-all ${current === idx ? 'bg-white w-4' : 'bg-white/50'}`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* Description Section below slideshow */}
-            {trip.description && (
-              <div className="bg-card border rounded-lg p-4 sm:p-3 mt-4">
-                <h2 className="text-lg sm:text-base font-semibold mb-2 sm:mb-1">About This Trip</h2>
-                <p className="text-sm text-muted-foreground">{trip.description}</p>
-              </div>
-            )}
+        <Badge className="absolute top-4 right-20 sm:top-4 sm:right-20 bg-primary text-primary-foreground z-30 text-xs font-bold px-3 py-1 rounded-full">
+          TRIP
+        </Badge>
+
+        <Carousel 
+          opts={{ loop: true }} 
+          plugins={[Autoplay({ delay: 3000 })]} 
+          className="w-full overflow-hidden"
+          style={{ 
+            borderBottom: `2px solid ${TEAL_COLOR}`, // Teal bottom border for small/big screen
+            marginTop: 0, 
+            width: '100%', 
+            maxHeight: '600px' // Added max height for larger screens
+          }}
+          setApi={(api) => {
+            if (api) api.on("select", () => setCurrent(api.selectedScrollSnap()));
+          }}
+        >
+          <CarouselContent>
+            {displayImages.map((img, idx) => (
+              <CarouselItem key={idx}>
+                <img 
+                  src={img} 
+                  alt={`${trip.name} ${idx + 1}`} 
+                  loading="lazy" 
+                  decoding="async" 
+                  className="w-full h-[60vh] md:h-96 lg:h-[500px] object-cover" // Ensure height consistency
+                />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
+
+        {/* Name Overlay: Fading RGBA, concentrated at center bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 z-20 text-white bg-gradient-to-t from-black/80 via-black/50 to-transparent">
+          <h1 className="text-3xl sm:text-2xl font-bold mb-0">{trip.name}</h1>
+          {/* If there was a local_name, it would go here */}
+        </div>
+        
+        {/* Dot indicators */}
+        {displayImages.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-30">
+            {displayImages.map((_, idx) => (
+              <div 
+                key={idx} 
+                className={`w-2 h-2 rounded-full transition-all ${current === idx ? 'bg-white w-4' : 'bg-white/50'}`}
+              />
+            ))}
           </div>
-
-          {/* --- Detail/Booking Section (Right Column on large screens, Stacked on small) --- */}
-          <div className="space-y-4 sm:space-y-3">
+        )}
+      </div>
+      
+      {/* Main Content starts here, contained by the max-width wrapper */}
+      <main className="container px-4 max-w-6xl mx-auto mt-4 sm:mt-6">
+        <div className="grid lg:grid-cols-[2fr,1fr] gap-6 sm:gap-4">
+          
+          {/* LEFT COLUMN (Description, Activities) */}
+          <div className="w-full space-y-4">
+            
+            {/* Location/Details section (Name moved to overlay) */}
             <div>
-              <h1 className="text-3xl sm:text-2xl font-bold mb-2">{trip.name}</h1>
+              {/* NOTE: Removed H1 as it is now in the overlay */}
               <div className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-2">
-                {/* Location Icon Teal */}
                 <MapPin className="h-4 w-4" style={{ color: TEAL_COLOR }} />
                 <span className="sm:text-sm">{trip.location}, {trip.country}</span>
               </div>
             </div>
 
-            <div className="space-y-3 p-4 sm:p-3 border bg-card">
+            {/* Description Section */}
+            {trip.description && (
+              <div className="bg-card border rounded-lg p-4 sm:p-3">
+                <h2 className="text-lg sm:text-base font-semibold mb-2 sm:mb-1">About This Trip</h2>
+                <p className="text-sm text-muted-foreground">{trip.description}</p>
+              </div>
+            )}
+            
+            {/* --- Included Activities Section (ORANGE) --- */}
+            {trip.activities && trip.activities.length > 0 && (
+              <div className="p-4 sm:p-3 border bg-card rounded-lg">
+                <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Included Activities</h2>
+                <div className="flex flex-wrap gap-2">
+                  {trip.activities.map((activity, idx) => (
+                    <div 
+                      key={idx} 
+                      className="px-3 py-1.5 text-white rounded-full text-xs flex flex-col items-center justify-center text-center"
+                      style={{ backgroundColor: ORANGE_COLOR }}
+                    >
+                      <span className="font-medium">{activity.name}</span>
+                      <span className="text-[10px] opacity-90">{activity.price === 0 ? 'Free' : `KSh ${activity.price}`}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT COLUMN (Booking Card, Contact, Share Buttons) */}
+          <div className="space-y-4 sm:space-y-3">
+            
+            {/* Booking Card */}
+            <div className="space-y-3 p-4 sm:p-3 border bg-card rounded-lg">
               <div className="flex items-center gap-2">
-                {/* Calendar Icon Teal */}
                 <Calendar className="h-5 w-5" style={{ color: TEAL_COLOR }} />
                 <div>
                   <p className="text-sm sm:text-xs text-muted-foreground">Trip Date</p>
@@ -325,7 +363,6 @@ const TripDetail = () => {
               
               <div className="border-t pt-3 sm:pt-2">
                 <p className="text-sm sm:text-xs text-muted-foreground mb-1">Price (Per Adult)</p>
-                {/* Price in Red */}
                 <p className="text-2xl sm:text-xl font-bold" style={{ color: RED_COLOR }}>KSh {trip.price}</p>
                 {trip.price_child > 0 && <p className="text-sm sm:text-xs text-muted-foreground">Child: KSh {trip.price_child}</p>}
                 <p className="text-sm sm:text-xs text-muted-foreground mt-2 sm:mt-1">Available Tickets: {trip.available_tickets}</p>
@@ -335,7 +372,7 @@ const TripDetail = () => {
               <Button 
                 size="lg" 
                 className="w-full text-white h-10 sm:h-9" 
-                onClick={() => setBookingOpen(true)} 
+                onClick={() => { setIsCompleted(false); setBookingOpen(true); }}
                 disabled={trip.available_tickets <= 0}
                 style={{ backgroundColor: TEAL_COLOR }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#005555')}
@@ -345,9 +382,8 @@ const TripDetail = () => {
               </Button>
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons (Combined Share/Copy/Map) */}
             <div className="flex gap-2">
-              {/* Map Button: Border/Icon Teal */}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -358,7 +394,6 @@ const TripDetail = () => {
                 <MapPin className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
                 <span className="hidden md:inline">Map</span>
               </Button>
-              {/* Copy Link Button: Border/Icon Teal */}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -369,7 +404,6 @@ const TripDetail = () => {
                 <Copy className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
                 <span className="hidden md:inline">Copy Link</span>
               </Button>
-              {/* Share Button: Border/Icon Teal */}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -380,67 +414,39 @@ const TripDetail = () => {
                 <Share2 className="h-4 w-4 md:mr-2" style={{ color: TEAL_COLOR }} />
                 <span className="hidden md:inline">Share</span>
               </Button>
-              {/* Save Button: Border/Icon Teal (and filled red if saved) */}
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={handleSave} 
-                className={`h-9 w-9 ${isSaved ? "bg-red-500 text-white hover:bg-red-600" : ""}`}
-                style={{ borderColor: TEAL_COLOR, color: isSaved ? 'white' : TEAL_COLOR }}
-              >
-                <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
-              </Button>
+              {/* Removed the small Save button here as it's now an overlay */}
             </div>
+
+            {/* --- Contact Information Section --- */}
+            {(trip.phone_number || trip.email) && (
+              <div className="p-4 sm:p-3 border bg-card rounded-lg">
+                <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Contact Information</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {trip.phone_number && (
+                    <a 
+                      href={`tel:${trip.phone_number}`}
+                      className="flex items-center gap-2 px-4 py-3 border rounded-lg hover:bg-muted transition-colors"
+                      style={{ borderColor: TEAL_COLOR }}
+                    >
+                      <Phone className="h-4 w-4" style={{ color: TEAL_COLOR }} />
+                      <span className="text-sm" style={{ color: TEAL_COLOR }}>{trip.phone_number}</span>
+                    </a>
+                  )}
+                  {trip.email && (
+                    <a 
+                      href={`mailto:${trip.email}`}
+                      className="flex items-center gap-2 px-4 py-3 border rounded-lg hover:bg-muted transition-colors"
+                      style={{ borderColor: TEAL_COLOR }}
+                    >
+                      <Mail className="h-4 w-4" style={{ color: TEAL_COLOR }} />
+                      <span className="text-sm" style={{ color: TEAL_COLOR }}>{trip.email}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* --- Included Activities Section --- */}
-        {trip.activities && trip.activities.length > 0 && (
-          <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
-            <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Included Activities</h2>
-            <div className="flex flex-wrap gap-2">
-              {trip.activities.map((activity, idx) => (
-                <div 
-                  key={idx} 
-                  className="px-3 py-1.5 text-white rounded-full text-xs flex flex-col items-center justify-center text-center"
-                  style={{ backgroundColor: ORANGE_COLOR }}
-                >
-                  <span className="font-medium">{activity.name}</span>
-                  <span className="text-[10px] opacity-90">{activity.price === 0 ? 'Free' : `KSh ${activity.price}`}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* --- Contact Information Section --- */}
-        {(trip.phone_number || trip.email) && (
-          <div className="mt-6 sm:mt-4 p-4 sm:p-3 border bg-card rounded-lg">
-            <h2 className="text-xl sm:text-lg font-semibold mb-4 sm:mb-3">Contact Information</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {trip.phone_number && (
-                <a 
-                  href={`tel:${trip.phone_number}`}
-                  className="flex items-center gap-2 px-4 py-3 border rounded-lg hover:bg-muted transition-colors"
-                  style={{ borderColor: TEAL_COLOR }}
-                >
-                  <Phone className="h-4 w-4" style={{ color: TEAL_COLOR }} />
-                  <span className="text-sm" style={{ color: TEAL_COLOR }}>{trip.phone_number}</span>
-                </a>
-              )}
-              {trip.email && (
-                <a 
-                  href={`mailto:${trip.email}`}
-                  className="flex items-center gap-2 px-4 py-3 border rounded-lg hover:bg-muted transition-colors"
-                  style={{ borderColor: TEAL_COLOR }}
-                >
-                  <Mail className="h-4 w-4" style={{ color: TEAL_COLOR }} />
-                  <span className="text-sm" style={{ color: TEAL_COLOR }}>{trip.email}</span>
-                </a>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* --- Review Section --- */}
         <div className="mt-6 sm:mt-4">
@@ -463,7 +469,8 @@ const TripDetail = () => {
             itemName={trip.name}
             skipDateSelection={!trip.is_custom_date}
             fixedDate={trip.date}
-            skipFacilitiesAndActivities={true}
+            // Facilities are not relevant for trip, but activities are included in price and cannot be chosen separately
+            skipFacilitiesAndActivities={true} 
             itemId={trip.id}
             bookingType="trip"
             hostId={trip.created_by || ""}
