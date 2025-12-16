@@ -15,7 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NavigationDrawer } from "./NavigationDrawer";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // Import useLocation
+// Import useLocation
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle"; 
 import { NotificationBell } from "./NotificationBell"; 
 
@@ -37,7 +38,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
   const { user, signOut } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // --- Start of functional code (omitted for brevity, assume unchanged) ---
+  // --- Start of functional code ---
   useEffect(() => {
     const checkRole = async () => {
       if (!user) {
@@ -95,25 +96,27 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
 
   // Conditional classes for the main header element
   const mobileHeaderClasses = isIndexPage 
-    // Index page: fixed, no background/border (relying on icon backgrounds)
+    // Classes for the index page (fixed, hidden background)
     ? "fixed top-0 left-0 right-0" 
-    // Other pages: sticky, full background/border
+    // Classes for all other pages (sticky, full background)
     : "sticky top-0 left-0 right-0 border-b border-border bg-[#008080] dark:bg-[#008080] text-white dark:text-white";
 
-  // Conditional style for icon backgrounds (transparent on non-index pages)
+  // Conditional icon styling for non-index pages
   const nonIndexIconStyle = isIndexPage ? {} : { backgroundColor: 'transparent' };
-  
-  // A consistent height/padding wrapper for non-index mobile pages to align content
-  const nonIndexMobileWrapperClasses = 'w-full h-16 flex items-center';
-
+  const nonIndexIconColor = isIndexPage ? 'text-white' : 'text-white'; 
 
   return (
+    // 1. Apply conditional classes to the header
     <header className={`z-[100] text-black dark:text-white md:sticky md:h-16 md:text-white dark:md:text-white ${mobileHeaderClasses}`}>
-      <div className="container md:flex md:h-full md:items-center md:justify-between md:px-4">
+      
+      {/* 2. Main container: Use flexbox to align items for non-index pages on mobile */}
+      <div className={`container md:flex md:h-full md:items-center md:justify-between md:px-4 
+                      ${!isIndexPage ? 'flex items-center justify-between h-16' : ''}`}>
         
-        {/* 1. Mobile Left Icons (Menu) - Conditional Position/Flow */}
-        {/* On non-index pages, this takes up the left space and uses flex justify-start */}
-        <div className={`flex items-center gap-3 md:relative md:top-auto md:left-auto ${isIndexPage ? 'absolute top-4 left-4' : 'relative h-16 flex justify-start pl-4'}`}>
+        {/* 3. Mobile Left Icons (Menu) - Conditional Fixed/Relative Position */}
+        <div className={`flex items-center gap-3 
+                        ${isIndexPage ? 'absolute top-4 left-4' : 'relative'} 
+                        md:relative md:top-auto md:left-auto`}>
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>
               {/* Menu Icon: Conditionally apply RGBA Background */}
@@ -131,7 +134,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
             </SheetContent>
           </Sheet>
           
-          {/* Logo/Description: Hidden on mobile (always) */}
+          {/* Logo/Description: Hidden on mobile, flows with relative positioning on other pages */}
           <Link to="/" className="hidden md:flex items-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center text-[#0066cc] font-bold text-lg">
                 T
@@ -168,17 +171,11 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
           </button>
         </nav>
 
-        {/* 2. Mobile Right Icons (Search, Notification) - Conditional Position/Flow */}
-        {/* On non-index pages, this uses flex justify-end to position icons on the top right
-          within the sticky bar flow.
-        */}
+        {/* 4. Mobile Right Icons (Search, Notification) - Conditional Fixed/Relative Position */}
         <div className={`flex items-center gap-2 md:relative md:top-auto md:right-auto md:flex 
-                        ${isIndexPage 
-                          ? 'absolute top-4 right-4' // Fixed overlay corners on index
-                          : 'relative h-16 flex justify-end pr-4' // Flowing right-side on other pages
-                        }`}> 
+                        ${isIndexPage ? 'absolute top-4 right-4' : 'relative'}`}>
           
-          {/* Search Icon Button: Conditionally apply RGBA Background */}
+          {/* Search Icon Button: Conditionally apply RGBA Background and White Icon */}
           {showSearchIcon && (
             <button 
               onClick={() => {
@@ -193,7 +190,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
               aria-label="Search"
               style={isIndexPage ? { backgroundColor: MOBILE_ICON_BG } : nonIndexIconStyle}
             >
-              <Search className={`h-5 w-5 md:text-white md:group-hover:text-[#008080] text-white`} />
+              <Search className={`h-5 w-5 md:text-white md:group-hover:text-[#008080] ${nonIndexIconColor}`} />
             </button>
           )}
           
