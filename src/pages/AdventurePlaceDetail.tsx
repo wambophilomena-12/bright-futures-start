@@ -59,15 +59,15 @@ interface AdventurePlace {
 }
 
 const getButtonStyle = (isHovering: boolean) => ({
-  borderColor: TEAL_COLOR,
-  color: isHovering ? '#FFFFFF' : TEAL_COLOR,
-  backgroundColor: isHovering ? TEAL_COLOR : 'transparent',
-  transition: 'background-color 0.2s, color 0.2s', // Smooth transition
+  borderColor: TEAL_COLOR,
+  color: isHovering ? '#FFFFFF' : TEAL_COLOR,
+  backgroundColor: isHovering ? TEAL_COLOR : 'transparent',
+  transition: 'background-color 0.2s, color 0.2s', // Smooth transition
 });
 
 const getIconStyle = (isHovering: boolean) => ({
-  color: isHovering ? '#FFFFFF' : TEAL_COLOR,
-  transition: 'color 0.2s', // Smooth transition
+  color: isHovering ? '#FFFFFF' : TEAL_COLOR,
+  transition: 'color 0.2s', // Smooth transition
 });
 
 const AdventurePlaceDetail = () => {
@@ -78,11 +78,11 @@ const AdventurePlaceDetail = () => {
   const { user } = useAuth();
   const { position, requestLocation } = useGeolocation();
   
-  // --- New State for Hover Effects ---
-  const [isMapHovering, setIsMapHovering] = useState(false);
-  const [isCopyHovering, setIsCopyHovering] = useState(false);
-  const [isShareHovering, setIsShareHovering] = useState(false);
-  // -----------------------------------
+  // --- New State for Hover Effects ---
+  const [isMapHovering, setIsMapHovering] = useState(false);
+  const [isCopyHovering, setIsCopyHovering] = useState(false);
+  const [isShareHovering, setIsShareHovering] = useState(false);
+  // -----------------------------------
 
   useEffect(() => {
     const handleInteraction = () => {
@@ -440,15 +440,15 @@ const AdventurePlaceDetail = () => {
               )}
             </div>
             
-            {/* --- Mobile Order 2.1: Action Buttons (Map, Copy, Share) - MODIFIED FOR HOVER --- */}
+            {/* --- Mobile Order 2.1: Action Buttons (Map, Copy, Share) - STYLED FOR HOVER --- */}
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={openInMaps} 
                 className="flex-1 h-9"
-                onMouseEnter={() => setIsMapHovering(true)}
-                onMouseLeave={() => setIsMapHovering(false)}
+                onMouseEnter={() => setIsMapHovering(true)}
+                onMouseLeave={() => setIsMapHovering(false)}
                 style={getButtonStyle(isMapHovering)}
               >
                 <MapPin className="h-4 w-4 md:mr-2" style={getIconStyle(isMapHovering)} />
@@ -459,8 +459,8 @@ const AdventurePlaceDetail = () => {
                 size="sm" 
                 onClick={handleCopyLink} 
                 className="flex-1 h-9"
-                onMouseEnter={() => setIsCopyHovering(true)}
-                onMouseLeave={() => setIsCopyHovering(false)}
+                onMouseEnter={() => setIsCopyHovering(true)}
+                onMouseLeave={() => setIsCopyHovering(false)}
                 style={getButtonStyle(isCopyHovering)}
               >
                 <Copy className="h-4 w-4 md:mr-2" style={getIconStyle(isCopyHovering)} />
@@ -471,8 +471,8 @@ const AdventurePlaceDetail = () => {
                 size="sm" 
                 onClick={handleShare} 
                 className="flex-1 h-9"
-                onMouseEnter={() => setIsShareHovering(true)}
-                onMouseLeave={() => setIsShareHovering(false)}
+                onMouseEnter={() => setIsShareHovering(true)}
+                onMouseLeave={() => setIsShareHovering(false)}
                 style={getButtonStyle(isShareHovering)}
               >
                 <Share2 className="h-4 w-4 md:mr-2" style={getIconStyle(isShareHovering)} />
