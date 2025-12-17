@@ -329,13 +329,8 @@ const CategoryDetail = () => {
         
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6">
-          {loading ? (
+          {loading || filteredItems.length === 0 ? (
             <ListingGridSkeleton count={12} className="col-span-full" />
-          ) : filteredItems.length === 0 ? (
-            /* Show skeleton placeholders instead of empty message for better UX */
-            <div className="col-span-full">
-              <p className="text-center text-muted-foreground py-8">No items available in this category</p>
-            </div>
           ) : filteredItems.map(item => {
           const isAttraction = item.table === "attractions";
           const isEvent = item.table === "trips" && (item.type === "event" || category === "events");

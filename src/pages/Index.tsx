@@ -654,11 +654,11 @@ const Index = () => {
                                     </Button>
                                 </>}
                             <div ref={featuredEventsRef} onScroll={handleScroll('featuredEvents')} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={() => onTouchEnd(featuredEventsRef)} className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide md:gap-4 pl-1 pr-8 md:pl-2 md:pr-12 scroll-smooth">
-                            {loadingScrollable ? <div className="flex gap-1.5 md:gap-2">
+                            {loadingScrollable || scrollableRows.events.length === 0 ? <div className="flex gap-1.5 md:gap-2">
                                     {[...Array(5)].map((_, i) => <div key={i} className="flex-shrink-0 w-[45vw] md:w-56">
                                             <ListingSkeleton />
                                         </div>)}
-                                </div> : scrollableRows.events.length === 0 ? <p className="text-center text-muted-foreground py-8 w-full">No events available</p> : scrollableRows.events.map((event, index) => <div key={event.id} className="flex-shrink-0 w-[45vw] md:w-56">
+                                </div> : scrollableRows.events.map((event, index) => <div key={event.id} className="flex-shrink-0 w-[45vw] md:w-56">
                                         <ListingCard id={event.id} type="EVENT" name={event.name} imageUrl={event.image_url} location={event.location} country={event.country} price={event.price} date={event.date} isCustomDate={event.is_custom_date} onSave={handleSave} isSaved={savedItems.has(event.id)} showBadge={false} priority={index === 0} activities={event.activities} />
                                     </div>)}
                             </div>
@@ -687,11 +687,11 @@ const Index = () => {
                                     </Button>
                                 </>}
                             <div ref={featuredCampsitesRef} onScroll={handleScroll('featuredCampsites')} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={() => onTouchEnd(featuredCampsitesRef)} className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide md:gap-4 pl-1 pr-8 md:pl-2 md:pr-12 scroll-smooth">
-                            {loadingScrollable ? <div className="flex gap-1.5 md:gap-2">
+                            {loadingScrollable || scrollableRows.campsites.length === 0 ? <div className="flex gap-1.5 md:gap-2">
                                     {[...Array(5)].map((_, i) => <div key={i} className="flex-shrink-0 w-[45vw] md:w-56">
                                             <ListingSkeleton />
                                         </div>)}
-                                </div> : scrollableRows.campsites.length === 0 ? <p className="text-center text-muted-foreground py-8 w-full">No campsites available</p> : [...scrollableRows.campsites].sort((a, b) => {
+                                </div> : [...scrollableRows.campsites].sort((a, b) => {
                 if (!position) return 0;
                 const distA = a.latitude && a.longitude ? calculateDistance(position.latitude, position.longitude, a.latitude, a.longitude) : Infinity;
                 const distB = b.latitude && b.longitude ? calculateDistance(position.latitude, position.longitude, b.latitude, b.longitude) : Infinity;
@@ -726,11 +726,11 @@ const Index = () => {
                                     </Button>
                                 </>}
                             <div ref={featuredHotelsRef} onScroll={handleScroll('featuredHotels')} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={() => onTouchEnd(featuredHotelsRef)} className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide md:gap-4 pl-1 pr-8 md:pl-2 md:pr-12 scroll-smooth">
-                            {loadingScrollable ? <div className="flex gap-1.5 md:gap-2">
+                            {loadingScrollable || scrollableRows.hotels.length === 0 ? <div className="flex gap-1.5 md:gap-2">
                                     {[...Array(5)].map((_, i) => <div key={i} className="flex-shrink-0 w-[45vw] md:w-56">
                                             <ListingSkeleton />
                                         </div>)}
-                                </div> : scrollableRows.hotels.length === 0 ? <p className="text-center text-muted-foreground py-8 w-full">No hotels available</p> : [...scrollableRows.hotels].sort((a, b) => {
+                                </div> : [...scrollableRows.hotels].sort((a, b) => {
                 if (!position) return 0;
                 const distA = a.latitude && a.longitude ? calculateDistance(position.latitude, position.longitude, a.latitude, a.longitude) : Infinity;
                 const distB = b.latitude && b.longitude ? calculateDistance(position.latitude, position.longitude, b.latitude, b.longitude) : Infinity;
@@ -773,11 +773,11 @@ const Index = () => {
                                     </Button>
                                 </>}
                             <div ref={featuredTripsRef} onScroll={handleScroll('featuredTrips')} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={() => onTouchEnd(featuredTripsRef)} className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide md:gap-4 pl-1 pr-8 md:pl-2 md:pr-12 scroll-smooth">
-                            {loadingScrollable ? <div className="flex gap-1.5 md:gap-2">
+                            {loadingScrollable || scrollableRows.trips.length === 0 ? <div className="flex gap-1.5 md:gap-2">
                                     {[...Array(5)].map((_, i) => <div key={i} className="flex-shrink-0 w-[45vw] md:w-56">
                                             <ListingSkeleton />
                                         </div>)}
-                                </div> : scrollableRows.trips.length === 0 ? <p className="text-center text-muted-foreground py-8 w-full">No trips available</p> : scrollableRows.trips.map(trip => {
+                                </div> : scrollableRows.trips.map(trip => {
                 const isEvent = trip.type === "event";
                 return <div key={trip.id} className="flex-shrink-0 w-[45vw] md:w-56">
                                         <ListingCard id={trip.id} type={isEvent ? "EVENT" : "TRIP"} name={trip.name} imageUrl={trip.image_url} location={trip.location} country={trip.country} price={trip.price} date={trip.date} isCustomDate={trip.is_custom_date} onSave={handleSave} isSaved={savedItems.has(trip.id)} showBadge={isEvent} availableTickets={trip.available_tickets} bookedTickets={bookingStats[trip.id] || 0} activities={trip.activities} />
