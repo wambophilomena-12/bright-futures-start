@@ -434,7 +434,7 @@ const Index = () => {
     description: "Adventure camping spots"
   }];
   return <div className="min-h-screen bg-background pb-20 md:pb-0">
-            <Header onSearchClick={handleSearchIconClick} showSearchIcon={showSearchIcon} />
+            <Header onSearchClick={handleSearchIconClick} showSearchIcon={showSearchIcon} hideIcons={isSearchFocused} />
             
      {/* Hero Section with Search Bar and Background Image - Hidden when search focused */}
      {!isSearchFocused && (
@@ -486,7 +486,7 @@ const Index = () => {
 )}
             
             {/* Search Bar - Appears below header when focused on all screens */}
-            {isSearchFocused && <div className="sticky top-[64px] z-[100] bg-background p-4 border-b shadow-md">
+            {isSearchFocused && <div className="sticky top-0 md:top-[64px] z-[100] bg-background p-4 border-b shadow-md">
                     <div className="container md:px-4 px-4 mx-auto">
                         <SearchBarWithSuggestions value={searchQuery} onChange={setSearchQuery} onSubmit={() => {
           if (searchQuery.trim()) {

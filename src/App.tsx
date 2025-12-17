@@ -8,7 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 // REMOVED: import { InstallPrompt } from "@/components/InstallPrompt";
 // REMOVED: import { MobileInstallBanner } from "@/components/MobileInstallBanner";
 import { PageLayout } from "@/components/PageLayout";
-import { OfflineIndicator } from "@/components/OfflineIndicator";
+// OfflineIndicator removed per user request
 
 // Critical path pages - load eagerly
 import Index from "./pages/Index";
@@ -82,7 +82,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <OfflineIndicator />
+        {/* OfflineIndicator removed */}
         <BrowserRouter>
           <AuthProvider>
             {/* REMOVED: <InstallPrompt /> */}

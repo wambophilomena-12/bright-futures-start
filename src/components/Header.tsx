@@ -27,9 +27,10 @@ export interface HeaderProps {
   onSearchClick?: () => void;
   showSearchIcon?: boolean;
   className?: string;
+  hideIcons?: boolean;
 }
 
-export const Header = ({ onSearchClick, showSearchIcon = true, className }: HeaderProps) => {
+export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIcons = false }: HeaderProps) => {
   const navigate = useNavigate();
   // Determine the current route
   const location = useLocation();
@@ -117,10 +118,11 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className }: Head
       <div className={`container md:flex md:h-full md:items-center md:justify-between md:px-4 
             ${isIndexPage ? 'px-0' : 'px-0'} flex items-center justify-between h-16`}>
         
-        {/* 3. Left Icons (Menu & Logo) - Conditional Positioning and Margin */}
+        {/* 3. Left Icons (Menu & Logo) - Conditional Positioning and Margin - Hidden on mobile when hideIcons */}
         <div className={`flex items-center gap-3 
                         ${isIndexPage ? 'absolute top-4 left-4' : 'relative ml-4'} 
-                        md:relative md:top-auto md:left-auto md:ml-0`}> {/* Added ml-4 for non-index mobile */}
+                        md:relative md:top-auto md:left-auto md:ml-0
+                        ${hideIcons && isIndexPage ? 'hidden md:flex' : ''}`}>
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>
               {/* Menu Icon: Conditionally apply RGBA Background on index page (mobile only) */}
@@ -174,10 +176,11 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className }: Head
           </button>
         </nav>
 
-        {/* 4. Right Icons (Search, Notification, Theme, Account) - Conditional Positioning and Margin */}
+        {/* 4. Right Icons (Search, Notification, Theme, Account) - Conditional Positioning and Margin - Hidden on mobile when hideIcons */}
         <div className={`flex items-center gap-2 
                         ${isIndexPage ? 'absolute top-4 right-4' : 'relative mr-4'}
-                        md:relative md:top-auto md:right-auto md:flex md:mr-0`}> {/* Added mr-4 for non-index mobile */}
+                        md:relative md:top-auto md:right-auto md:flex md:mr-0
+                        ${hideIcons && isIndexPage ? 'hidden md:flex' : ''}`}>
           
           {/* Search Icon Button: Conditionally apply RGBA Background on index page (mobile only) */}
           {showSearchIcon && (
