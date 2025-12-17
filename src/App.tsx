@@ -65,6 +65,7 @@ const Install = lazy(() => import("./pages/Install"));
 const AllBookings = lazy(() => import("./pages/admin/AllBookings"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const QRScanner = lazy(() => import("./pages/QRScanner"));
 
 const queryClient = new QueryClient();
 
@@ -143,9 +144,10 @@ const App = () => {
                     <Route path="/install" element={<Install />} />
                     <Route path="/host-bookings" element={<HostBookings />} />
                     <Route path="/host-bookings/:itemType/:id" element={<HostBookingDetails />} />
-                    <Route path="/terms-of-service" element={<TermsOfService />} />
-                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                    <Route path="*" element={<NotFound />} />
+                    <Route path="/terms-of-service" element={<TermsOfService />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/qr-scanner" element={<QRScanner />} />
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </div>
               </Suspense>

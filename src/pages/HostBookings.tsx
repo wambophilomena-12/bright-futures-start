@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Building, Plane, Tent, Bell, ChevronRight, ArrowLeft, Calendar } from "lucide-react";
+import { Building, Plane, Tent, Bell, ChevronRight, ArrowLeft, Calendar, QrCode } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HostedItem {
   id: string;
@@ -20,6 +21,7 @@ interface HostedItem {
 const HostBookings = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [hostedItems, setHostedItems] = useState<HostedItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -169,6 +171,18 @@ const HostBookings = () => {
             <p className="text-sm text-muted-foreground mt-1">{totalPaidBookings} total paid bookings</p>
           </div>
         </div>
+
+        {/* QR Scanner Button - Mobile Only */}
+        {isMobile && (
+          <Button 
+            onClick={() => navigate("/qr-scanner")} 
+            className="w-full mb-6 flex items-center justify-center gap-2"
+            variant="outline"
+          >
+            <QrCode className="h-5 w-5" />
+            Scan Booking QR Code
+          </Button>
+        )}
 
         {hostedItems.length === 0 ? (
           <Card className="p-12 text-center">
