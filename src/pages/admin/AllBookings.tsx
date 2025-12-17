@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Mail, Phone, User, Search, ArrowLeft, MapPin, Clock } from "lucide-react";
+import { Calendar, Mail, Phone, User, Search, ArrowLeft, Clock, Users, DollarSign } from "lucide-react";
+import { BookingDownloadButton } from "@/components/booking/BookingDownloadButton";
+import { format } from "date-fns";
 
 interface Booking {
   id: string;
@@ -98,9 +99,11 @@ const AllBookings = () => {
 
   const fetchAllBookings = async () => {
     try {
+      // Fetch only paid/completed bookings
       const { data: bookingsData, error } = await supabase
         .from("bookings")
         .select("*")
+        .in("payment_status", ["paid", "completed"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -206,7 +209,6 @@ const AllBookings = () => {
         <main className="flex-1 container px-4 py-8 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </main>
-        <Footer />
         <MobileBottomBar />
       </div>
     );
@@ -363,6 +365,27 @@ const AllBookings = () => {
                     </pre>
                   </div>
                 )}
+
+                <div className="pt-4">
+                  <BookingDownloadButton
+                    booking={{
+                      bookingId: selectedBooking.id,
+                      guestName: selectedBooking.guest_name || 'Guest',
+                      guestEmail: selectedBooking.guest_email || '',
+                      guestPhone: selectedBooking.guest_phone || undefined,
+                      itemName: itemDetails[selectedBooking.item_id]?.name || 'Booking',
+                      bookingType: selectedBooking.booking_type,
+                      visitDate: selectedBooking.visit_date || selectedBooking.created_at,
+                      totalAmount: selectedBooking.total_amount,
+                      slotsBooked: selectedBooking.slots_booked || 1,
+                      adults: (selectedBooking.booking_details as any)?.adults,
+                      children: (selectedBooking.booking_details as any)?.children,
+                      paymentStatus: selectedBooking.payment_status || 'paid',
+                      facilities: (selectedBooking.booking_details as any)?.facilities,
+                      activities: (selectedBooking.booking_details as any)?.activities,
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </Card>
@@ -372,7 +395,7 @@ const AllBookings = () => {
         {filteredBookings.length === 0 ? (
           <Card className="p-8 text-center">
             <p className="text-muted-foreground">
-              {searchQuery ? "No bookings found matching your search." : "No bookings found."}
+              {searchQuery ? "No bookings found matching your search." : "No paid bookings found."}
             </p>
           </Card>
         ) : (
@@ -416,7 +439,6 @@ const AllBookings = () => {
           </div>
         )}
       </main>
-      <Footer />
       <MobileBottomBar />
     </div>
   );

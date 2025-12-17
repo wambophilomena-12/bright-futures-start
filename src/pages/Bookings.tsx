@@ -7,9 +7,11 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, DollarSign, Users, MapPin, CalendarClock, RefreshCw, XCircle } from "lucide-react";
+import { Calendar, DollarSign, Users, CalendarClock, RefreshCw, XCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { RescheduleBookingDialog } from "@/components/booking/RescheduleBookingDialog";
+import { BookingDownloadButton } from "@/components/booking/BookingDownloadButton";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +22,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface Booking {
   id: string;
@@ -41,16 +48,22 @@ interface Booking {
   result_code?: string | null;
 }
 
+interface ItemDetails {
+  name: string;
+  type: string;
+}
+
 const Bookings = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [itemDetails, setItemDetails] = useState<Record<string, ItemDetails>>({});
   const [loading, setLoading] = useState(true);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const [retryingPaymentId, setRetryingPaymentId] = useState<string | null>(null);
-  const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+  const [expandedBookings, setExpandedBookings] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -72,10 +85,7 @@ const Bookings = () => {
             table: 'payments',
             filter: `user_id=eq.${user.id}`,
           },
-          (payload) => {
-            console.log('Pending payment update:', payload);
-            fetchBookings();
-          }
+          () => fetchBookings()
         )
         .subscribe();
 
@@ -87,48 +97,22 @@ const Bookings = () => {
 
   const fetchBookings = async () => {
     try {
+      // Fetch only paid/completed bookings
       const { data: confirmedBookings, error: bookingsError } = await supabase
         .from("bookings")
         .select("*")
         .eq("user_id", user?.id)
+        .in("payment_status", ["paid", "completed"])
+        .not("status", "eq", "cancelled")
         .order("created_at", { ascending: false });
 
       if (bookingsError) throw bookingsError;
 
-      const { data: pendingPayments, error: pendingError } = await supabase
-        .from("payments" as any)
-        .select("*")
-        .eq("user_id", user?.id)
-        .in("payment_status", ["pending", "failed"])
-        .order("created_at", { ascending: false });
-
-      if (pendingError) throw pendingError;
-
-      const pendingAsBookings: Booking[] = (pendingPayments || []).map((pp: any) => ({
-        id: pp.id,
-        booking_type: pp.booking_data?.booking_type || "unknown",
-        total_amount: pp.amount,
-        booking_details: pp.booking_data?.booking_details || {},
-        payment_status: pp.payment_status,
-        status: "pending",
-        created_at: pp.created_at,
-        guest_name: pp.booking_data?.guest_name || null,
-        guest_email: pp.booking_data?.guest_email || null,
-        guest_phone: pp.booking_data?.guest_phone || null,
-        slots_booked: pp.booking_data?.slots_booked || 1,
-        visit_date: pp.booking_data?.visit_date || null,
-        item_id: pp.booking_data?.item_id || "",
-        isPending: true,
-        payment_phone: pp.phone_number,
-        pendingPaymentId: pp.id,
-        result_code: pp.result_code,
-      }));
-
-      const allBookings = [...(confirmedBookings || []), ...pendingAsBookings].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-
-      setBookings(allBookings);
+      setBookings(confirmedBookings || []);
+      
+      // Fetch item details
+      const itemIds = [...new Set((confirmedBookings || []).map(b => ({ id: b.item_id, type: b.booking_type })))];
+      await fetchItemDetails(itemIds);
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
@@ -136,64 +120,41 @@ const Bookings = () => {
     }
   };
 
-  const getStatusColor = (booking: Booking) => {
-    const { payment_status, result_code } = booking;
-    if (result_code) {
-      switch (result_code) {
-        case "0": return "bg-green-500/10 text-green-500";
-        case "1": return "bg-orange-500/10 text-orange-500";
-        case "1025": return "bg-red-500/10 text-red-500";
-        case "1032": return "bg-red-500/10 text-red-500";
-        case "1037": return "bg-yellow-500/10 text-yellow-500";
-        case "1001": return "bg-orange-500/10 text-orange-500";
-        case "2001": return "bg-red-500/10 text-red-500";
-        default: return "bg-orange-500/10 text-orange-500";
+  const fetchItemDetails = async (items: { id: string; type: string }[]) => {
+    const details: Record<string, ItemDetails> = {};
+
+    for (const item of items) {
+      try {
+        let data: any = null;
+        if (item.type === "trip" || item.type === "event") {
+          const { data: tripData } = await supabase.from("trips").select("name").eq("id", item.id).maybeSingle();
+          data = tripData;
+        } else if (item.type === "hotel") {
+          const { data: hotelData } = await supabase.from("hotels").select("name").eq("id", item.id).maybeSingle();
+          data = hotelData;
+        } else if (item.type === "adventure" || item.type === "adventure_place") {
+          const { data: adventureData } = await supabase.from("adventure_places").select("name").eq("id", item.id).maybeSingle();
+          data = adventureData;
+        }
+        if (data) {
+          details[item.id] = { name: data.name, type: item.type };
+        }
+      } catch (error) {
+        console.error("Error fetching item details:", error);
       }
     }
+    setItemDetails(details);
+  };
+
+  const getStatusColor = (booking: Booking) => {
+    const { payment_status } = booking;
     switch (payment_status) {
-      case "confirmed": 
       case "paid":
       case "completed":
         return "bg-green-500/10 text-green-500";
-      case "pending": 
-        return "bg-yellow-500/10 text-yellow-500";
       default: 
         return "bg-gray-500/10 text-gray-500";
     }
-  };
-
-  const getPaymentStatusLabel = (booking: Booking) => {
-    const { payment_status, result_code } = booking;
-    if (result_code) {
-      switch (result_code) {
-        case "0": return "Paid";
-        case "1": return "Insufficient Funds";
-        case "1025": return "Wrong PIN";
-        case "1032": return "Cancelled by User";
-        case "1037": return "PIN Timeout";
-        case "1001": return "Subscriber Busy";
-        case "2001": return "Invalid Request";
-        default: return `Failed (${result_code})`;
-      }
-    }
-    switch (payment_status) {
-      case "paid":
-      case "completed":
-        return "Paid";
-      case "pending":
-        return "Awaiting Payment";
-      default:
-        return payment_status;
-    }
-  };
-
-  const canRetryPayment = (booking: Booking) => {
-    if (!booking.isPending) return false;
-    const { result_code, payment_status } = booking;
-    if (result_code) {
-      return ["1", "1025", "1032", "1037", "1001", "2001", "2"].includes(result_code);
-    }
-    return ["failed", "cancelled", "timeout"].includes(payment_status);
   };
 
   const canReschedule = (booking: Booking) => {
@@ -215,62 +176,8 @@ const Bookings = () => {
     return true;
   };
 
-  const retryPayment = async (booking: Booking) => {
-    if (!booking.payment_phone || !booking.pendingPaymentId) {
-      toast.error("Unable to retry payment. Missing payment information.");
-      return;
-    }
-    setRetryingPaymentId(booking.pendingPaymentId);
-    try {
-      const { data: pendingPayment, error: fetchError } = await supabase
-        .from("payments" as any)
-        .select("*")
-        .eq("id", booking.pendingPaymentId)
-        .single();
-
-      if (fetchError || !pendingPayment) throw new Error("Could not find payment record");
-
-      const payment = pendingPayment as any;
-      const { data, error } = await supabase.functions.invoke("mpesa-stk-push", {
-        body: {
-          phoneNumber: payment.phone_number,
-          amount: payment.amount,
-          accountReference: payment.account_reference,
-          transactionDesc: `Retry: ${payment.transaction_desc || "Booking Payment"}`,
-          bookingData: payment.booking_data,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        await supabase
-          .from("payments" as any)
-          .update({
-            checkout_request_id: data.checkoutRequestId,
-            merchant_request_id: data.merchantRequestId,
-            payment_status: "pending",
-            result_code: null,
-            result_desc: null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", booking.pendingPaymentId);
-
-        toast.success("Payment request sent!");
-        setTimeout(() => fetchBookings(), 3000);
-      } else {
-        throw new Error(data?.error || "Failed to initiate payment");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to retry payment.");
-    } finally {
-      setRetryingPaymentId(null);
-    }
-  };
-
   const handleCancelBooking = async () => {
     if (!bookingToCancel) return;
-    setCancellingBookingId(bookingToCancel.id);
     try {
       const { error } = await supabase
         .from('bookings')
@@ -284,10 +191,30 @@ const Bookings = () => {
     } catch (error: any) {
       toast.error(error.message || "Failed to cancel booking.");
     } finally {
-      setCancellingBookingId(null);
       setShowCancelDialog(false);
       setBookingToCancel(null);
     }
+  };
+
+  const toggleExpanded = (bookingId: string) => {
+    setExpandedBookings(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(bookingId)) {
+        newSet.delete(bookingId);
+      } else {
+        newSet.add(bookingId);
+      }
+      return newSet;
+    });
+  };
+
+  const getItemName = (booking: Booking) => {
+    return itemDetails[booking.item_id]?.name || 
+           booking.booking_details?.trip_name || 
+           booking.booking_details?.hotel_name || 
+           booking.booking_details?.place_name ||
+           booking.booking_details?.event_name ||
+           'Booking';
   };
 
   if (authLoading || loading) {
@@ -295,7 +222,10 @@ const Bookings = () => {
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-1 container px-4 py-8">
-          <p>Loading...</p>
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-48"></div>
+            {[1, 2, 3].map(i => <div key={i} className="h-32 bg-muted rounded"></div>)}
+          </div>
         </main>
         <MobileBottomBar />
       </div>
@@ -307,78 +237,175 @@ const Bookings = () => {
       <Header />
       
       <main className="flex-1 container px-4 py-8 pb-24 md:pb-8 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
+        <h1 className="text-3xl font-bold mb-2">My Bookings</h1>
+        <p className="text-muted-foreground mb-8">Your completed and confirmed bookings</p>
         
         {bookings.length === 0 ? (
-          <div className="text-center py-16">
+          <Card className="p-12 text-center">
+            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-xl text-muted-foreground">No bookings yet</p>
-          </div>
+            <p className="text-sm text-muted-foreground mt-2">Your confirmed bookings will appear here</p>
+          </Card>
         ) : (
           <div className="space-y-4">
-            {bookings.map((booking) => (
-              <Card key={booking.id} className="p-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <Badge variant="outline">{booking.booking_type}</Badge>
-                      <Badge className={getStatusColor(booking)}>
-                        {getPaymentStatusLabel(booking)}
-                      </Badge>
-                      {!booking.isPending && (
-                        <Badge className={booking.status === 'cancelled' ? "bg-red-500/10 text-red-500" : "bg-green-500/10 text-green-500"}>
-                          {booking.status}
-                        </Badge>
-                      )}
-                    </div>
+            {bookings.map((booking) => {
+              const isExpanded = expandedBookings.has(booking.id);
+              const details = booking.booking_details as Record<string, any> | null;
+              
+              return (
+                <Card key={booking.id} className="overflow-hidden">
+                  <Collapsible open={isExpanded} onOpenChange={() => toggleExpanded(booking.id)}>
+                    {/* Header - Always Visible */}
+                    <div className="p-6">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <Badge variant="outline" className="capitalize">{booking.booking_type}</Badge>
+                            <Badge className={getStatusColor(booking)}>Paid</Badge>
+                            <Badge variant="secondary">{booking.status}</Badge>
+                          </div>
 
-                    <h3 className="text-xl font-semibold">
-                      {booking.booking_details.trip_name || booking.booking_details.hotel_name || 'Booking'}
-                    </h3>
+                          <h3 className="text-xl font-semibold">{getItemName(booking)}</h3>
+                          
+                          <p className="text-xs text-muted-foreground font-mono">Booking ID: {booking.id}</p>
 
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      {booking.visit_date && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{new Date(booking.visit_date).toLocaleDateString()}</span>
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            {booking.visit_date && (
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>{format(new Date(booking.visit_date), 'PPP')}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              <span>{booking.slots_booked || 1} People</span>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        <span>{booking.slots_booked} Tickets</span>
+
+                        <div className="flex flex-col gap-3 items-end">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="h-5 w-5 text-primary" />
+                            <span className="text-2xl font-bold">KES {booking.total_amount.toLocaleString()}</span>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2">
+                            <BookingDownloadButton
+                              booking={{
+                                bookingId: booking.id,
+                                guestName: booking.guest_name || 'Guest',
+                                guestEmail: booking.guest_email || '',
+                                guestPhone: booking.guest_phone || undefined,
+                                itemName: getItemName(booking),
+                                bookingType: booking.booking_type,
+                                visitDate: booking.visit_date || booking.created_at,
+                                totalAmount: booking.total_amount,
+                                slotsBooked: booking.slots_booked || 1,
+                                adults: details?.adults,
+                                children: details?.children,
+                                paymentStatus: booking.payment_status,
+                                facilities: details?.facilities,
+                                activities: details?.activities,
+                              }}
+                            />
+
+                            {canReschedule(booking) && (
+                              <Button variant="outline" size="sm" onClick={() => setRescheduleBooking(booking)}>
+                                <CalendarClock className="h-4 w-4 mr-2" />
+                                Reschedule
+                              </Button>
+                            )}
+
+                            {canCancel(booking) && (
+                              <Button variant="destructive" size="sm" onClick={() => { setBookingToCancel(booking); setShowCancelDialog(true); }}>
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Cancel
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5 text-primary" />
-                      <span className="text-2xl font-bold">KSh {booking.total_amount}</span>
-                    </div>
-                    
-                    {canRetryPayment(booking) && (
-                      <Button size="sm" onClick={() => retryPayment(booking)} disabled={retryingPaymentId === booking.pendingPaymentId}>
-                        <RefreshCw className={`h-4 w-4 mr-2 ${retryingPaymentId === booking.pendingPaymentId ? 'animate-spin' : ''}`} />
-                        Retry Payment
+                    {/* Expandable Details */}
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" className="w-full rounded-none border-t h-10">
+                        {isExpanded ? (
+                          <>
+                            <ChevronUp className="h-4 w-4 mr-2" />
+                            Hide Details
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="h-4 w-4 mr-2" />
+                            View Details
+                          </>
+                        )}
                       </Button>
-                    )}
-                    
-                    {canReschedule(booking) && (
-                      <Button variant="outline" size="sm" onClick={() => setRescheduleBooking(booking)}>
-                        <CalendarClock className="h-4 w-4 mr-2" />
-                        Reschedule
-                      </Button>
-                    )}
+                    </CollapsibleTrigger>
 
-                    {canCancel(booking) && (
-                      <Button variant="destructive" size="sm" onClick={() => { setBookingToCancel(booking); setShowCancelDialog(true); }}>
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
+                    <CollapsibleContent>
+                      <div className="p-6 pt-0 border-t bg-muted/30">
+                        <div className="grid md:grid-cols-2 gap-6 mt-4">
+                          {/* Guest Info */}
+                          <div className="space-y-3">
+                            <h4 className="font-semibold text-sm text-muted-foreground uppercase">Guest Information</h4>
+                            <div className="space-y-2 text-sm">
+                              <p><span className="text-muted-foreground">Name:</span> {booking.guest_name || 'N/A'}</p>
+                              <p><span className="text-muted-foreground">Email:</span> {booking.guest_email || 'N/A'}</p>
+                              <p><span className="text-muted-foreground">Phone:</span> {booking.guest_phone || 'N/A'}</p>
+                            </div>
+                          </div>
+
+                          {/* Booking Breakdown */}
+                          <div className="space-y-3">
+                            <h4 className="font-semibold text-sm text-muted-foreground uppercase">Booking Breakdown</h4>
+                            <div className="space-y-2 text-sm">
+                              {details?.adults !== undefined && (
+                                <p><span className="text-muted-foreground">Adults:</span> {details.adults}</p>
+                              )}
+                              {details?.children !== undefined && details.children > 0 && (
+                                <p><span className="text-muted-foreground">Children:</span> {details.children}</p>
+                              )}
+                              <p><span className="text-muted-foreground">Total People:</span> {booking.slots_booked || 1}</p>
+                            </div>
+                          </div>
+
+                          {/* Facilities */}
+                          {details?.facilities && details.facilities.length > 0 && (
+                            <div className="space-y-3">
+                              <h4 className="font-semibold text-sm text-muted-foreground uppercase">Facilities</h4>
+                              <div className="space-y-1 text-sm">
+                                {details.facilities.map((f: any, idx: number) => (
+                                  <p key={idx}>
+                                    {f.name} - {f.price === 0 ? 'Free' : `KES ${f.price}`}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Activities */}
+                          {details?.activities && details.activities.length > 0 && (
+                            <div className="space-y-3">
+                              <h4 className="font-semibold text-sm text-muted-foreground uppercase">Activities</h4>
+                              <div className="space-y-1 text-sm">
+                                {details.activities.map((a: any, idx: number) => (
+                                  <p key={idx}>
+                                    {a.name} - {a.price === 0 ? 'Free' : `KES ${a.price}`}
+                                    {a.numberOfPeople && ` (${a.numberOfPeople} people)`}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </Card>
+              );
+            })}
           </div>
         )}
       </main>

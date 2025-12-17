@@ -23,12 +23,13 @@ import { NotificationBell } from "./NotificationBell";
 // Setting the deeper RGBA background color as a constant for clarity
 const MOBILE_ICON_BG = 'rgba(0, 0, 0, 0.5)'; // Deeper semi-transparent black
 
-interface HeaderProps {
+export interface HeaderProps {
   onSearchClick?: () => void;
   showSearchIcon?: boolean;
+  className?: string;
 }
 
-export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) => {
+export const Header = ({ onSearchClick, showSearchIcon = true, className }: HeaderProps) => {
   const navigate = useNavigate();
   // Determine the current route
   const location = useLocation();
@@ -109,7 +110,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
 
   return (
     // 1. Apply conditional classes to the header, including the new desktop-index-specific class
-    <header className={`z-[100] text-black dark:text-white md:sticky md:h-16 md:text-white dark:md:text-white ${mobileHeaderClasses} ${desktopIndexClasses}`}>
+    <header className={`z-[100] text-black dark:text-white md:sticky md:h-16 md:text-white dark:md:text-white ${mobileHeaderClasses} ${desktopIndexClasses} ${className || ''}`}>
       
       {/* 2. Main container: Remove horizontal padding on mobile for non-index pages to allow the icons to push to the edge */}
       {/* Use px-0 on mobile, px-4 on tablet/desktop */}
@@ -203,10 +204,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true }: HeaderProps) =>
                 className="rounded-full h-10 w-10 flex items-center justify-center transition-colors md:bg-transparent hover:bg-white/20"
                 style={isIndexPage ? { backgroundColor: MOBILE_ICON_BG } : {}}
             >
-              <NotificationBell 
-                  mobileIconClasses="text-white"
-                  desktopIconClasses="md:text-white md:hover:bg-[#008080]"
-              />
+              <NotificationBell />
             </div>
           </div>
 
