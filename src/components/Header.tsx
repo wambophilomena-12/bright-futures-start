@@ -1,27 +1,19 @@
 import { useState, useEffect } from "react";
-import { Menu, Heart, Ticket, Shield, Home, FolderOpen, User, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Menu, Heart, Ticket, Home, FolderOpen, User, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NavigationDrawer } from "./NavigationDrawer";
-// Import useLocation
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle"; 
 import { NotificationBell } from "./NotificationBell"; 
 
-// Setting the deeper RGBA background color as a constant for clarity
-const MOBILE_ICON_BG = 'rgba(0, 0, 0, 0.5)'; // Deeper semi-transparent black
+const COLORS = {
+  TEAL: "#008080",
+  CORAL: "#FF7F50",
+  SOFT_GRAY: "#F8F9FA",
+  DARK_BG: "rgba(0, 0, 0, 0.5)"
+};
 
 export interface HeaderProps {
   onSearchClick?: () => void;
@@ -32,196 +24,119 @@ export interface HeaderProps {
 
 export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIcons = false }: HeaderProps) => {
   const navigate = useNavigate();
-  // Determine the current route
   const location = useLocation();
   const isIndexPage = location.pathname === '/';
-
+  const { user } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const { user, signOut } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-
-  // --- Start of functional code (omitted for brevity) ---
-  useEffect(() => {
-    const checkRole = async () => {
-      if (!user) {
-        setUserRole(null);
-        return;
-      }
-
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-
-      if (data && data.length > 0) {
-        const roles = data.map(r => r.role);
-        if (roles.includes("admin")) setUserRole("admin");
-        else setUserRole("user");
-      }
-    };
-
-    checkRole();
-  }, [user]);
-
   const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile?.name) {
-          setUserName(profile.name);
-        }
+        const { data: profile } = await supabase.from('profiles').select('name').eq('id', session.user.id).single();
+        if (profile?.name) setUserName(profile.name);
       }
     };
-
     fetchUserProfile();
   }, [user]);
 
-  const getUserInitials = () => {
-    if (userName) {
-      const names = userName.trim().split(' ');
-      if (names.length >= 2) {
-        return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-      }
-      return userName.substring(0, 2).toUpperCase();
-    }
-    return "U";
-  };
-
-  // Conditional classes for the main header element
+  // Styling logic
   const mobileHeaderClasses = isIndexPage 
-    // Index page (Mobile behavior: fixed, hidden background for the main header element)
-    ? "fixed top-0 left-0 right-0" 
-    // Non-index pages (Default behavior: sticky, full background)
-    : "sticky top-0 left-0 right-0 border-b border-border bg-[#008080] dark:bg-[#008080] text-white dark:text-white";
+    ? "fixed top-0 left-0 right-0 bg-transparent" 
+    : `sticky top-0 left-0 right-0 border-b border-white/10 shadow-lg`;
 
-  // New conditional class for the index page on desktop
-  const desktopIndexClasses = isIndexPage 
-    ? "md:bg-[#008080] dark:md:bg-[#008080] md:border-b md:border-border" 
-    : "";
-
-  const nonIndexIconColor = 'text-white'; 
+  const headerBgStyle = !isIndexPage ? { backgroundColor: COLORS.TEAL } : {};
 
   return (
-    // 1. Apply conditional classes to the header, including the new desktop-index-specific class
-    <header className={`z-[100] text-black dark:text-white md:sticky md:h-16 md:text-white dark:md:text-white ${mobileHeaderClasses} ${desktopIndexClasses} ${className || ''}`}>
-      
-      {/* 2. Main container: Remove horizontal padding on mobile for non-index pages to allow the icons to push to the edge */}
-      {/* Use px-0 on mobile, px-4 on tablet/desktop */}
-      <div className={`container md:flex md:h-full md:items-center md:justify-between md:px-4 
-            ${isIndexPage ? 'px-0' : 'px-0'} flex items-center justify-between h-16`}>
+    <header 
+      className={`z-[100] transition-all duration-300 md:h-20 flex items-center ${mobileHeaderClasses} ${className || ''}`}
+      style={headerBgStyle}
+    >
+      <div className="container mx-auto px-4 flex items-center justify-between h-full">
         
-        {/* 3. Left Icons (Menu & Logo) - Conditional Positioning and Margin - Hidden on mobile when hideIcons */}
-        <div className={`flex items-center gap-3 
-                        ${isIndexPage ? 'absolute top-4 left-4' : 'relative ml-4'} 
-                        md:relative md:top-auto md:left-auto md:ml-0
-                        ${hideIcons && isIndexPage ? 'hidden md:flex' : ''}`}>
+        {/* Left Section: Menu & Logo */}
+        <div className={`flex items-center gap-4 ${isIndexPage && 'mt-4 md:mt-0'}`}>
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>
-              {/* Menu Icon: Conditionally apply RGBA Background on index page (mobile only) */}
               <button 
-                className={`inline-flex items-center justify-center h-10 w-10 rounded-full transition-colors md:text-white md:hover:bg-[#006666] ${isIndexPage ? 'text-white hover:bg-white/20' : 'text-white hover:bg-white/20'}`}
-                aria-label="Open navigation menu"
-                style={isIndexPage ? { backgroundColor: MOBILE_ICON_BG } : {}}
+                className="inline-flex items-center justify-center h-11 w-11 rounded-2xl transition-all active:scale-90 shadow-md md:shadow-none"
+                style={{ backgroundColor: isIndexPage ? COLORS.DARK_BG : 'rgba(255,255,255,0.15)' }}
               >
-                <Menu className="h-5 w-5" />
+                <Menu className="h-5 w-5 text-white" />
               </button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0 h-screen">
+            <SheetContent side="left" className="w-72 p-0 h-screen border-none">
               <NavigationDrawer onClose={() => setIsDrawerOpen(false)} />
             </SheetContent>
           </Sheet>
           
-          {/* Logo/Description: Show on all non-index pages (mobile and desktop), hide only on index mobile page */}
-          <Link to="/" className={`${isIndexPage ? 'hidden' : 'flex'} items-center gap-3 md:flex`}>
-              <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center text-[#008080] font-bold text-lg">
-                T
-              </div>
-              <div>
-                <span className="font-bold text-base md:text-lg text-white block">
-                  TripTrac
-                </span>
-                <p className="text-xs text-white/90">Your journey starts now.</p>
-              </div>
+          <Link to="/" className="flex items-center gap-3 group">
+            <div 
+              className="h-10 w-10 rounded-xl flex items-center justify-center font-black text-xl shadow-lg transition-transform group-hover:rotate-12"
+              style={{ backgroundColor: 'white', color: COLORS.TEAL }}
+            >
+              T
+            </div>
+            <div className={`${isIndexPage ? 'hidden md:block' : 'block'}`}>
+              <span className="font-black text-lg uppercase tracking-tighter text-white block leading-none">
+                TripTrac
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/70">
+                Explore Kenya
+              </span>
+            </div>
           </Link>
         </div>
 
-        {/* Desktop Navigation (Centered) - Hidden on screens smaller than large (lg) */}
-        <nav className="hidden lg:flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2 font-bold hover:text-muted-foreground transition-colors">
-            <Home className="h-4 w-4" />
-            <span>Home</span>
-          </Link>
-          <Link to="/bookings" className="flex items-center gap-2 font-bold hover:text-muted-foreground transition-colors">
-            <Ticket className="h-4 w-4" />
-            <span>My Bookings</span>
-          </Link>
-          <Link to="/saved" className="flex items-center gap-2 font-bold hover:text-muted-foreground transition-colors">
-            <Heart className="h-4 w-4" />
-            <span>Wishlist</span>
-          </Link>
-          <button 
-            onClick={() => user ? navigate('/become-host') : navigate('/auth')} 
-            className="flex items-center gap-2 font-bold hover:text-muted-foreground transition-colors"
-          >
-            <FolderOpen className="h-4 w-4" />
-            <span>Become a Host</span>
-          </button>
+        {/* Desktop Navigation: Styled like the "About" headers */}
+        <nav className="hidden lg:flex items-center gap-8">
+          {[
+            { to: "/", icon: <Home className="h-4 w-4" />, label: "Home" },
+            { to: "/bookings", icon: <Ticket className="h-4 w-4" />, label: "Bookings" },
+            { to: "/saved", icon: <Heart className="h-4 w-4" />, label: "Wishlist" }
+          ].map((item) => (
+            <Link 
+              key={item.label}
+              to={item.to} 
+              className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-white/90 hover:text-white transition-colors"
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </Link>
+          ))}
         </nav>
 
-        {/* 4. Right Icons (Search, Notification, Theme, Account) - Conditional Positioning and Margin - Hidden on mobile when hideIcons */}
-        <div className={`flex items-center gap-2 
-                        ${isIndexPage ? 'absolute top-4 right-4' : 'relative mr-4'}
-                        md:relative md:top-auto md:right-auto md:flex md:mr-0
-                        ${hideIcons && isIndexPage ? 'hidden md:flex' : ''}`}>
-          
-          {/* Search Icon Button: Conditionally apply RGBA Background on index page (mobile only) */}
+        {/* Right Section: Actions */}
+        <div className={`flex items-center gap-3 ${isIndexPage && 'mt-4 md:mt-0'}`}>
           {showSearchIcon && (
             <button 
-              onClick={() => {
-                if (onSearchClick) {
-                  onSearchClick();
-                } else {
-                  navigate('/');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-              }}
-              className={`rounded-full h-10 w-10 flex items-center justify-center transition-colors md:bg-white/10 md:hover:bg-white hover:bg-white/20`}
-              aria-label="Search"
-              style={isIndexPage ? { backgroundColor: MOBILE_ICON_BG } : {}}
+              onClick={() => onSearchClick ? onSearchClick() : navigate('/')}
+              className="h-11 w-11 rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-md md:shadow-none"
+              style={{ backgroundColor: isIndexPage ? COLORS.DARK_BG : 'rgba(255,255,255,0.1)' }}
             >
-              <Search className={`h-5 w-5 md:text-white md:group-hover:text-[#008080] ${nonIndexIconColor}`} />
+              <Search className="h-5 w-5 text-white" />
             </button>
           )}
           
-          {/* Notification Bell (Always shown on mobile now) */}
-          <div className="flex items-center gap-2">
-            <div 
-                className="rounded-full h-10 w-10 flex items-center justify-center transition-colors md:bg-transparent hover:bg-white/20"
-                style={isIndexPage ? { backgroundColor: MOBILE_ICON_BG } : {}}
-            >
-              <NotificationBell />
-            </div>
+          <div 
+            className="h-11 w-11 rounded-2xl flex items-center justify-center shadow-md md:shadow-none"
+            style={{ backgroundColor: isIndexPage ? COLORS.DARK_BG : 'transparent' }}
+          >
+            <NotificationBell />
           </div>
 
-          {/* Theme Toggle & Desktop Account: Hidden on mobile (all pages) */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
-            
             <button 
               onClick={() => user ? navigate('/account') : navigate('/auth')}
-              className="rounded-full h-10 w-10 flex items-center justify-center transition-colors 
-                          bg-white/10 hover:bg-white group" 
-              aria-label="Account"
+              className="h-11 px-4 rounded-2xl flex items-center gap-3 transition-all font-black text-[10px] uppercase tracking-widest shadow-lg border-none text-white"
+              style={{ 
+                background: `linear-gradient(135deg, ${COLORS.CORAL} 0%, #FF6B35 100%)`
+              }}
             >
-              <User className="h-5 w-5 text-white group-hover:text-[#008080]" />
+              <User className="h-4 w-4" />
+              {user ? "Profile" : "Login"}
             </button>
           </div>
         </div>
