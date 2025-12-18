@@ -6,11 +6,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle2, Receipt, Calendar, Users, MapPin } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Receipt, Calendar, Users, CreditCard, Ticket } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { BookingDownloadButton } from "@/components/booking/BookingDownloadButton";
+
+const COLORS = {
+  TEAL: "#008080",
+  CORAL: "#FF7F50",
+  CORAL_LIGHT: "#FF9E7A",
+  KHAKI: "#F0E68C",
+  KHAKI_DARK: "#857F3E",
+  RED: "#FF0000",
+  SOFT_GRAY: "#F8F9FA"
+};
 
 interface Booking {
   id: string;
@@ -50,7 +60,6 @@ export default function PaymentHistory() {
 
   const fetchBookings = async () => {
     try {
-      // Fetch only paid/completed bookings
       const { data, error } = await supabase
         .from("bookings")
         .select("*")
@@ -60,15 +69,12 @@ export default function PaymentHistory() {
 
       if (error) throw error;
 
-      // Filter out expired trips/events (unless they're flexible)
       const now = new Date();
       const validBookings = (data || []).filter(booking => {
         if (booking.booking_type === 'trip' || booking.booking_type === 'event') {
-          // Check if visit date has passed
           if (booking.visit_date) {
             const visitDate = new Date(booking.visit_date);
             if (visitDate < now) {
-              // Check booking details for flexible trip
               const details = booking.booking_details as Record<string, any> | null;
               const isFlexible = details?.is_flexible_date || details?.is_custom_date;
               return isFlexible;
@@ -79,8 +85,6 @@ export default function PaymentHistory() {
       });
 
       setBookings(validBookings);
-      
-      // Fetch item details
       const itemIds = [...new Set(validBookings.map(b => ({ id: b.item_id, type: b.booking_type })))];
       await fetchItemDetails(itemIds);
     } catch (error) {
@@ -92,173 +96,158 @@ export default function PaymentHistory() {
 
   const fetchItemDetails = async (items: { id: string; type: string }[]) => {
     const details: Record<string, ItemDetails> = {};
-
     for (const item of items) {
       try {
         let data: any = null;
         if (item.type === "trip" || item.type === "event") {
-          const { data: tripData } = await supabase
-            .from("trips")
-            .select("name")
-            .eq("id", item.id)
-            .maybeSingle();
+          const { data: tripData } = await supabase.from("trips").select("name").eq("id", item.id).maybeSingle();
           data = tripData;
         } else if (item.type === "hotel") {
-          const { data: hotelData } = await supabase
-            .from("hotels")
-            .select("name")
-            .eq("id", item.id)
-            .maybeSingle();
+          const { data: hotelData } = await supabase.from("hotels").select("name").eq("id", item.id).maybeSingle();
           data = hotelData;
         } else if (item.type === "adventure" || item.type === "adventure_place") {
-          const { data: adventureData } = await supabase
-            .from("adventure_places")
-            .select("name")
-            .eq("id", item.id)
-            .maybeSingle();
+          const { data: adventureData } = await supabase.from("adventure_places").select("name").eq("id", item.id).maybeSingle();
           data = adventureData;
         }
-
-        if (data) {
-          details[item.id] = { name: data.name, type: item.type };
-        }
-      } catch (error) {
-        console.error("Error fetching item details:", error);
-      }
+        if (data) details[item.id] = { name: data.name, type: item.type };
+      } catch (error) { console.error(error); }
     }
-
     setItemDetails(details);
-  };
-
-  const getBookingTypeBadge = (type: string) => {
-    const typeLabels: Record<string, string> = {
-      trip: "Trip",
-      event: "Event",
-      hotel: "Hotel",
-      adventure: "Adventure",
-      adventure_place: "Adventure",
-    };
-    return <Badge variant="outline">{typeLabels[type] || type}</Badge>;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen bg-[#F8F9FA]">
         <Header />
-        <main className="flex-1 container mx-auto px-4 py-8">
-          <Skeleton className="h-12 w-48 mb-8" />
+        <main className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto space-y-4">
+            <Skeleton className="h-10 w-48 rounded-full" />
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-32 w-full" />
+              <Skeleton key={i} className="h-40 w-full rounded-[28px]" />
             ))}
           </div>
         </main>
-        <MobileBottomBar />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-8 pb-24 md:pb-8">
-        <div className="max-w-4xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
+    <div className="min-h-screen bg-[#F8F9FA] pb-24">
+      <Header className="hidden md:block" />
+      
+      <main className="container px-4 max-w-4xl mx-auto pt-8 md:pt-12">
+        <Button
+          onClick={() => navigate(-1)}
+          variant="ghost"
+          className="mb-6 rounded-full bg-white shadow-sm border border-slate-100 hover:bg-slate-50 transition-all px-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          <span className="text-[10px] font-black uppercase tracking-widest">Back</span>
+        </Button>
 
-          <h1 className="text-3xl font-bold mb-2 text-foreground">Payment History</h1>
-          <p className="text-muted-foreground mb-8">View your completed bookings and payments</p>
+        <div className="mb-10">
+          <Badge className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg mb-4 text-white">
+            Wallet & Bookings
+          </Badge>
+          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none text-slate-900 mb-3">
+            Payment History
+          </h1>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Verified Community Transactions
+          </p>
+        </div>
 
-          {bookings.length === 0 ? (
-            <Card className="p-12 text-center">
-              <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg text-muted-foreground">No completed payments found</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Your paid bookings will appear here
-              </p>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {bookings.map((booking) => (
-                <Card key={booking.id} className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="flex-1 space-y-3">
-                      {/* Header */}
-                      <div className="flex items-center gap-3 flex-wrap">
-                        {getBookingTypeBadge(booking.booking_type)}
-                        <Badge className="bg-green-500/10 text-green-600">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Paid
-                        </Badge>
-                      </div>
+        {bookings.length === 0 ? (
+          <div className="bg-white rounded-[28px] p-16 text-center border border-slate-100 shadow-sm">
+            <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+               <Receipt className="h-10 w-10 text-slate-300" />
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight mb-2" style={{ color: COLORS.TEAL }}>No Records Found</h3>
+            <p className="text-slate-400 text-sm font-bold uppercase tracking-tight">Your paid bookings will appear here</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {bookings.map((booking) => (
+              <Card key={booking.id} className="bg-white rounded-[28px] p-6 md:p-8 shadow-sm border border-slate-100 overflow-hidden relative group transition-all hover:shadow-md">
+                <div className="absolute top-0 right-0 p-4">
+                   <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                      <CheckCircle2 className="h-3 w-3 text-green-600" />
+                      <span className="text-[9px] font-black text-green-600 uppercase tracking-widest">Paid</span>
+                   </div>
+                </div>
 
-                      {/* Item Name */}
-                      <h3 className="text-xl font-semibold">
-                        {itemDetails[booking.item_id]?.name || booking.booking_details?.trip_name || booking.booking_details?.hotel_name || booking.booking_details?.place_name || 'Booking'}
-                      </h3>
-
-                      {/* Booking ID */}
-                      <p className="text-xs text-muted-foreground font-mono">
-                        ID: {booking.id}
-                      </p>
-
-                      {/* Details Grid */}
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                        {booking.visit_date && (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
-                            <span>{format(new Date(booking.visit_date), 'PP')}</span>
-                          </div>
-                        )}
-                        {booking.slots_booked && (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Users className="h-4 w-4" />
-                            <span>{booking.slots_booked} people</span>
-                          </div>
-                        )}
-                      </div>
+                <div className="flex flex-col md:flex-row justify-between gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                       <div className="bg-[#008080]/10 p-2 rounded-xl">
+                          <Ticket className="h-4 w-4 text-[#008080]" />
+                       </div>
+                       <span className="text-[10px] font-black text-[#008080] uppercase tracking-[0.2em]">
+                         {booking.booking_type} Reference
+                       </span>
                     </div>
 
-                    {/* Right Side - Amount & Actions */}
-                    <div className="flex flex-col items-end gap-3">
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Total Paid</p>
-                        <p className="text-2xl font-bold text-primary">
-                          KES {booking.total_amount.toLocaleString()}
-                        </p>
-                      </div>
-                      
-                      <BookingDownloadButton
-                        booking={{
-                          bookingId: booking.id,
-                          guestName: booking.guest_name || 'Guest',
-                          guestEmail: booking.guest_email || '',
-                          guestPhone: booking.guest_phone || undefined,
-                          itemName: itemDetails[booking.item_id]?.name || booking.booking_details?.trip_name || booking.booking_details?.hotel_name || 'Booking',
-                          bookingType: booking.booking_type,
-                          visitDate: booking.visit_date || booking.created_at,
-                          totalAmount: booking.total_amount,
-                          slotsBooked: booking.slots_booked || 1,
-                          adults: booking.booking_details?.adults,
-                          children: booking.booking_details?.children,
-                          paymentStatus: booking.payment_status,
-                          facilities: booking.booking_details?.facilities,
-                          activities: booking.booking_details?.activities,
-                        }}
-                      />
+                    <div>
+                      <h3 className="text-2xl font-black uppercase tracking-tight leading-tight text-slate-800 mb-1">
+                        {itemDetails[booking.item_id]?.name || booking.booking_details?.trip_name || 'Confirmed Booking'}
+                      </h3>
+                      <p className="text-[10px] font-mono text-slate-400 font-bold">Ref: #{booking.id.slice(0,8).toUpperCase()}</p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4">
+                      {booking.visit_date && (
+                        <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                          <Calendar className="h-4 w-4 text-[#FF7F50]" />
+                          <span className="text-[11px] font-black text-slate-600 uppercase">
+                            {format(new Date(booking.visit_date), 'dd MMM yyyy')}
+                          </span>
+                        </div>
+                      )}
+                      {booking.slots_booked && (
+                        <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                          <Users className="h-4 w-4 text-[#FF7F50]" />
+                          <span className="text-[11px] font-black text-slate-600 uppercase">
+                            {booking.slots_booked} Pax
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+
+                  <div className="flex flex-col items-start md:items-end justify-between border-t md:border-t-0 md:border-l border-slate-100 pt-6 md:pt-0 md:pl-8">
+                    <div className="text-left md:text-right mb-6">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Transaction</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-black" style={{ color: COLORS.RED }}>KES {booking.total_amount.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="w-full">
+                        <BookingDownloadButton
+                            booking={{
+                            bookingId: booking.id,
+                            guestName: booking.guest_name || 'Guest',
+                            guestEmail: booking.guest_email || '',
+                            guestPhone: booking.guest_phone || undefined,
+                            itemName: itemDetails[booking.item_id]?.name || booking.booking_details?.trip_name || 'Booking',
+                            bookingType: booking.booking_type,
+                            visitDate: booking.visit_date || booking.created_at,
+                            totalAmount: booking.total_amount,
+                            slotsBooked: booking.slots_booked || 1,
+                            adults: booking.booking_details?.adults,
+                            children: booking.booking_details?.children,
+                            paymentStatus: booking.payment_status,
+                            facilities: booking.booking_details?.facilities,
+                            activities: booking.booking_details?.activities,
+                            }}
+                        />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
       <MobileBottomBar />
     </div>

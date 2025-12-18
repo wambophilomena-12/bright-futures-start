@@ -4,13 +4,27 @@ import { Scanner } from "@yudiel/react-qr-scanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Camera, CheckCircle, XCircle, AlertCircle, User, Calendar, Mail, Phone, Users, WifiOff, Wifi } from "lucide-react";
+import { 
+  ArrowLeft, Camera, CheckCircle, XCircle, AlertCircle, 
+  User, Calendar, Mail, Phone, Users, WifiOff, Wifi, 
+  ChevronRight, QrCode, ShieldCheck
+} from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useOfflineBookings } from "@/hooks/useOfflineBookings";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+
+const COLORS = {
+  TEAL: "#008080",
+  CORAL: "#FF7F50",
+  CORAL_LIGHT: "#FF9E7A",
+  KHAKI: "#F0E68C",
+  KHAKI_DARK: "#857F3E",
+  RED: "#FF0000",
+  SOFT_GRAY: "#F8F9FA"
+};
 
 interface BookingData {
   bookingId: string;
@@ -52,16 +66,12 @@ const QRScanner = () => {
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [checkedIn, setCheckedIn] = useState(false);
 
-  // Sync offline check-ins when coming online
   useEffect(() => {
     const syncOfflineCheckIns = async () => {
       if (!isOnline || !user) return;
-      
       const pendingCheckIns = getPendingCheckIns();
       if (pendingCheckIns.length === 0) return;
 
-      console.log(`Syncing ${pendingCheckIns.length} offline check-ins...`);
-      
       for (const checkIn of pendingCheckIns) {
         try {
           await supabase
@@ -76,59 +86,35 @@ const QRScanner = () => {
           console.error("Failed to sync check-in:", error);
         }
       }
-      
       clearSyncedCheckIns();
-      toast({
-        title: "Synced",
-        description: `${pendingCheckIns.length} offline check-in(s) synced`,
-      });
+      toast({ title: "Synced", description: `${pendingCheckIns.length} offline check-in(s) synced` });
     };
-
     syncOfflineCheckIns();
   }, [isOnline, user]);
 
   useEffect(() => {
     const checkMobile = () => {
       const isMobileDevice = window.innerWidth < 768 || 
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-        window.matchMedia('(display-mode: standalone)').matches;
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       setIsMobile(isMobileDevice);
     };
-    
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
+    if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
 
   const verifyBookingOnline = async (bookingId: string, email: string, visitDate: string) => {
-    const { data: booking, error } = await supabase
-      .from("bookings")
-      .select("*")
-      .eq("id", bookingId)
-      .single();
-
-    if (error || !booking) {
-      return { valid: false, error: "Booking not found" };
-    }
-
-    if (booking.guest_email !== email) {
-      return { valid: false, error: "Booking email doesn't match" };
-    }
-
-    if (booking.payment_status !== "completed" && booking.payment_status !== "paid") {
-      return { valid: false, error: "Booking is not paid" };
-    }
+    const { data: booking, error } = await supabase.from("bookings").select("*").eq("id", bookingId).single();
+    if (error || !booking) return { valid: false, error: "Booking not found" };
+    if (booking.guest_email !== email) return { valid: false, error: "Booking email doesn't match" };
+    if (booking.payment_status !== "completed" && booking.payment_status !== "paid") return { valid: false, error: "Booking is not paid" };
 
     const bookingVisitDate = booking.visit_date ? format(new Date(booking.visit_date), "yyyy-MM-dd") : null;
-    if (bookingVisitDate !== visitDate) {
-      return { valid: false, error: `Visit date mismatch` };
-    }
+    if (bookingVisitDate !== visitDate) return { valid: false, error: `Visit date mismatch` };
 
     let itemData: { created_by: string | null; name: string } | null = null;
     const bookingType = booking.booking_type;
@@ -144,10 +130,7 @@ const QRScanner = () => {
       itemData = data;
     }
 
-    if (itemData && itemData.created_by !== user?.id) {
-      return { valid: false, error: "This booking is not for your listing" };
-    }
-
+    if (itemData && itemData.created_by !== user?.id) return { valid: false, error: "This booking is not for your listing" };
     return { valid: true, booking, itemName: itemData?.name };
   };
 
@@ -159,11 +142,6 @@ const QRScanner = () => {
     try {
       const parsedData: BookingData = JSON.parse(qrData);
       const { bookingId, visitDate, email } = parsedData;
-
-      if (!bookingId || !visitDate || !email) {
-        throw new Error("Invalid QR code format");
-      }
-
       let result: any;
 
       if (isOnline) {
@@ -171,13 +149,7 @@ const QRScanner = () => {
       } else {
         result = verifyBookingOffline(bookingId, email, visitDate);
         setIsOfflineScan(true);
-        saveOfflineScan({
-          bookingId,
-          scannedAt: new Date().toISOString(),
-          verified: result.valid,
-          guestName: result.booking?.guest_name,
-          visitDate,
-        });
+        saveOfflineScan({ bookingId, scannedAt: new Date().toISOString(), verified: result.valid, guestName: result.booking?.guest_name, visitDate });
       }
 
       if (!result.valid) {
@@ -190,15 +162,9 @@ const QRScanner = () => {
       if (result.itemName) setItemName(result.itemName);
       else if (result.booking?.item_name) setItemName(result.booking.item_name);
       setVerificationStatus("valid");
-      
-      toast({
-        title: isOnline ? "Booking Verified" : "Booking Verified (Offline)",
-        description: isOnline ? "Guest check-in confirmed" : "Verified from cached data",
-      });
-
     } catch (err) {
       setVerificationStatus("error");
-      setErrorMessage("Invalid QR code. Please scan a valid booking QR code.");
+      setErrorMessage("Invalid QR code format.");
     }
   };
 
@@ -209,54 +175,21 @@ const QRScanner = () => {
     }
   };
 
-  const handleError = (error: any) => {
-    console.error("Scanner error:", error);
-    toast({
-      title: "Scanner Error",
-      description: "Could not access camera. Please check permissions.",
-      variant: "destructive",
-    });
-  };
-
   const confirmCheckIn = async () => {
     if (!verifiedBooking || !user) return;
-    
     setIsCheckingIn(true);
     try {
       if (isOnline) {
-        const { error } = await supabase
-          .from("bookings")
-          .update({
-            checked_in: true,
-            checked_in_at: new Date().toISOString(),
-            checked_in_by: user.id
-          })
-          .eq("id", verifiedBooking.id);
-
-        if (error) throw error;
+        await supabase.from("bookings").update({ checked_in: true, checked_in_at: new Date().toISOString(), checked_in_by: user.id }).eq("id", verifiedBooking.id);
       } else {
-        // Save offline check-in for sync later
         const offlineCheckIns = JSON.parse(localStorage.getItem('offline_checkins') || '[]');
-        offlineCheckIns.push({
-          bookingId: verifiedBooking.id,
-          checkedInAt: new Date().toISOString(),
-          checkedInBy: user.id
-        });
+        offlineCheckIns.push({ bookingId: verifiedBooking.id, checkedInAt: new Date().toISOString(), checkedInBy: user.id });
         localStorage.setItem('offline_checkins', JSON.stringify(offlineCheckIns));
       }
-      
       setCheckedIn(true);
-      toast({
-        title: "Check-in Confirmed",
-        description: `${verifiedBooking.guest_name} has been checked in successfully`,
-      });
+      toast({ title: "Check-in Confirmed" });
     } catch (error) {
-      console.error("Check-in error:", error);
-      toast({
-        title: "Check-in Failed",
-        description: "Could not complete check-in. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Check-in Failed", variant: "destructive" });
     } finally {
       setIsCheckingIn(false);
     }
@@ -266,245 +199,175 @@ const QRScanner = () => {
     setScanning(true);
     setVerifiedBooking(null);
     setVerificationStatus("idle");
-    setErrorMessage("");
-    setItemName("");
-    setIsOfflineScan(false);
     setCheckedIn(false);
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!isMobile) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Camera className="h-5 w-5" />
-              QR Scanner
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">
-              QR code scanner is only available on mobile devices or the installed PWA app.
-            </p>
-            <Button onClick={() => navigate(-1)} variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Go Back
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  if (authLoading) return <div className="min-h-screen bg-[#F8F9FA] animate-pulse" />;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-header text-header-foreground p-4 flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-          className="text-header-foreground hover:bg-header-foreground/10"
-        >
+    <div className="min-h-screen bg-[#F8F9FA] pb-10">
+      {/* Dynamic Header */}
+      <div className="bg-white px-6 pt-12 pb-6 rounded-b-[40px] shadow-sm border-b border-slate-100 flex items-center justify-between">
+        <Button onClick={() => navigate(-1)} className="rounded-full bg-slate-100 text-slate-900 border-none w-10 h-10 p-0 hover:bg-slate-200">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-lg font-semibold flex-1">Scan Booking QR</h1>
-        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${isOnline ? 'bg-green-500/20' : 'bg-yellow-500/20'}`}>
-          {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-          {isOnline ? 'Online' : 'Offline'}
+        <div className="text-center">
+            <h1 className="text-xl font-black uppercase tracking-tighter" style={{ color: COLORS.TEAL }}>Verify Guest</h1>
+            <div className="flex items-center justify-center gap-1.5 mt-1">
+                {isOnline ? (
+                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none px-2 py-0 text-[10px] font-black uppercase">
+                        <Wifi className="h-3 w-3 mr-1" /> Online
+                    </Badge>
+                ) : (
+                    <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none px-2 py-0 text-[10px] font-black uppercase">
+                        <WifiOff className="h-3 w-3 mr-1" /> Offline
+                    </Badge>
+                )}
+            </div>
         </div>
+        <div className="w-10" /> {/* Spacer */}
       </div>
 
-      <div className="p-4 space-y-4">
+      <main className="container px-6 -mt-4 relative z-50 space-y-6">
+        {/* Offline Warning Card */}
         {!isOnline && (
-          <Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
-            <CardContent className="p-3 flex items-center gap-2 text-sm">
-              <WifiOff className="h-4 w-4 text-yellow-600" />
-              <span>Offline mode: Verifying from {cachedHostBookings.length} cached bookings</span>
-            </CardContent>
-          </Card>
+          <div className="bg-[#F0E68C]/20 border border-[#F0E68C] p-4 rounded-2xl flex items-center gap-3">
+             <AlertCircle className="h-5 w-5 text-[#857F3E]" />
+             <p className="text-[11px] font-bold text-[#857F3E] uppercase tracking-wide">
+                Offline Mode: Verifying from {cachedHostBookings.length} cached bookings
+             </p>
+          </div>
         )}
 
         {scanning && verificationStatus === "idle" && (
-          <>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground text-center mb-4">
-                  Point your camera at the guest's booking QR code to verify their check-in
+          <div className="space-y-6">
+            <div className="bg-white rounded-[32px] p-2 shadow-2xl border border-slate-100 overflow-hidden relative">
+              <div className="absolute inset-0 z-10 pointer-events-none border-[12px] border-white/50 rounded-[32px]"></div>
+              <Scanner
+                onScan={handleScan}
+                onError={(err) => console.error(err)}
+                constraints={{ facingMode: "environment" }}
+                styles={{ container: { width: "100%", aspectRatio: "1/1", borderRadius: "28px" } }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                <div className="w-48 h-48 border-2 border-dashed border-white/80 rounded-3xl opacity-50"></div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-[28px] p-6 shadow-sm border border-slate-100 text-center">
+                <QrCode className="h-8 w-8 mx-auto mb-3 text-slate-300" />
+                <h2 className="text-sm font-black uppercase tracking-widest mb-1" style={{ color: COLORS.TEAL }}>Align QR Code</h2>
+                <p className="text-slate-400 text-[10px] font-bold uppercase leading-relaxed">
+                    Place the guest's booking QR code within the frame to verify automatically.
                 </p>
-                <div className="rounded-lg overflow-hidden">
-                  <Scanner
-                    onScan={handleScan}
-                    onError={handleError}
-                    constraints={{ facingMode: "environment" }}
-                    styles={{
-                      container: { width: "100%", borderRadius: "0.5rem" },
-                      video: { borderRadius: "0.5rem" }
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </>
+            </div>
+          </div>
         )}
 
         {verificationStatus === "verifying" && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Verifying booking...</p>
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-[32px] p-12 shadow-sm border border-slate-100 text-center">
+            <div className="h-16 w-16 border-4 border-[#008080]/20 border-t-[#008080] rounded-full animate-spin mx-auto mb-6"></div>
+            <h2 className="text-lg font-black uppercase tracking-widest" style={{ color: COLORS.TEAL }}>Verifying...</h2>
+          </div>
         )}
 
         {verificationStatus === "valid" && verifiedBooking && (
-          <Card className="border-green-500">
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-6 w-6 text-green-500" />
-                <CardTitle className="text-green-600">Booking Verified</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  Valid Check-in
-                </Badge>
-                {isOfflineScan && (
-                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                    Offline Verified
-                  </Badge>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <User className="h-4 w-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Guest Name</p>
-                    <p className="font-medium">{verifiedBooking.guest_name}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Mail className="h-4 w-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Email</p>
-                    <p className="font-medium">{verifiedBooking.guest_email}</p>
-                  </div>
-                </div>
-
-                {verifiedBooking.guest_phone && (
-                  <div className="flex items-start gap-3">
-                    <Phone className="h-4 w-4 text-muted-foreground mt-1" />
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white rounded-[32px] p-8 shadow-2xl border border-slate-100 relative overflow-hidden">
+               {/* Decorative Background Icon */}
+               <ShieldCheck className="absolute -right-8 -top-8 h-32 w-32 text-green-50 opacity-50" />
+               
+               <div className="relative z-10">
+                <div className="flex justify-between items-start mb-8">
                     <div>
-                      <p className="text-xs text-muted-foreground">Phone</p>
-                      <p className="font-medium">{verifiedBooking.guest_phone}</p>
+                        <Badge className="bg-green-500 hover:bg-green-500 text-white border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest mb-2">
+                            Verified Valid
+                        </Badge>
+                        <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">{verifiedBooking.guest_name}</h2>
                     </div>
-                  </div>
+                    {isOfflineScan && (
+                        <div className="bg-[#F0E68C] px-2 py-1 rounded-lg text-[9px] font-black uppercase">Offline</div>
+                    )}
+                </div>
+
+                <div className="space-y-5 border-y border-slate-50 py-6 mb-6">
+                    <InfoRow icon={<Calendar className="h-4 w-4" />} label="Visit Date" value={format(new Date(verifiedBooking.visit_date), "dd MMM yyyy")} />
+                    <InfoRow icon={<Users className="h-4 w-4" />} label="Group Size" value={`${verifiedBooking.slots_booked || 1} People`} />
+                    <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={verifiedBooking.guest_email} />
+                    {itemName && <InfoRow icon={<ChevronRight className="h-4 w-4" />} label="Item" value={itemName} />}
+                </div>
+
+                <div className="flex justify-between items-end mb-8">
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Paid</p>
+                        <span className="text-2xl font-black" style={{ color: COLORS.RED }}>KSh {verifiedBooking.total_amount?.toLocaleString()}</span>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Booking ID</p>
+                        <span className="text-[11px] font-mono font-bold text-slate-500 uppercase">{verifiedBooking.id.slice(0,8)}</span>
+                    </div>
+                </div>
+
+                {!checkedIn && !verifiedBooking.checked_in ? (
+                    <Button 
+                        onClick={confirmCheckIn}
+                        disabled={isCheckingIn}
+                        className="w-full py-8 rounded-2xl text-md font-black uppercase tracking-[0.2em] text-white shadow-xl transition-all active:scale-95 border-none"
+                        style={{ 
+                            background: `linear-gradient(135deg, ${COLORS.TEAL} 0%, #006666 100%)`,
+                            boxShadow: `0 12px 24px -8px ${COLORS.TEAL}88`
+                        }}
+                    >
+                        {isCheckingIn ? "Checking In..." : "Confirm Arrival"}
+                    </Button>
+                ) : (
+                    <div className="w-full py-6 rounded-2xl bg-green-50 border-2 border-green-200 flex items-center justify-center gap-3">
+                        <CheckCircle className="h-6 w-6 text-green-500" />
+                        <span className="text-sm font-black text-green-700 uppercase tracking-widest">Guest Checked In</span>
+                    </div>
                 )}
-
-                <div className="flex items-start gap-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Visit Date</p>
-                    <p className="font-medium">
-                      {verifiedBooking.visit_date
-                        ? format(new Date(verifiedBooking.visit_date), "MMMM d, yyyy")
-                        : "Not specified"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Users className="h-4 w-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Number of People</p>
-                    <p className="font-medium">{verifiedBooking.slots_booked || 1} people</p>
-                  </div>
-                </div>
-
-                {itemName && (
-                  <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground">Item Booked</p>
-                    <p className="font-medium">{itemName}</p>
-                  </div>
-                )}
-
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-muted-foreground">Booking ID</p>
-                  <p className="font-mono text-sm">{verifiedBooking.id}</p>
-                </div>
-
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-muted-foreground">Total Amount</p>
-                  <p className="font-semibold text-lg">KES {verifiedBooking.total_amount?.toLocaleString()}</p>
-                </div>
-              </div>
-
-              {/* Check-in Button */}
-              {!checkedIn && !verifiedBooking.checked_in ? (
-                <Button 
-                  onClick={confirmCheckIn} 
-                  className="w-full mt-4 bg-green-600 hover:bg-green-700"
-                  disabled={isCheckingIn}
-                >
-                  {isCheckingIn ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Checking In...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Confirm Check-in
-                    </>
-                  )}
+                
+                <Button onClick={resetScanner} variant="ghost" className="w-full mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Scan Next Guest
                 </Button>
-              ) : (
-                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center gap-2 text-green-700 dark:text-green-400">
-                  <CheckCircle className="h-5 w-5" />
-                  <span className="font-medium">Guest Checked In</span>
-                </div>
-              )}
-
-              <Button onClick={resetScanner} variant="outline" className="w-full mt-2">
-                <Camera className="h-4 w-4 mr-2" />
-                Scan Another
-              </Button>
-            </CardContent>
-          </Card>
+               </div>
+            </div>
+          </div>
         )}
 
         {(verificationStatus === "invalid" || verificationStatus === "error") && (
-          <Card className="border-destructive">
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-2">
-                <XCircle className="h-6 w-6 text-destructive" />
-                <CardTitle className="text-destructive">Verification Failed</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">{errorMessage}</p>
-              <Button onClick={resetScanner} className="w-full">
-                <Camera className="h-4 w-4 mr-2" />
+          <div className="bg-white rounded-[32px] p-8 shadow-2xl border-t-4 border-t-red-500 text-center">
+            <div className="h-20 w-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <XCircle className="h-10 w-10 text-red-500" />
+            </div>
+            <h2 className="text-xl font-black uppercase tracking-tight text-slate-800 mb-2">Verification Failed</h2>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-wide mb-8 leading-relaxed">
+                {errorMessage || "The QR code scanned is either invalid, expired, or doesn't belong to your listings."}
+            </p>
+            <Button 
+                onClick={resetScanner}
+                className="w-full py-6 rounded-2xl bg-slate-900 text-white font-black uppercase tracking-widest"
+            >
                 Try Again
-              </Button>
-            </CardContent>
-          </Card>
+            </Button>
+          </div>
         )}
-      </div>
+      </main>
     </div>
   );
 };
+
+// Helper Component for Info Rows
+const InfoRow = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
+    <div className="flex items-center justify-between group">
+        <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-slate-50 text-slate-400 group-hover:text-[#008080] transition-colors">
+                {icon}
+            </div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+        </div>
+        <span className="text-xs font-black text-slate-700 uppercase tracking-tight text-right">{value}</span>
+    </div>
+);
 
 export default QRScanner;

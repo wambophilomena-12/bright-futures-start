@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getUserId } from "@/lib/sessionManager";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Trash2, CheckCircle, LogIn } from "lucide-react";
+import { Trash2, CheckCircle, LogIn, Bookmark, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   AlertDialog,
@@ -22,6 +22,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import { useAuth } from "@/contexts/AuthContext";
+
+const COLORS = {
+  TEAL: "#008080",
+  CORAL: "#FF7F50",
+  CORAL_LIGHT: "#FF9E7A",
+  KHAKI: "#F0E68C",
+  KHAKI_DARK: "#857F3E",
+  RED: "#FF0000",
+  SOFT_GRAY: "#F8F9FA"
+};
 
 const Saved = () => {
   const [savedListings, setSavedListings] = useState<any[]>([]);
@@ -37,12 +47,9 @@ const Saved = () => {
 
   useEffect(() => {
     const initializeData = async () => {
-      // Wait for auth to finish loading
       if (authLoading) return;
-      
       const uid = await getUserId();
       if (!uid) {
-        // User not logged in - show empty state with login prompt
         setIsLoading(false);
         return;
       }
@@ -52,39 +59,9 @@ const Saved = () => {
     initializeData();
   }, [authLoading]);
 
-  // Refetch when savedItems changes (realtime updates)
   useEffect(() => {
-    if (userId) {
-      fetchSavedItems(userId, 0, 15);
-    }
+    if (userId) fetchSavedItems(userId, 0, 15);
   }, [savedItems, userId]);
-
-  // Infinite scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (isLoading) return;
-      
-      const scrollHeight = document.documentElement.scrollHeight;
-      const scrollTop = document.documentElement.scrollTop;
-      const clientHeight = document.documentElement.clientHeight;
-      
-      if (scrollTop + clientHeight >= scrollHeight - 500 && userId) {
-        loadMore();
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isLoading, savedListings.length, userId]);
-
-  const loadMore = async () => {
-    if (isLoading || !userId) return;
-    
-    const moreData = await fetchSavedItems(userId, savedListings.length, 20);
-    if (moreData.length === 0) {
-      // No more items to load
-    }
-  };
 
   const fetchSavedItems = async (uid: string, offset: number = 0, limit: number = 15) => {
     setIsLoading(true);
@@ -101,122 +78,99 @@ const Saved = () => {
     }
 
     const items: any[] = [];
-    
     for (const saved of savedData) {
       let tableName: string;
+      if (saved.item_type === "adventure_place") tableName = "adventure_places";
+      else if (saved.item_type === "event" || saved.item_type === "trip") tableName = "trips";
+      else if (saved.item_type === "hotel") tableName = "hotels";
+      else if (saved.item_type === "attraction") tableName = "attractions";
+      else tableName = `${saved.item_type}s`;
       
-      // Map item types to correct table names
-      if (saved.item_type === "adventure_place") {
-        tableName = "adventure_places";
-      } else if (saved.item_type === "event" || saved.item_type === "trip") {
-        // Both events and trips are stored in the trips table
-        tableName = "trips";
-      } else if (saved.item_type === "hotel") {
-        tableName = "hotels";
-      } else if (saved.item_type === "attraction") {
-        tableName = "attractions";
-      } else {
-        // Fallback: try adding 's' to the type
-        tableName = `${saved.item_type}s`;
-      }
-      
-      const { data } = await supabase
-        .from(tableName as any)
-        .select("*")
-        .eq("id", saved.item_id)
-        .maybeSingle();
-      
-      if (data && typeof data === 'object') {
-        items.push(Object.assign({}, data, { savedType: saved.item_type }));
-      }
+      const { data } = await supabase.from(tableName as any).select("*").eq("id", saved.item_id).maybeSingle();
+      if (data) items.push({ ...data, savedType: saved.item_type });
     }
 
-    if (offset === 0) {
-      setSavedListings(items);
-    } else {
-      setSavedListings(prev => [...prev, ...items]);
-    }
+    if (offset === 0) setSavedListings(items);
+    else setSavedListings(prev => [...prev, ...items]);
     
     setIsLoading(false);
     return items;
   };
 
-
   const toggleItemSelection = (itemId: string) => {
     setSelectedItems(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
-      }
+      if (newSet.has(itemId)) newSet.delete(itemId);
+      else newSet.add(itemId);
       return newSet;
     });
   };
 
   const handleRemoveSelected = async () => {
     if (!userId || selectedItems.size === 0) return;
-
-    const { error } = await supabase
-      .from("saved_items")
-      .delete()
-      .in("item_id", Array.from(selectedItems))
-      .eq("user_id", userId);
-
+    const { error } = await supabase.from("saved_items").delete().in("item_id", Array.from(selectedItems)).eq("user_id", userId);
     if (!error) {
       setSavedListings(prev => prev.filter(item => !selectedItems.has(item.id)));
       setSelectedItems(new Set());
       setIsSelectionMode(false);
-      toast({ title: `Removed ${selectedItems.size} item(s) from saved` });
+      toast({ title: `Removed ${selectedItems.size} item(s)` });
     }
   };
 
   const handleClearAll = async () => {
     if (!userId) return;
-
-    const { error } = await supabase
-      .from("saved_items")
-      .delete()
-      .eq("user_id", userId);
-
+    const { error } = await supabase.from("saved_items").delete().eq("user_id", userId);
     if (!error) {
       setSavedListings([]);
       setShowClearAllDialog(false);
-      toast({ title: "All saved items cleared" });
+      toast({ title: "Wishlist cleared" });
     }
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-[#F8F9FA] pb-24">
       <Header />
       
-      <main className="container px-4 py-8">
-        <div className="flex items-center justify-between mb-8">          
+      <main className="container px-4 py-10 max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+               <div className="p-2 rounded-xl bg-[#008080]/10">
+                 <Bookmark className="h-5 w-5 text-[#008080]" />
+               </div>
+               <span className="text-[10px] font-black text-[#FF7F50] uppercase tracking-[0.2em]">Personal Collection</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none text-slate-900">
+              Your <span style={{ color: COLORS.TEAL }}>Wishlist</span>
+            </h1>
+          </div>
+
           {savedListings.length > 0 && (
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               {!isSelectionMode ? (
                 <>
                   <Button
                     variant="outline"
-                    size="sm"
+                    className="rounded-2xl border-slate-200 font-black uppercase text-[10px] tracking-widest h-11 px-6 hover:bg-white transition-all"
                     onClick={() => setIsSelectionMode(true)}
                   >
-                    Select Items
+                    Select
                   </Button>
                   <Button
-                    variant="destructive"
-                    size="sm"
+                    className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-11 px-6 shadow-lg transition-all active:scale-95"
+                    style={{ background: COLORS.RED, color: 'white' }}
                     onClick={() => setShowClearAllDialog(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Clear All
+                    Clear
                   </Button>
                 </>
               ) : (
                 <>
                   <Button
                     variant="outline"
-                    size="sm"
+                    className="rounded-2xl border-slate-200 font-black uppercase text-[10px] tracking-widest h-11 px-6"
                     onClick={() => {
                       setIsSelectionMode(false);
                       setSelectedItems(new Set());
@@ -225,12 +179,14 @@ const Saved = () => {
                     Cancel
                   </Button>
                   <Button
-                    variant="destructive"
-                    size="sm"
+                    className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-11 px-6 shadow-xl transition-all active:scale-95"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${COLORS.CORAL_LIGHT} 0%, ${COLORS.CORAL} 100%)`,
+                      color: 'white'
+                    }}
                     onClick={handleRemoveSelected}
                     disabled={selectedItems.size === 0}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
                     Remove ({selectedItems.size})
                   </Button>
                 </>
@@ -240,52 +196,74 @@ const Saved = () => {
         </div>
         
         {isLoading || authLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {[...Array(10)].map((_, i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="h-48 w-full rounded-lg" />
+              <div key={i} className="space-y-4">
+                <Skeleton className="h-64 w-full rounded-[28px]" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
               </div>
             ))}
           </div>
         ) : !user ? (
-          <div className="text-center py-16">
-            <p className="text-xl text-muted-foreground">No saved items</p>
-            <p className="text-muted-foreground mt-2 mb-6">Log in to see your saved items</p>
+          <div className="bg-white rounded-[40px] p-12 text-center shadow-sm border border-slate-100 flex flex-col items-center max-w-2xl mx-auto">
+            <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-6">
+                <LogIn className="h-10 w-10 text-slate-300" />
+            </div>
+            <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Login Required</h2>
+            <p className="text-slate-500 text-sm mb-8 font-medium">Save your favorite spots and experiences to access them anytime.</p>
             <Link to="/auth">
-              <Button className="gap-2">
-                <LogIn className="h-4 w-4" />
-                Log in
+              <Button 
+                className="py-7 px-10 rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95"
+                style={{ background: `linear-gradient(135deg, ${COLORS.CORAL_LIGHT} 0%, ${COLORS.CORAL} 100%)` }}
+              >
+                Sign In to View Wishlist
               </Button>
             </Link>
           </div>
         ) : savedListings.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-xl text-muted-foreground">No saved items yet</p>
-            <p className="text-muted-foreground mt-2">Start exploring and save your favorites!</p>
+          <div className="bg-white rounded-[40px] p-12 text-center shadow-sm border border-slate-100 flex flex-col items-center max-w-2xl mx-auto">
+             <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-6">
+                <Bookmark className="h-10 w-10 text-slate-300" />
+            </div>
+            <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Empty Wishlist</h2>
+            <p className="text-slate-500 text-sm mb-8 font-medium">You haven't saved any experiences yet. Start exploring!</p>
+            <Link to="/">
+              <Button 
+                variant="outline"
+                className="py-7 px-10 rounded-2xl border-2 border-slate-100 font-black uppercase tracking-[0.2em] hover:bg-slate-50"
+              >
+                Discover Experiences <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {savedListings.map((item) => (
               <div
                 key={item.id}
-                className="relative"
+                className={`relative transition-all duration-300 ${isSelectionMode ? 'cursor-pointer' : ''}`}
                 onClick={() => isSelectionMode && toggleItemSelection(item.id)}
               >
                 {isSelectionMode && (
                   <div
-                    className={`absolute top-2 left-2 z-10 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    className={`absolute top-4 left-4 z-50 h-8 w-8 rounded-xl border-2 flex items-center justify-center backdrop-blur-md transition-all ${
                       selectedItems.has(item.id)
-                        ? "bg-primary border-primary"
-                        : "bg-background border-muted-foreground"
+                        ? "bg-[#008080] border-[#008080]"
+                        : "bg-black/20 border-white"
                     }`}
                   >
                     {selectedItems.has(item.id) && (
-                      <CheckCircle className="h-5 w-5 text-primary-foreground" />
+                      <CheckCircle className="h-5 w-5 text-white" />
                     )}
                   </div>
                 )}
+                
+                {/* Visual overlay when selecting */}
+                {isSelectionMode && selectedItems.has(item.id) && (
+                    <div className="absolute inset-0 bg-[#008080]/10 z-40 rounded-[32px] pointer-events-none border-2 border-[#008080]" />
+                )}
+
                 <ListingCard
                   id={item.id}
                   type={item.savedType.replace("_", " ").toUpperCase() as any}
@@ -296,6 +274,7 @@ const Saved = () => {
                   onSave={() => handleSave(item.id, item.savedType)}
                   isSaved={true}
                   showBadge={true}
+                  className="bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-shadow"
                 />
               </div>
             ))}
@@ -304,17 +283,20 @@ const Saved = () => {
       </main>
 
       <AlertDialog open={showClearAllDialog} onOpenChange={setShowClearAllDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-[32px] border-none p-8">
           <AlertDialogHeader>
-            <AlertDialogTitle>Clear all saved items?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove all {savedListings.length} item(s) from your saved list. This action cannot be undone.
+            <AlertDialogTitle className="text-xl font-black uppercase tracking-tight">Clear Wishlist?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 font-medium">
+              This will remove all {savedListings.length} items. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleClearAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Clear All
+          <AlertDialogFooter className="gap-3 mt-6">
+            <AlertDialogCancel className="rounded-xl font-bold uppercase text-[10px] tracking-widest border-slate-100">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={handleClearAll} 
+                className="rounded-xl font-black uppercase text-[10px] tracking-widest bg-red-500 hover:bg-red-600"
+            >
+              Confirm Clear
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
