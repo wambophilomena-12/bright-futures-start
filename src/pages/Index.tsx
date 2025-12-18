@@ -471,9 +471,7 @@ const Index = () => {
       ref={searchRef}
       // 👇 MODIFIED CLASSES HERE 👇
       className="relative w-full h-[30vh] lg:h-[39vh]" 
-      // h-[50vh] sets 50% height for small screens (default).
-      // lg:h-[65vh] overrides it to 65% height for large screens (lg breakpoint and up).
-      // h-48 md:h-72 lg:h-80 have been removed/replaced.
+
       style={{
         backgroundImage: `url(https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1920&h=600&fit=crop&auto=format&q=80)`, 
         backgroundSize: 'cover',
@@ -655,7 +653,7 @@ const Index = () => {
                     {/* Events */}
                     <section className="mb-2 md:mb-6">
                         <div className="mb-1.5 md:mb-3 flex items-start justify-between">
-                         <h2 className="text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
+                         <h2 className="text-[0.9rem] sm:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis min-w-max">
                           Sports and events.
                         </h2>
                      <Link to="/category/events" className="text-primary text-sm hover:underline">
@@ -688,7 +686,7 @@ const Index = () => {
                     {/* Campsite & Experience */}
                     <section className="mb-2 md:mb-6">
                         <div className="mb-1.5 md:mb-3 flex items-start justify-between">
-                         <h2 className="text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
+                         <h2 className="text-[0.9rem] sm:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis min-w-max">
                              Places to adventure
                         </h2>
                        <Link to="/category/campsite" className="text-primary text-sm hover:underline">
@@ -727,7 +725,7 @@ const Index = () => {
                     {/* Hotels */}
                     <section className="mb-2 md:mb-6">
                         <div className="mb-1.5 md:mb-3 flex items-start justify-between">
-                            <h2 className="text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis min-w-max">
+                            <h2 className="text-[0.9rem] sm:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis min-w-max">
                                 Hotels and accommodations.
                             </h2>
                             <Link to="/category/hotels" className="text-primary text-sm hover:underline">
@@ -774,7 +772,7 @@ const Index = () => {
                     {/* Trips Section */}
                     <section className="mb-2 md:mb-6">
                         <div className="mb-1.5 md:mb-3 flex items-start justify-between">
-                            <h2 className="text-xs md:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">
+                            <h2 className="text-[0.9rem] sm:text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis min-w-max">
                                 Trips and tours.
                             </h2>
                             <Link to="/category/trips" className="text-primary text-3xs md:text-sm hover:underline">
