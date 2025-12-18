@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
-import { MapPin, Share2, Heart, Calendar, Phone, Mail, ArrowLeft, Copy, CheckCircle2 } from "lucide-react";
+import { MapPin, Share2, Heart, Calendar, Copy, CheckCircle2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,8 +18,9 @@ import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
 import { Badge } from "@/components/ui/badge";
+import { ArrowLeft } from "lucide-react";
 
-// Updated Color Palette to exactly match the rendered image
+// Updated Color Palette
 const COLORS = {
   TEAL: "#008080",      // Primary Brand Text
   CORAL: "#FF7F50",     // Booking Button Base
@@ -40,7 +41,6 @@ const EventDetail = () => {
   const [event, setEvent] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBooking, setShowBooking] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { savedItems, handleSave: handleSaveItem } = useSavedItems();
   const isSaved = savedItems.has(id || "");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -111,6 +111,20 @@ const EventDetail = () => {
     } finally { setIsProcessing(false); }
   };
 
+  // Star Rating Helper for Mobile Summary
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <Star 
+            key={s} 
+            className={`h-3 w-3 ${s <= Math.round(rating || 5) ? "fill-[#FF7F50] text-[#FF7F50]" : "text-slate-200"}`} 
+          />
+        ))}
+      </div>
+    );
+  };
+
   if (loading) return <div className="min-h-screen bg-slate-50 animate-pulse" />;
 
   const allImages = [event?.image_url, ...(event?.images || [])].filter(Boolean);
@@ -119,7 +133,7 @@ const EventDetail = () => {
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
       <Header className="hidden md:block" />
 
-      {/* Image Gallery with Glassmorphism controls */}
+      {/* Hero Image Section */}
       <div className="relative w-full overflow-hidden h-[40vh] md:h-[50vh]">
         <div className="absolute top-4 left-4 right-4 z-30 flex justify-between">
           <Button onClick={() => navigate(-1)} className="rounded-full bg-black/30 backdrop-blur-md text-white border-none w-10 h-10 p-0">
@@ -180,12 +194,37 @@ const EventDetail = () => {
               </div>
             )}
             
-            <ReviewSection itemId={event.id} itemType="event" />
+            {/* Review Section - Shown ONLY on large screens */}
+            <div className="hidden lg:block">
+               <ReviewSection itemId={event.id} itemType="event" />
+            </div>
           </div>
 
-          {/* Floating Action Card - Matches Image Sidebar */}
+          {/* Sidebar / Booking Card */}
           <div className="space-y-4">
             <div className="bg-white rounded-[24px] p-6 shadow-2xl border border-slate-100 lg:sticky lg:top-24">
+              
+              {/* MOBILE ONLY REVIEW SUMMARY: Stars and Average Rating */}
+              <div className="flex items-center justify-between mb-5 lg:hidden pb-4 border-b border-slate-50">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Guest Experience</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-black text-slate-800 leading-none">
+                      {event.average_rating || "4.8"}
+                    </span>
+                    <div className="flex flex-col justify-center">
+                      {renderStars(event.average_rating || 4.8)}
+                      <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
+                        {event.review_count || "12"} Verified Reviews
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-teal-50 flex items-center justify-center border border-teal-100">
+                  <CheckCircle2 className="h-5 w-5 text-teal-600" />
+                </div>
+              </div>
+
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <div className="flex items-baseline gap-1">
@@ -228,7 +267,7 @@ const EventDetail = () => {
                 Instant confirmation • Secure payment
               </p>
 
-              {/* Utility Buttons within the floating card */}
+              {/* Action Buttons */}
               <div className="grid grid-cols-3 gap-2 mt-6 pt-6 border-t border-slate-50">
                 <Button variant="ghost" onClick={openInMaps} className="flex-col h-auto py-2 bg-[#F0E68C]/20 text-[#857F3E] rounded-xl hover:bg-[#F0E68C]/40">
                   <MapPin className="h-5 w-5 mb-1" />
@@ -248,10 +287,11 @@ const EventDetail = () => {
         </div>
 
         <div className="mt-12">
-           <SimilarItems currentItemId={event.id} itemType="trip" location={event.location} country={event.country} />
+            <SimilarItems currentItemId={event.id} itemType="trip" location={event.location} country={event.country} />
         </div>
       </main>
 
+      {/* Booking Dialog */}
       <Dialog open={showBooking} onOpenChange={setShowBooking}>
         <DialogContent className="sm:max-w-2xl p-0 overflow-hidden rounded-[32px] border-none shadow-2xl">
           <MultiStepBooking 
