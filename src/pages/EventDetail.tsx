@@ -3,8 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
-// Added Phone and Mail icons here
-import { MapPin, Share2, Heart, Calendar, Copy, CheckCircle2, ArrowLeft, Star, Phone, Mail } from "lucide-react";
+import { MapPin, Share2, Heart, Calendar, Copy, CheckCircle2, ArrowLeft, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -136,6 +135,7 @@ const EventDetail = () => {
               <CarouselItem key={idx} className="h-full">
                 <div className="relative h-full w-full">
                   <img src={img} alt={event.name} className="w-full h-full object-cover" />
+                  {/* Base Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10" />
                 </div>
               </CarouselItem>
@@ -143,7 +143,9 @@ const EventDetail = () => {
           </CarouselContent>
         </Carousel>
 
+        {/* Floating Adventure & Location Info Section */}
         <div className="absolute bottom-10 left-0 z-40 w-full md:w-3/4 lg:w-1/2 p-8 pointer-events-none">
+          {/* Radial concentrated background - Fades out towards the edges */}
           <div 
             className="absolute inset-0 z-0 opacity-80"
             style={{
@@ -154,7 +156,9 @@ const EventDetail = () => {
           />
           
           <div className="relative z-10 space-y-4 pointer-events-auto">
-            <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg">
+            <Button 
+              className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg"
+            >
               Adventure Place
             </Button>
             
@@ -182,12 +186,15 @@ const EventDetail = () => {
       <main className="container px-4 max-w-6xl mx-auto -mt-10 relative z-50">
         <div className="grid lg:grid-cols-[1.7fr,1fr] gap-6">
           
+          {/* Main Content Column */}
           <div className="space-y-6">
+            {/* About Card */}
             <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
               <h2 className="text-xl font-black uppercase tracking-tight mb-4" style={{ color: COLORS.TEAL }}>About</h2>
               <p className="text-slate-500 text-sm leading-relaxed">{event.description}</p>
             </div>
 
+            {/* Highlights Card */}
             {event.activities?.length > 0 && (
               <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
                 <h2 className="text-xl font-black uppercase tracking-tight mb-5" style={{ color: COLORS.TEAL }}>Highlights</h2>
@@ -202,6 +209,7 @@ const EventDetail = () => {
               </div>
             )}
 
+            {/* STYLED REVIEW CARD */}
             <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
               <div className="flex justify-between items-center mb-8">
                 <div>
@@ -222,6 +230,7 @@ const EventDetail = () => {
             </div>
           </div>
 
+          {/* Booking Sidebar Column */}
           <div className="space-y-4">
             <div className="bg-white rounded-[32px] p-8 shadow-2xl border border-slate-100 lg:sticky lg:top-24">
               
@@ -271,24 +280,6 @@ const EventDetail = () => {
                 <UtilityButton icon={<Copy className="h-5 w-5" />} label="Copy" onClick={handleCopyLink} />
                 <UtilityButton icon={<Share2 className="h-5 w-5" />} label="Share" onClick={handleShare} />
               </div>
-
-              {/* Added Organizer Contact Footer Section */}
-              <div className="space-y-4 pt-6 mt-8 border-t border-slate-50">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Organizer Contact</h3>
-                {event.phone_number && (
-                  <a href={`tel:${event.phone_number}`} className="flex items-center gap-3 text-slate-600 hover:text-[#008080] transition-colors">
-                    <Phone className="h-4 w-4 text-[#008080]" />
-                    <span className="text-xs font-bold uppercase tracking-tight">{event.phone_number}</span>
-                  </a>
-                )}
-                {event.email && (
-                  <a href={`mailto:${event.email}`} className="flex items-center gap-3 text-slate-600 hover:text-[#008080] transition-colors">
-                    <Mail className="h-4 w-4 text-[#008080]" />
-                    <span className="text-xs font-bold uppercase tracking-tight truncate">{event.email}</span>
-                  </a>
-                )}
-              </div>
-
             </div>
           </div>
         </div>
