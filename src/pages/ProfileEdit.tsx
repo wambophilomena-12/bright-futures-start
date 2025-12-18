@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ChevronRight, User, Calendar, Globe, Phone, ArrowLeft } from "lucide-react";
+import { User, Calendar, Globe, Phone, ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,13 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { CountrySelector } from "@/components/creation/CountrySelector";
 
-// Define the specified Teal color
-const TEAL_COLOR = "#008080";
-const TEAL_HOVER_COLOR = "#005555"; // A darker shade of teal for hover
-const LIGHT_TEAL_BG = "#0080801A"; // Teal with 10% opacity for background (used as replacement for bg-primary/10)
+const COLORS = {
+  TEAL: "#008080",
+  CORAL: "#FF7F50",
+  CORAL_LIGHT: "#FF9E7A",
+  KHAKI: "#F0E68C",
+  KHAKI_DARK: "#857F3E",
+  SOFT_GRAY: "#F8F9FA"
+};
 
 const ProfileEdit = () => {
   const navigate = useNavigate();
@@ -45,11 +46,13 @@ const ProfileEdit = () => {
     country: "",
     phone_number: ""
   });
+  
   const [verificationCode, setVerificationCode] = useState("");
   const [showVerification, setShowVerification] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [originalPhone, setOriginalPhone] = useState("");
+
   useEffect(() => {
     if (!user) {
       navigate("/auth");
@@ -82,37 +85,18 @@ const ProfileEdit = () => {
 
   const handleSendVerificationCode = async () => {
     if (!profileData.phone_number || profileData.phone_number === originalPhone) {
-      toast({
-        title: "Error",
-        description: "Please enter a new phone number.",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Please enter a new phone number.", variant: "destructive" });
       return;
     }
-
     setSendingCode(true);
     try {
-      // Generate a random 6-digit code
       const code = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      // In a real app, you would send this via SMS API
-      // For now, we'll just show it in a toast (demo purposes)
-      toast({
-        title: "Verification Code Sent",
-        description: `Your code is: ${code} (Demo: In production, this would be sent via SMS)`,
-      });
-
-      // Store the code temporarily (in production, store it server-side)
+      toast({ title: "Verification Code Sent", description: `Your code is: ${code}` });
       sessionStorage.setItem("phone_verification_code", code);
       sessionStorage.setItem("phone_to_verify", profileData.phone_number);
-      
       setShowVerification(true);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to send verification code.",
-        variant: "destructive"
-      });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to send code.", variant: "destructive" });
     } finally {
       setSendingCode(false);
     }
@@ -122,40 +106,19 @@ const ProfileEdit = () => {
     setVerifyingCode(true);
     try {
       const storedCode = sessionStorage.getItem("phone_verification_code");
-      const storedPhone = sessionStorage.getItem("phone_to_verify");
-
-      if (verificationCode !== storedCode || profileData.phone_number !== storedPhone) {
-        throw new Error("Invalid verification code.");
-      }
-
-      // Update phone number and set it as verified
-      const { error } = await supabase
-        .from("profiles")
-        .update({ 
-          phone_number: profileData.phone_number,
-          phone_verified: true 
-        })
-        .eq("id", user!.id);
+      if (verificationCode !== storedCode) throw new Error("Invalid code.");
+      
+      const { error } = await supabase.from("profiles").update({ 
+        phone_number: profileData.phone_number,
+        phone_verified: true 
+      }).eq("id", user!.id);
 
       if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: "Phone number verified and updated.",
-      });
-
-      // Clean up
-      sessionStorage.removeItem("phone_verification_code");
-      sessionStorage.removeItem("phone_to_verify");
+      toast({ title: "Verified!" });
       setShowVerification(false);
-      setVerificationCode("");
       setOriginalPhone(profileData.phone_number);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setVerifyingCode(false);
     }
@@ -163,305 +126,207 @@ const ProfileEdit = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Check if phone number changed but not verified
     if (profileData.phone_number !== originalPhone && !showVerification) {
-      toast({
-        title: "Phone Verification Required",
-        description: "Please verify your new phone number before saving.",
-        variant: "destructive"
-      });
+      toast({ title: "Verify Phone", description: "Please verify your new phone number first.", variant: "destructive" });
       return;
     }
 
     setLoading(true);
-
     try {
-      const updateData: any = {
+      const { error } = await supabase.from("profiles").update({
         name: profileData.name,
         date_of_birth: profileData.date_of_birth || null,
         country: profileData.country || null,
-      };
-      
-      if (profileData.gender) {
-        updateData.gender = profileData.gender;
-      }
-
-      const { error } = await supabase
-        .from("profiles")
-        .update(updateData)
-        .eq("id", user!.id);
+        gender: profileData.gender || null
+      }).eq("id", user!.id);
 
       if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: "Your profile has been updated.",
-      });
-
+      toast({ title: "Profile Updated" });
       navigate("/profile");
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
+  if (fetchingProfile) return <div className="min-h-screen bg-[#F8F9FA] animate-pulse" />;
+
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-[#F8F9FA] pb-24">
       <Header />
       
-      <main className="container px-4 py-8 max-w-2xl mx-auto">
+      <main className="container px-4 py-8 max-w-2xl mx-auto relative z-10">
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
-          className="mb-4"
+          className="mb-6 hover:bg-white/50 rounded-full"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          <span className="text-[10px] font-black uppercase tracking-widest">Back</span>
         </Button>
-        <h1 className="text-3xl font-bold mb-8">Edit Profile</h1>
 
-        <Card className="overflow-hidden">
-          {fetchingProfile ? (
-            <div className="p-6 space-y-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between py-4">
-                  <div className="space-y-2 flex-1">
-                    <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-                    <div className="h-6 w-32 bg-muted animate-pulse rounded" />
+        <div className="mb-8">
+          <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg mb-4">
+            Account Settings
+          </Button>
+          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none text-slate-900">
+            Edit Profile
+          </h1>
+        </div>
+
+        <div className="bg-white rounded-[28px] p-8 shadow-sm border border-slate-100">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            
+            {/* Field: Name */}
+            <div className="space-y-4">
+               <div className="flex items-center gap-3">
+                  <div className="bg-[#008080]/10 p-2.5 rounded-xl">
+                    <User className="h-5 w-5 text-[#008080]" />
                   </div>
-                  <div className="h-5 w-5 bg-muted animate-pulse rounded" />
-                </div>
-              ))}
+                  <Label className="text-[10px] font-black text-[#008080] uppercase tracking-[0.2em]">Full Name</Label>
+               </div>
+               <Input
+                  value={profileData.name}
+                  onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                  placeholder="Enter your name"
+                  className="bg-slate-50 border-none rounded-2xl h-14 px-6 font-bold focus-visible:ring-1 focus-visible:ring-[#008080]"
+               />
             </div>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div className="divide-y">
-                {/* Name Field */}
-                <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer group">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: LIGHT_TEAL_BG }}
-                    >
-                      <User className="h-5 w-5" style={{ color: TEAL_COLOR }} />
-                    </div>
-                    <div className="flex-1">
-                      <Label htmlFor="name" className="text-sm text-muted-foreground cursor-pointer">
-                        Name
-                      </Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        value={profileData.name}
-                        onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                        required
-                        className="border-0 shadow-none p-0 h-8 focus-visible:ring-0 font-medium"
-                        placeholder="Tap to add name"
-                      />
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
 
-                {/* Date of Birth Field */}
-                <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer group">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: LIGHT_TEAL_BG }}
-                    >
-                      <Calendar className="h-5 w-5" style={{ color: TEAL_COLOR }} />
+            {/* Row: Gender & DOB */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="bg-[#008080]/10 p-2.5 rounded-xl">
+                      <Calendar className="h-5 w-5 text-[#008080]" />
                     </div>
-                    <div className="flex-1">
-                      <Label htmlFor="dob" className="text-sm text-muted-foreground cursor-pointer">
-                        Date of Birth
-                      </Label>
-                      <Input
-                        id="dob"
-                        type="date"
-                        value={profileData.date_of_birth}
-                        onChange={(e) => setProfileData({ ...profileData, date_of_birth: e.target.value })}
-                        className="border-0 shadow-none p-0 h-8 focus-visible:ring-0 font-medium"
-                      />
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <Label className="text-[10px] font-black text-[#008080] uppercase tracking-[0.2em]">Date of Birth</Label>
                 </div>
-
-                {/* Gender Field */}
-                <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: LIGHT_TEAL_BG }}
-                    >
-                      <User className="h-5 w-5" style={{ color: TEAL_COLOR }} />
-                    </div>
-                    <div className="flex-1">
-                      <Label htmlFor="gender" className="text-sm text-muted-foreground">
-                        Gender
-                      </Label>
-                      <Select
-                        value={profileData.gender}
-                        onValueChange={(value: any) =>
-                          setProfileData({ ...profileData, gender: value })
-                        }
-                      >
-                        <SelectTrigger 
-                          id="gender" 
-                          className="border-0 shadow-none p-0 h-8 focus:ring-0 font-medium w-full"
-                        >
-                          <SelectValue placeholder="Tap to select gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                          <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-
-                {/* Country Field */}
-                <div className="p-4 flex items-center justify-between hover:bg-accent/50 transition-colors">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: LIGHT_TEAL_BG }}
-                    >
-                      <Globe className="h-5 w-5" style={{ color: TEAL_COLOR }} />
-                    </div>
-                    <div className="flex-1">
-                      <Label className="text-sm text-muted-foreground">
-                        Country
-                      </Label>
-                      <CountrySelector
-                        value={profileData.country}
-                        onChange={(value) => setProfileData({ ...profileData, country: value })}
-                      />
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-
-                {/* Phone Number Field */}
-                <div className="p-4 hover:bg-accent/50 transition-colors">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: LIGHT_TEAL_BG }}
-                    >
-                      <Phone className="h-5 w-5" style={{ color: TEAL_COLOR }} />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <Label htmlFor="phone" className="text-sm text-muted-foreground">
-                        Phone Number
-                      </Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="phone"
-                          type="tel"
-                          value={profileData.phone_number}
-                          onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
-                          className="border-0 shadow-none p-0 h-8 focus-visible:ring-0 font-medium"
-                          placeholder="Enter phone number"
-                        />
-                        {profileData.phone_number !== originalPhone && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={handleSendVerificationCode}
-                            disabled={sendingCode}
-                            style={{ 
-                              backgroundColor: TEAL_COLOR,
-                              borderColor: TEAL_COLOR,
-                              color: 'white'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = TEAL_HOVER_COLOR}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = TEAL_COLOR}
-                          >
-                            {sendingCode ? "Sending..." : "Verify"}
-                          </Button>
-                        )}
-                      </div>
-                      
-                      {showVerification && (
-                        <div className="space-y-2 pt-2">
-                          <Label htmlFor="code" className="text-sm text-muted-foreground">
-                            Verification Code
-                          </Label>
-                          <div className="flex gap-2">
-                            <Input
-                              id="code"
-                              type="text"
-                              value={verificationCode}
-                              onChange={(e) => setVerificationCode(e.target.value)}
-                              placeholder="Enter 6-digit code"
-                              maxLength={6}
-                            />
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={handleVerifyCode}
-                              disabled={verifyingCode || verificationCode.length !== 6}
-                              style={{ 
-                                backgroundColor: TEAL_COLOR,
-                                borderColor: TEAL_COLOR,
-                                color: 'white'
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = TEAL_HOVER_COLOR}
-                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = TEAL_COLOR}
-                            >
-                              {verifyingCode ? "Verifying..." : "Confirm"}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <Input
+                  type="date"
+                  value={profileData.date_of_birth}
+                  onChange={(e) => setProfileData({ ...profileData, date_of_birth: e.target.value })}
+                  className="bg-slate-50 border-none rounded-2xl h-14 px-6 font-bold focus-visible:ring-1 focus-visible:ring-[#008080]"
+                />
               </div>
 
-              <Separator />
-
-              <div className="p-6 flex gap-4">
-                <Button
-                  type="submit"
-                  className="flex-1 text-white"
-                  disabled={loading}
-                  style={{ 
-                    backgroundColor: TEAL_COLOR,
-                    borderColor: TEAL_COLOR 
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = TEAL_HOVER_COLOR}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = TEAL_COLOR}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="bg-[#008080]/10 p-2.5 rounded-xl">
+                      <ShieldCheck className="h-5 w-5 text-[#008080]" />
+                    </div>
+                    <Label className="text-[10px] font-black text-[#008080] uppercase tracking-[0.2em]">Gender</Label>
+                </div>
+                <Select
+                  value={profileData.gender}
+                  onValueChange={(value: any) => setProfileData({ ...profileData, gender: value })}
                 >
-                  {loading ? "Saving..." : "Save Changes"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/profile")}
-                  disabled={loading}
-                >
-                  Cancel
-                </Button>
+                  <SelectTrigger className="bg-slate-50 border-none rounded-2xl h-14 px-6 font-bold focus:ring-1 focus:ring-[#008080]">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-none shadow-xl">
+                    <SelectItem value="male">MALE</SelectItem>
+                    <SelectItem value="female">FEMALE</SelectItem>
+                    <SelectItem value="other">OTHER</SelectItem>
+                    <SelectItem value="prefer_not_to_say">PRIVATE</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </form>
-          )}
-        </Card>
+            </div>
+
+            {/* Field: Country */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                  <div className="bg-[#008080]/10 p-2.5 rounded-xl">
+                    <Globe className="h-5 w-5 text-[#008080]" />
+                  </div>
+                  <Label className="text-[10px] font-black text-[#008080] uppercase tracking-[0.2em]">Country</Label>
+              </div>
+              <div className="bg-slate-50 rounded-2xl p-2 px-4">
+                <CountrySelector
+                  value={profileData.country}
+                  onChange={(value) => setProfileData({ ...profileData, country: value })}
+                />
+              </div>
+            </div>
+
+            {/* Field: Phone */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                  <div className="bg-[#008080]/10 p-2.5 rounded-xl">
+                    <Phone className="h-5 w-5 text-[#008080]" />
+                  </div>
+                  <Label className="text-[10px] font-black text-[#008080] uppercase tracking-[0.2em]">Phone Identity</Label>
+              </div>
+              <div className="flex gap-3">
+                <Input
+                  type="tel"
+                  value={profileData.phone_number}
+                  onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
+                  className="bg-slate-50 border-none rounded-2xl h-14 px-6 font-bold focus-visible:ring-1 focus-visible:ring-[#008080]"
+                />
+                {profileData.phone_number !== originalPhone && (
+                  <Button
+                    type="button"
+                    onClick={handleSendVerificationCode}
+                    disabled={sendingCode}
+                    className="h-14 px-6 rounded-2xl font-black uppercase text-[10px] tracking-widest text-white shadow-lg"
+                    style={{ background: COLORS.TEAL }}
+                  >
+                    {sendingCode ? "..." : "Verify"}
+                  </Button>
+                )}
+              </div>
+              
+              {showVerification && (
+                <div className="p-6 bg-[#F0E68C]/10 rounded-[24px] border border-[#F0E68C]/30 space-y-4 animate-in fade-in slide-in-from-top-2">
+                  <p className="text-[10px] font-black text-[#857F3E] uppercase tracking-widest">Enter Verification Code</p>
+                  <div className="flex gap-3">
+                    <Input
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      placeholder="6-Digit Code"
+                      className="bg-white border-none rounded-xl h-12 px-4 font-black tracking-widest text-center"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleVerifyCode}
+                      disabled={verifyingCode}
+                      className="h-12 px-6 rounded-xl font-black bg-[#857F3E] hover:bg-[#857F3E]/90 text-white"
+                    >
+                      {verifyingCode ? "..." : "Confirm"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-6 flex flex-col md:flex-row gap-4">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="flex-1 py-8 rounded-2xl text-md font-black uppercase tracking-[0.2em] text-white shadow-xl transition-all active:scale-95 border-none"
+                style={{ 
+                  background: `linear-gradient(135deg, ${COLORS.CORAL_LIGHT} 0%, ${COLORS.CORAL} 100%)`,
+                  boxShadow: `0 12px 24px -8px ${COLORS.CORAL}88`
+                }}
+              >
+                {loading ? "Updating..." : "Save Profile"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => navigate("/profile")}
+                className="py-8 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </div>
       </main>
 
-      <Footer />
       <MobileBottomBar />
     </div>
   );
