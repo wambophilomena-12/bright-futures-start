@@ -155,7 +155,7 @@ const EventDetail = () => {
           
           <div className="relative z-10 space-y-4 pointer-events-auto">
             <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg">
-              Adventure Place
+              Experience
             </Button>
             
             <div>
