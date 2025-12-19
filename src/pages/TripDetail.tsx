@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Share2, Mail, Clock, ArrowLeft, Heart, Copy, Star, Zap, Calendar } from "lucide-react";
+import { MapPin, Phone, Share2, Mail, Clock, ArrowLeft, Heart, Copy, Star, Zap, Calendar, Users } from "lucide-react";
 import { SimilarItems } from "@/components/SimilarItems";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -18,7 +18,6 @@ import { generateReferralLink } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
 
-// ADVENTURE-STYLE DESIGN TOKENS
 const COLORS = {
   TEAL: "#008080",
   CORAL: "#FF7F50",
@@ -103,7 +102,7 @@ const TripDetail = () => {
   if (loading) return <div className="min-h-screen bg-[#F8F9FA] animate-pulse" />;
   if (!trip) return null;
 
-  // LOGIC FOR BOOKING STATUS
+  // STATUS LOGIC
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tripDate = trip.date ? new Date(trip.date) : null;
@@ -111,6 +110,7 @@ const TripDetail = () => {
   const isSoldOut = trip.available_tickets <= 0;
   const canBook = !isExpired && !isSoldOut;
 
+  // Formatting for images
   const allImages = [trip.image_url, ...(trip.gallery_images || []), ...(trip.images || [])].filter(Boolean);
 
   return (
@@ -142,36 +142,18 @@ const TripDetail = () => {
         </Carousel>
 
         <div className="absolute bottom-10 left-0 z-40 w-full md:w-3/4 lg:w-1/2 p-8 pointer-events-none">
-          <div 
-            className="absolute inset-0 z-0 opacity-80"
-            style={{
-              background: `radial-gradient(circle at 20% 50%, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 85%)`,
-              filter: 'blur(15px)',
-              marginLeft: '-20px'
-            }}
-          />
-          
+          <div className="absolute inset-0 z-0 opacity-80" style={{ background: `radial-gradient(circle at 20% 50%, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 85%)`, filter: 'blur(15px)', marginLeft: '-20px' }} />
           <div className="relative z-10 space-y-4 pointer-events-auto">
-            <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg">
-              Scheduled Trip
-            </Button>
-            
+            <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg">Scheduled Trip</Button>
             <div>
-              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl mb-3">
-                {trip.name}
-              </h1>
-              
+              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl mb-3">{trip.name}</h1>
               <div className="flex flex-wrap items-center gap-3 cursor-pointer group w-fit" onClick={openInMaps}>
                 <div className="bg-white/20 backdrop-blur-md p-2 rounded-xl group-hover:bg-[#008080] transition-all duration-300">
                   <MapPin className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-[#FF7F50] uppercase tracking-widest">Destination</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-black text-white uppercase tracking-wider group-hover:text-[#008080] transition-colors">
-                      {trip.location}, {trip.country}
-                    </span>
-                  </div>
+                  <span className="text-sm font-black text-white uppercase tracking-wider group-hover:text-[#008080] transition-colors">{trip.location}, {trip.country}</span>
                 </div>
               </div>
             </div>
@@ -192,15 +174,12 @@ const TripDetail = () => {
             {trip.activities?.length > 0 && (
               <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-xl bg-orange-50">
-                    <Zap className="h-5 w-5 text-[#FF9800]" />
-                  </div>
+                  <div className="p-2 rounded-xl bg-orange-50"><Zap className="h-5 w-5 text-[#FF9800]" /></div>
                   <div>
                     <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: COLORS.ORANGE }}>Included Activities</h2>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Experiences in this package</p>
                   </div>
                 </div>
-
                 <div className="flex flex-wrap gap-3">
                   {trip.activities.map((act: any, i: number) => (
                     <div key={i} className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-orange-50/50 border border-orange-100/50">
@@ -236,23 +215,40 @@ const TripDetail = () => {
                 <div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ticket Price</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black" style={{ color: COLORS.RED }}>
-                      KSh {trip.price}
-                    </span>
+                    <span className="text-3xl font-black" style={{ color: COLORS.RED }}>KSh {trip.price}</span>
                     <span className="text-slate-400 text-[10px] font-bold uppercase">/ adult</span>
                   </div>
                 </div>
                 <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 flex items-center gap-2">
                   <Clock className="h-4 w-4" style={{ color: COLORS.TEAL }} />
                   <span className={`text-xs font-black uppercase ${isSoldOut ? "text-red-500" : "text-slate-600"}`}>
-                    {trip.available_tickets} Left
+                    {isSoldOut ? "Full" : `${trip.available_tickets} Left`}
                   </span>
+                </div>
+              </div>
+
+              {/* NEW: DETAILED TICKET AVAILABILITY SECTION */}
+              <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <Users className="h-3 w-3" /> Booking Availability
+                  </span>
+                  <span className={`text-[10px] font-black uppercase ${trip.available_tickets < 5 ? 'text-red-500' : 'text-emerald-600'}`}>
+                    {isSoldOut ? "Sold Out" : `${trip.available_tickets} Tickets Remaining`}
+                  </span>
+                </div>
+                {/* Visual Progress Bar */}
+                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                   <div 
+                    className={`h-full transition-all duration-500 ${trip.available_tickets < 5 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                    style={{ width: `${Math.min((trip.available_tickets / 50) * 100, 100)}%` }} // Assuming max 50 for visual scale
+                   />
                 </div>
               </div>
 
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
-                  <span className="text-slate-400 flex items-center gap-1"><Calendar className="h-3 w-3" /> Date</span>
+                  <span className="text-slate-400 flex items-center gap-1"><Calendar className="h-3 w-3" /> Trip Date</span>
                   <span className={isExpired ? "text-red-500" : "text-slate-700"}>
                     {trip.is_custom_date ? "Flexible" : new Date(trip.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     {isExpired && " (Past)"}
