@@ -166,10 +166,34 @@ const HotelDetail = () => {
       <main className="container px-4 max-w-6xl mx-auto -mt-10 relative z-50">
         <div className="flex flex-col lg:grid lg:grid-cols-[1.7fr,1fr] gap-6">
           
-          {/* DESCRIPTION */}
-          <div className="order-1 lg:order-none bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
-            <h2 className="text-xl font-black uppercase tracking-tight mb-4" style={{ color: COLORS.TEAL }}>Description</h2>
-            <p className="text-slate-500 text-sm leading-relaxed">{hotel.description}</p>
+          {/* DESCRIPTION & HOURS */}
+          <div className="order-1 lg:order-none space-y-6">
+            <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
+              <h2 className="text-xl font-black uppercase tracking-tight mb-4" style={{ color: COLORS.TEAL }}>Description</h2>
+              <p className="text-slate-500 text-sm leading-relaxed">{hotel.description}</p>
+            </div>
+
+            {/* OPENING HOURS SECTION */}
+            <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-6">
+                <Clock className="h-5 w-5 text-blue-600" />
+                <h2 className="text-xl font-black uppercase tracking-tight text-blue-600">Operating Hours</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Working Days</p>
+                  <p className="text-sm font-bold text-slate-700 uppercase">
+                    {hotel.working_days || "Monday - Sunday"}
+                  </p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Daily Schedule</p>
+                  <p className="text-sm font-bold text-slate-700 uppercase">
+                    {hotel.opening_time || "08:00 AM"} — {hotel.closing_time || "10:00 PM"}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* PRICE & CONTACT CARD (SIDEBAR) */}
@@ -205,24 +229,22 @@ const HotelDetail = () => {
                 <UtilityButton icon={<Share2 className="h-5 w-5" />} label="Share" onClick={() => {}} />
               </div>
 
-              {/* UPDATED CONTACT SECTION */}
+              {/* CONTACT SECTION */}
               <div className="space-y-4 pt-6 border-t border-slate-100">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Host Inquiries</h3>
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact Information</h3>
                 
-                {/* Email Section */}
                 {hotel.email && (
                   <a href={`mailto:${hotel.email}`} className="flex items-center gap-3 text-slate-600 hover:text-[#008080] transition-colors group">
-                    <div className="p-2 rounded-lg bg-slate-50 group-hover:bg-teal-50 transition-colors">
+                    <div className="p-2 rounded-lg bg-slate-50 group-hover:bg-teal-50">
                       <Mail className="h-4 w-4 text-[#008080]" />
                     </div>
                     <span className="text-xs font-bold truncate">{hotel.email}</span>
                   </a>
                 )}
 
-                {/* Phone Numbers Section */}
                 {hotel.phone_numbers?.map((p: string, i: number) => (
                   <a key={i} href={`tel:${p}`} className="flex items-center gap-3 text-slate-600 hover:text-[#008080] transition-colors group">
-                    <div className="p-2 rounded-lg bg-slate-50 group-hover:bg-teal-50 transition-colors">
+                    <div className="p-2 rounded-lg bg-slate-50 group-hover:bg-teal-50">
                       <Phone className="h-4 w-4 text-[#008080]" />
                     </div>
                     <span className="text-xs font-bold">{p}</span>
@@ -242,7 +264,7 @@ const HotelDetail = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {hotel.facilities.map((f: any, i: number) => (
-                    <div key={i} className="p-5 rounded-[22px] bg-slate-50 border border-slate-100 flex justify-between items-center">
+                    <div key={i} className="p-5 rounded-[22px] bg-slate-50 border border-slate-100 flex justify-between items-center hover:border-teal-200 transition-colors">
                       <span className="text-sm font-black uppercase text-slate-700">{f.name}</span>
                       <Badge className="bg-white text-[#008080] text-[10px] font-black shadow-sm">KSH {f.price}</Badge>
                     </div>
@@ -281,7 +303,7 @@ const HotelDetail = () => {
 };
 
 const UtilityButton = ({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick: () => void }) => (
-  <Button variant="ghost" onClick={onClick} className="flex-col h-auto py-3 bg-[#F8F9FA] text-slate-500 rounded-2xl border border-slate-100 flex-1">
+  <Button variant="ghost" onClick={onClick} className="flex-col h-auto py-3 bg-[#F8F9FA] text-slate-500 rounded-2xl border border-slate-100 flex-1 hover:bg-slate-100 transition-all">
     <div className="mb-1">{icon}</div>
     <span className="text-[10px] font-black uppercase tracking-tighter">{label}</span>
   </Button>
