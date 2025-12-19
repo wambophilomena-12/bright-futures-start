@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 import { useRatings, sortByRating } from "@/hooks/useRatings";
+import { useRealtimeBookings } from "@/hooks/useRealtimeBookings";
 
 const CategoryDetail = () => {
   const { category } = useParams<{ category: string }>();
@@ -21,7 +22,6 @@ const CategoryDetail = () => {
   const { savedItems, handleSave } = useSavedItems();
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [bookingStats, setBookingStats] = useState<Record<string, number>>({});
   
   const { position } = useGeolocation();
   const [showSearchIcon, setShowSearchIcon] = useState(false);
@@ -65,29 +65,17 @@ const CategoryDetail = () => {
     setLoading(true);
     const data = await fetchData(0, 50);
     setItems(data);
-    
-    // Fetch booking stats for trips/events
-    if (category === 'trips' || category === 'events') {
-      const tripIds = data.map((item: any) => item.id);
-      if (tripIds.length > 0) {
-        const { data: bookingsData } = await supabase
-          .from('bookings')
-          .select('item_id, slots_booked')
-          .in('item_id', tripIds)
-          .in('status', ['confirmed', 'pending']);
-          
-        if (bookingsData) {
-          const stats: Record<string, number> = {};
-          bookingsData.forEach(booking => {
-            const current = stats[booking.item_id] || 0;
-            stats[booking.item_id] = current + (booking.slots_booked || 0);
-          });
-          setBookingStats(stats);
-        }
-      }
-    }
     setLoading(false);
   };
+
+  // Get item IDs for real-time booking subscriptions
+  const tripEventIds = useMemo(() => {
+    if (category !== 'trips' && category !== 'events') return [];
+    return items.map((item: any) => item.id);
+  }, [items, category]);
+
+  // Real-time booking stats subscription
+  const { bookingStats } = useRealtimeBookings(tripEventIds);
 
   const fetchData = async (offset: number, limit: number) => {
     if (!config) return [];

@@ -17,6 +17,7 @@ import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiSte
 import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
+import { useRealtimeItemAvailability } from "@/hooks/useRealtimeBookings";
 
 const COLORS = {
   TEAL: "#008080",
@@ -122,6 +123,9 @@ const EventDetail = () => {
     } finally { setIsProcessing(false); }
   };
 
+  // Real-time availability tracking
+  const { remainingSlots, isSoldOut } = useRealtimeItemAvailability(id || undefined, event?.available_tickets || 0);
+
   if (loading) return <div className="min-h-screen bg-slate-50 animate-pulse" />;
   if (!event) return null;
 
@@ -129,7 +133,6 @@ const EventDetail = () => {
   today.setHours(0, 0, 0, 0);
   const eventDate = event.date ? new Date(event.date) : null;
   const isExpired = !event.is_custom_date && eventDate && eventDate < today;
-  const isSoldOut = event.available_tickets <= 0;
   const canBook = !isExpired && !isSoldOut;
 
   const allImages = [event?.image_url, ...(event?.images || [])].filter(Boolean);
@@ -222,7 +225,7 @@ const EventDetail = () => {
                 <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 flex items-center gap-2">
                   <Clock className="h-4 w-4" style={{ color: COLORS.TEAL }} />
                   <span className={`text-xs font-black uppercase ${isSoldOut ? "text-red-500" : "text-slate-600"}`}>
-                    {isSoldOut ? "FULL" : `${event.available_tickets} Left`}
+                    {isSoldOut ? "FULL" : `${remainingSlots} Left`}
                   </span>
                 </div>
               </div>
@@ -232,14 +235,14 @@ const EventDetail = () => {
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
                     <Users className="h-3 w-3" /> Event Availability
                   </span>
-                  <span className={`text-[10px] font-black uppercase ${event.available_tickets < 5 ? 'text-red-500' : 'text-emerald-600'}`}>
-                    {isSoldOut ? "Sold Out" : `${event.available_tickets} Slots Available`}
+                  <span className={`text-[10px] font-black uppercase ${remainingSlots < 5 ? 'text-red-500' : 'text-emerald-600'}`}>
+                    {isSoldOut ? "Sold Out" : `${remainingSlots} Slots Available`}
                   </span>
                 </div>
                 <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                    <div 
-                    className={`h-full transition-all duration-500 ${event.available_tickets < 5 ? 'bg-red-500' : 'bg-emerald-500'}`}
-                    style={{ width: `${Math.min((event.available_tickets / 50) * 100, 100)}%` }}
+                    className={`h-full transition-all duration-500 ${remainingSlots < 5 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                    style={{ width: `${Math.min((remainingSlots / (event.available_tickets || 50)) * 100, 100)}%` }}
                    />
                 </div>
               </div>

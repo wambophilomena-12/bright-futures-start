@@ -17,6 +17,7 @@ import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiSte
 import { generateReferralLink } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
+import { useRealtimeItemAvailability } from "@/hooks/useRealtimeBookings";
 
 const COLORS = {
   TEAL: "#008080",
@@ -99,6 +100,9 @@ const TripDetail = () => {
     } finally { setIsProcessing(false); }
   };
 
+  // Real-time availability tracking
+  const { remainingSlots, isSoldOut } = useRealtimeItemAvailability(id || undefined, trip?.available_tickets || 0);
+
   if (loading) return <div className="min-h-screen bg-[#F8F9FA] animate-pulse" />;
   if (!trip) return null;
 
@@ -106,7 +110,6 @@ const TripDetail = () => {
   today.setHours(0, 0, 0, 0);
   const tripDate = trip.date ? new Date(trip.date) : null;
   const isExpired = !trip.is_custom_date && tripDate && tripDate < today;
-  const isSoldOut = trip.available_tickets <= 0;
   const canBook = !isExpired && !isSoldOut;
   const allImages = [trip.image_url, ...(trip.gallery_images || []), ...(trip.images || [])].filter(Boolean);
 
@@ -154,7 +157,7 @@ const TripDetail = () => {
         <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 flex items-center gap-2">
           <Clock className="h-4 w-4" style={{ color: COLORS.TEAL }} />
           <span className={`text-xs font-black uppercase ${isSoldOut ? "text-red-500" : "text-slate-600"}`}>
-            {isSoldOut ? "Full" : `${trip.available_tickets} Left`}
+            {isSoldOut ? "Full" : `${remainingSlots} Left`}
           </span>
         </div>
       </div>
@@ -164,14 +167,14 @@ const TripDetail = () => {
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
             <Users className="h-3 w-3" /> Booking Availability
           </span>
-          <span className={`text-[10px] font-black uppercase ${trip.available_tickets < 5 ? 'text-red-500' : 'text-emerald-600'}`}>
-            {isSoldOut ? "Sold Out" : `${trip.available_tickets} Tickets Remaining`}
+          <span className={`text-[10px] font-black uppercase ${remainingSlots < 5 ? 'text-red-500' : 'text-emerald-600'}`}>
+            {isSoldOut ? "Sold Out" : `${remainingSlots} Tickets Remaining`}
           </span>
         </div>
         <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
            <div 
-            className={`h-full transition-all duration-500 ${trip.available_tickets < 5 ? 'bg-red-500' : 'bg-emerald-500'}`}
-            style={{ width: `${Math.min((trip.available_tickets / 50) * 100, 100)}%` }}
+            className={`h-full transition-all duration-500 ${remainingSlots < 5 ? 'bg-red-500' : 'bg-emerald-500'}`}
+            style={{ width: `${Math.min((remainingSlots / (trip.available_tickets || 50)) * 100, 100)}%` }}
            />
         </div>
       </div>
