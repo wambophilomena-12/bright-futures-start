@@ -297,14 +297,14 @@ const HotelDetail = () => {
                 <div className="flex justify-between text-[11px] font-black uppercase tracking-tight">
                   <div className="flex items-center gap-2 text-slate-400">
                     <Clock className="h-3 w-3" />
-                    <span>Check-In / Opens</span>
+                    <span>Opens</span>
                   </div>
                   <span className="text-slate-700">{hotel.opening_hours || '12:00 PM'}</span>
                 </div>
                 <div className="flex justify-between text-[11px] font-black uppercase tracking-tight">
                   <div className="flex items-center gap-2 text-slate-400">
                     <Clock className="h-3 w-3" />
-                    <span>Check-Out / Closes</span>
+                    <span>Closes</span>
                   </div>
                   <span className="text-slate-700">{hotel.closing_hours || '10:00 AM'}</span>
                 </div>
