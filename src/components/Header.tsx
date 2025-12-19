@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, Heart, Ticket, Home, FolderOpen, User, Search } from "lucide-react";
+import { Menu, Heart, Ticket, Home, User, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -41,17 +41,19 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIc
     fetchUserProfile();
   }, [user]);
 
-  // Updated Styling logic:
-  // 1. Transparent on mobile for index, otherwise fixed/sticky.
+  /**
+   * VISIBILITY LOGIC:
+   * 1. If Index Page: 'fixed flex' (Always visible, transparent background)
+   * 2. If Other Pages: 'hidden md:flex' (Hidden on mobile, flex on desktop)
+   */
   const mobileHeaderClasses = isIndexPage 
-    ? "fixed top-0 left-0 right-0 bg-transparent" 
-    : `sticky top-0 left-0 right-0 border-b border-white/10 shadow-lg`;
+    ? "fixed top-0 left-0 right-0 bg-transparent flex" 
+    : "hidden md:flex sticky top-0 left-0 right-0 border-b border-white/10 shadow-lg";
 
   return (
     <header 
-      className={`z-[100] transition-all duration-300 md:h-20 flex items-center ${mobileHeaderClasses} ${className || ''}`}
+      className={`z-[100] transition-all duration-300 md:h-20 items-center ${mobileHeaderClasses} ${className || ''}`}
       style={{ 
-        // Logic: If index page AND desktop (md), use TEAL. If not index page, use TEAL.
         backgroundColor: isIndexPage 
           ? (window.innerWidth >= 768 ? COLORS.TEAL : 'transparent') 
           : COLORS.TEAL 
@@ -75,7 +77,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIc
             </SheetContent>
           </Sheet>
           
-          {/* Logo Logic: Hidden on small screens if isIndexPage */}
+          {/* Logo: Hidden on small screens if isIndexPage (to prevent clutter with transparent header) */}
           <Link to="/" className={`flex items-center gap-3 group ${isIndexPage ? 'hidden md:flex' : 'flex'}`}>
             <div 
               className="h-10 w-10 rounded-xl flex items-center justify-center font-black text-xl shadow-lg transition-transform group-hover:rotate-12"
