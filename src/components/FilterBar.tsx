@@ -92,7 +92,9 @@ export const FilterBar = ({ type, onApplyFilters }: FilterBarProps) => {
   };
 
   return (
-    <div className="bg-white rounded-[28px] p-6 shadow-sm border border-slate-100 space-y-6">
+    <div className="bg-gradient-to-br from-white via-white to-slate-50 rounded-[28px] p-6 shadow-xl border-2 border-[#008080]/20 space-y-6 relative overflow-hidden">
+      {/* Decorative accent */}
+      <div className="absolute top-0 left-0 w-full h-1" style={{ background: `linear-gradient(90deg, ${COLORS.TEAL} 0%, ${COLORS.CORAL} 100%)` }} />
       <div className="flex items-center justify-between border-b border-slate-50 pb-4">
         <div>
           <h3 className="text-lg font-black uppercase tracking-tight" style={{ color: COLORS.TEAL }}>

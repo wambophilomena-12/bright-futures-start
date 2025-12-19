@@ -299,12 +299,16 @@ const CreateAdventure = () => {
             </div>
             
             <div className="space-y-6">
-                <EmailVerification
-                    email={formData.email}
-                    onEmailChange={(email) => setFormData({...formData, email})}
-                    isVerified={emailVerified}
-                    onVerificationChange={setEmailVerified}
-                />
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Business Email</Label>
+                    <Input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        placeholder="contact@business.com"
+                        className="rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all h-12 font-bold"
+                    />
+                </div>
                 
                 <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">WhatsApp / Phone</Label>

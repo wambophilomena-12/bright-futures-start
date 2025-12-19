@@ -185,15 +185,14 @@ const Index = () => {
     
     try {
       const [tripsData, hotelsData, campsitesData, eventsData] = await Promise.all([
-        // Only fetch upcoming trips or flexible date trips
+        // Fetch ALL trips (including expired ones)
         supabase.from("trips")
           .select("*")
           .eq("approval_status", "approved")
           .eq("is_hidden", false)
           .eq("type", "trip")
-          .or(`date.gte.${today},is_flexible_date.eq.true`)
           .order('date', { ascending: true })
-          .limit(8),
+          .limit(12),
         supabase.from("hotels")
           .select("*")
           .eq("approval_status", "approved")
@@ -206,15 +205,14 @@ const Index = () => {
           .eq("is_hidden", false)
           .order('created_at', { ascending: false })
           .limit(8),
-        // Only fetch upcoming events or flexible date events
+        // Fetch ALL events (including expired ones)
         supabase.from("trips")
           .select("*")
           .eq("approval_status", "approved")
           .eq("is_hidden", false)
           .eq("type", "event")
-          .or(`date.gte.${today},is_flexible_date.eq.true`)
           .order('date', { ascending: true })
-          .limit(8)
+          .limit(12)
       ]);
       
       setScrollableRows({
@@ -569,10 +567,10 @@ const Index = () => {
                 <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 transition-all group-hover:bg-white/30 group-hover:scale-110">
                   <cat.icon className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-white text-[9px] font-bold uppercase tracking-tight mt-2 text-center leading-tight max-w-[70px]">
+                <span className="text-[#FF7F50] text-[9px] font-bold uppercase tracking-tight mt-2 text-center leading-tight max-w-[70px]">
                   {cat.title}
                 </span>
-                <p className="text-white/70 text-[7px] text-center leading-tight mt-0.5 max-w-[80px] line-clamp-2">
+                <p className="text-white/80 text-[7px] text-center leading-tight mt-0.5 max-w-[80px] line-clamp-2">
                   {cat.description}
                 </p>
               </div>

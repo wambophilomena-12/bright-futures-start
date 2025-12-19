@@ -125,8 +125,8 @@ const CreateTripEvent = () => {
       toast({ title: "Missing Info", description: "Phone and Location are required.", variant: "destructive" });
       return;
     }
-    if (formData.email && !emailVerified) {
-      toast({ title: "Verify Email", description: "Please verify your email address.", variant: "destructive" });
+    if (!formData.phone_number || !formData.map_link) {
+      toast({ title: "Missing Info", description: "Phone and Location are required.", variant: "destructive" });
       return;
     }
 
@@ -361,12 +361,15 @@ const CreateTripEvent = () => {
             <h2 className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: COLORS.TEAL }}>Host Contact & Location</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <EmailVerification
-                email={formData.email}
-                onEmailChange={(email) => setFormData({...formData, email})}
-                isVerified={emailVerified}
-                onVerificationChange={setEmailVerified}
-              />
+              <div className="space-y-2">
+                <CustomLabel>Contact Email</CustomLabel>
+                <StyledInput
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  placeholder="contact@example.com"
+                />
+              </div>
 
               <div className="space-y-2">
                 <CustomLabel>Contact Phone</CustomLabel>

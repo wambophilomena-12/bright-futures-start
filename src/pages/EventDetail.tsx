@@ -171,12 +171,12 @@ const EventDetail = () => {
             <div>
               <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] text-white drop-shadow-2xl mb-3">{event.name}</h1>
               <div className="flex items-center gap-3 cursor-pointer group w-fit" onClick={openInMaps}>
-                <div className="bg-white/20 backdrop-blur-md p-2 rounded-xl group-hover:bg-[#FF7F50] transition-all duration-300"><MapPin className="h-5 w-5 text-white" /></div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-[#FF7F50] uppercase tracking-widest">Location</span>
-                  <span className="text-sm font-black text-white uppercase tracking-wider group-hover:text-[#008080] transition-colors">{event.location}</span>
-                </div>
-              </div>
+                 <div className="bg-black/30 backdrop-blur-md p-2 rounded-xl group-hover:bg-[#FF7F50] transition-all duration-300"><MapPin className="h-5 w-5 text-white" /></div>
+                 <div className="flex flex-col">
+                   <span className="text-[10px] font-bold text-[#FF7F50] uppercase tracking-widest px-2 py-0.5 bg-black/30 rounded-full backdrop-blur-sm">Location</span>
+                   <span className="text-sm font-black text-white uppercase tracking-wider group-hover:text-[#008080] transition-colors px-3 py-1 bg-black/30 rounded-full backdrop-blur-sm mt-1">{event.location}</span>
+                 </div>
+               </div>
             </div>
           </div>
         </div>

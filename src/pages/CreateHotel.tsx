@@ -249,12 +249,16 @@ const CreateHotel = () => {
                 </Button>
               </div>
 
-              <EmailVerification 
-                email={formData.email} 
-                onEmailChange={(e) => setFormData({...formData, email: e})} 
-                isVerified={emailVerified} 
-                onVerificationChange={setEmailVerified} 
-              />
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Business Email</Label>
+                <Input 
+                  type="email"
+                  className="rounded-xl border-slate-100 bg-slate-50 focus:bg-white transition-all h-12 font-bold"
+                  value={formData.email} 
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  placeholder="contact@business.com"
+                />
+              </div>
 
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Phone Number</Label>

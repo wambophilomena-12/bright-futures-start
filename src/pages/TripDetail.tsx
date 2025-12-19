@@ -258,10 +258,10 @@ const TripDetail = () => {
           <div className="relative z-10 space-y-4 pointer-events-auto">
             <Button className="bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg">Scheduled Trip</Button>
             <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl mb-3">{trip.name}</h1>
-            <div className="flex items-center gap-3 group w-fit cursor-pointer" onClick={openInMaps}>
+          <div className="flex items-center gap-3 group w-fit cursor-pointer" onClick={openInMaps}>
                <MapPin className="h-5 w-5 text-white" />
-               <span className="text-sm font-black text-white uppercase tracking-wider">{trip.location}, {trip.country}</span>
-            </div>
+               <span className="text-sm font-black text-white uppercase tracking-wider px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">{trip.location}, {trip.country}</span>
+          </div>
           </div>
         </div>
       </div>

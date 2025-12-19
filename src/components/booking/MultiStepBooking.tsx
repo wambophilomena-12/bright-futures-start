@@ -318,7 +318,7 @@ export const MultiStepBooking = ({
     const total = calculateTotal();
 
     return (
-        <div className="flex flex-col max-h-[90vh] bg-white rounded-[32px] overflow-hidden">
+        <div className="flex flex-col max-h-[90vh] bg-gradient-to-br from-white via-white to-slate-50 rounded-[32px] overflow-hidden shadow-2xl border border-slate-100">
             {/* Fixed Header */}
             <div className="flex-shrink-0 p-6 pb-4 border-b border-slate-100">
                 <div className="flex items-center justify-between mb-4">

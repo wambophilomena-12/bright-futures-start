@@ -226,10 +226,10 @@ const HotelDetail = () => {
                </Badge>
           </div>
           <h1 className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-2">{hotel.name}</h1>
-          <div className="flex items-center gap-1 text-white/90">
+          <div className="flex items-center gap-1 text-white">
             <MapPin className="h-3.5 w-3.5" />
-            <span className="text-[11px] font-bold uppercase truncate">{hotel.location}</span>
-            {distance && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full ml-2">{distance}km away</span>}
+            <span className="text-[11px] font-bold uppercase truncate px-3 py-1 rounded-full bg-black/40 backdrop-blur-sm">{hotel.location}</span>
+            {distance && <span className="text-[10px] bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full ml-2">{distance}km away</span>}
           </div>
         </div>
       </div>

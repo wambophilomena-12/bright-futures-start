@@ -420,16 +420,6 @@ const EditListing = () => {
           updateData.map_link = mapLink;
           break;
         case "email":
-          // Verify email if changed and not yet verified
-          if (email !== originalEmail && !emailVerified) {
-            toast({
-              title: "Email Verification Required",
-              description: "Please verify your new email address before saving",
-              variant: "destructive"
-            });
-            setSaving(false);
-            return;
-          }
           updateData.email = email;
           break;
         case "phone":
@@ -623,7 +613,7 @@ const EditListing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-[#F8F9FA] pb-20 md:pb-0">
       <Header />
       
       <main className="container px-4 py-8 max-w-7xl mx-auto">
