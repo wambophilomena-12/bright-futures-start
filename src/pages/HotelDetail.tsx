@@ -34,6 +34,7 @@ const HotelDetail = () => {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isOpenNow, setIsOpenNow] = useState(false);
   const [liveRating, setLiveRating] = useState({ avg: 0, count: 0 });
   const { savedItems, handleSave: handleSaveItem } = useSavedItems();
   const isSaved = savedItems.has(id || "");
@@ -50,6 +51,34 @@ const HotelDetail = () => {
     requestLocation();
     window.scrollTo(0, 0);
   }, [id]);
+
+  // REAL-TIME STATUS LOGIC (Match Adventure Place)
+  useEffect(() => {
+    if (!hotel) return;
+    const checkOpenStatus = () => {
+      const now = new Date();
+      const currentDay = now.toLocaleString('en-us', { weekday: 'long' });
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      
+      const parseTime = (timeStr: string) => {
+        if (!timeStr) return 0;
+        const [time, modifier] = timeStr.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+        if (modifier === 'PM' && hours < 12) hours += 12;
+        if (modifier === 'AM' && hours === 12) hours = 0;
+        return hours * 60 + minutes;
+      };
+
+      const openTime = parseTime(hotel.opening_hours || "08:00 AM");
+      const closeTime = parseTime(hotel.closing_hours || "11:00 PM");
+      const days = Array.isArray(hotel.days_opened) ? hotel.days_opened : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      
+      setIsOpenNow(days.includes(currentDay) && currentTime >= openTime && currentTime <= closeTime);
+    };
+    checkOpenStatus();
+    const interval = setInterval(checkOpenStatus, 60000);
+    return () => clearInterval(interval);
+  }, [hotel]);
 
   const fetchHotel = async () => {
     if (!id) return;
@@ -117,6 +146,17 @@ const HotelDetail = () => {
         </Carousel>
 
         <div className="absolute bottom-8 left-0 w-full p-5 z-20">
+          {/* LIVE RATING & STATUS BADGES */}
+          <div className="flex flex-wrap gap-2 mb-3">
+               <Badge className="bg-amber-400 text-black border-none px-3 py-1 text-[10px] font-black uppercase rounded-full flex items-center gap-1 shadow-lg">
+                 <Star className="h-3 w-3 fill-current" />
+                 {liveRating.avg > 0 ? liveRating.avg : "New"}
+               </Badge>
+               <Badge className={`${isOpenNow ? "bg-emerald-500" : "bg-red-500"} text-white border-none px-3 py-1 text-[10px] font-black uppercase rounded-full flex items-center gap-1.5`}>
+                 <Circle className={`h-2 w-2 fill-current ${isOpenNow ? "animate-pulse" : ""}`} />
+                 {isOpenNow ? "open now" : "closed"}
+               </Badge>
+          </div>
           <h1 className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-2">{hotel.name}</h1>
           <div className="flex items-center gap-1 text-white/90">
             <MapPin className="h-3.5 w-3.5" />
@@ -129,7 +169,7 @@ const HotelDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1.8fr,1fr] gap-4">
           
           <div className="space-y-4">
-            {/* 1. DESCRIPTION (NOW TOP) */}
+            {/* 1. DESCRIPTION (TOP) */}
             <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
               <h2 className="text-[11px] font-black uppercase tracking-widest mb-3 text-slate-400">Description</h2>
               <p className="text-slate-500 text-sm leading-relaxed">{hotel.description}</p>
@@ -145,17 +185,19 @@ const HotelDetail = () => {
                 <div className="text-right">
                     <div className="flex items-center gap-1 text-amber-500 font-black text-lg">
                         <Star className="h-4 w-4 fill-current" />
-                        <span>{liveRating.avg || hotel.star_rating || "0"}</span>
+                        <span>{liveRating.avg || "0"}</span>
                     </div>
                     <p className="text-[9px] font-black text-slate-400 uppercase">{liveRating.count} reviews</p>
                 </div>
               </div>
 
-              {/* OPERATING INFO (Small letters for days) */}
+              {/* OPERATING INFO */}
               <div className="space-y-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-slate-400"><Clock className="h-4 w-4 text-teal-600" /><span className="text-[10px] font-black uppercase tracking-tight">Working Hours</span></div>
-                  <span className="text-[10px] font-black text-slate-600">{hotel.opening_hours || "08:00 AM"} - {hotel.closing_hours || "11:00 PM"}</span>
+                  <span className={`text-[10px] font-black uppercase ${isOpenNow ? "text-emerald-600" : "text-red-500"}`}>
+                    {hotel.opening_hours || "08:00 AM"} - {hotel.closing_hours || "11:00 PM"}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1.5 pt-1 border-t border-slate-100">
                   <div className="flex items-center gap-2 text-slate-400"><Calendar className="h-4 w-4 text-teal-600" /><span className="text-[10px] font-black uppercase tracking-tight">Working Days</span></div>
@@ -165,7 +207,7 @@ const HotelDetail = () => {
                 </div>
               </div>
 
-              <Button onClick={() => setBookingOpen(true)} className="w-full py-7 rounded-2xl text-md font-black uppercase tracking-widest bg-gradient-to-r from-[#FF7F50] to-[#FF4E50] border-none shadow-lg">Reserve Room</Button>
+              <Button onClick={() => setBookingOpen(true)} className="w-full py-7 rounded-2xl text-md font-black uppercase tracking-widest bg-gradient-to-r from-[#FF7F50] to-[#FF4E50] border-none shadow-lg transition-all active:scale-95">Reserve Room</Button>
             </div>
 
             {/* 3. AMENITIES (RED) */}
@@ -184,7 +226,7 @@ const HotelDetail = () => {
               </div>
             </section>
 
-            {/* 4. FACILITIES (TEAL #008080) */}
+            {/* 4. FACILITIES (TEAL) */}
             {hotel.facilities?.length > 0 && (
               <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                 <div className="flex items-center gap-2 mb-4">
@@ -217,27 +259,6 @@ const HotelDetail = () => {
                 </div>
               </section>
             )}
-
-            {/* 6. ROOM TYPES */}
-            {hotel.room_types && (
-              <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                <h2 className="text-sm font-black uppercase tracking-widest mb-4 text-slate-800">Available Rooms</h2>
-                <div className="space-y-3">
-                  {hotel.room_types.map((room: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <BedDouble className="h-5 w-5 text-slate-400" />
-                        <div>
-                          <p className="text-xs font-black uppercase text-slate-700">{room.name}</p>
-                          <p className="text-[10px] text-slate-400">{room.capacity} Guests</p>
-                        </div>
-                      </div>
-                      <span className="text-sm font-black text-red-600">KSh {room.price}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
           </div>
 
           {/* Desktop Sidebar */}
@@ -250,12 +271,12 @@ const HotelDetail = () => {
           </div>
         </div>
 
-        {/* 7. REVIEW SECTION */}
+        {/* 6. REVIEW SECTION */}
         <div className="mt-8">
           <ReviewSection itemId={hotel.id} itemType="hotel" />
         </div>
 
-        {/* 8. SIMILAR ITEMS */}
+        {/* 7. SIMILAR ITEMS */}
         <div className="mt-12">
           <h2 className="text-xl font-black uppercase tracking-tighter mb-6">Explore Similar Stays</h2>
           <SimilarItems currentItemId={hotel.id} itemType="hotel" country={hotel.country} />
