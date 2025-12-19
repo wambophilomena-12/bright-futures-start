@@ -150,7 +150,7 @@ const HotelDetail = () => {
           <div className="absolute inset-0 z-0 opacity-80" style={{ background: `radial-gradient(circle at 20% 50%, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 85%)`, filter: 'blur(15px)', marginLeft: '-20px' }} />
           
           <div className="relative z-10 space-y-4 pointer-events-auto">
-            <Button className="bg-[#008080] hover:bg-[#008080] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg text-white">
+            <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg text-white">
               Premium Hotel
             </Button>
             
@@ -164,7 +164,7 @@ const HotelDetail = () => {
                   <MapPin className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-[#008080] uppercase tracking-widest">Location</span>
+                  <span className="text-[10px] font-bold text-[#FF7F50] uppercase tracking-widest">Location</span>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-white uppercase tracking-wider group-hover:text-[#008080] transition-colors">
                       {hotel.location}, {hotel.country}
@@ -281,7 +281,7 @@ const HotelDetail = () => {
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Starting Price</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-black" style={{ color: COLORS.RED }}>
-                      KSh {hotel.facilities?.[0]?.price || '---'}
+                      KSh {hotel.facilities?.[0]?.price ||}
                     </span>
                     <span className="text-slate-400 text-[10px] font-bold uppercase">/ night</span>
                   </div>
@@ -306,7 +306,8 @@ const HotelDetail = () => {
               <Button 
                 onClick={() => setBookingOpen(true)}
                 className="w-full py-8 rounded-2xl text-md font-black uppercase tracking-[0.2em] text-white shadow-xl border-none mb-6"
-                style={{ background: `linear-gradient(135deg, #00A3A3 0%, ${COLORS.TEAL} 100%)`, boxShadow: `0 12px 24px -8px ${COLORS.TEAL}88` }}
+                style={{ background: `linear-gradient(135deg, ${COLORS.CORAL_LIGHT} 0%, ${COLORS.CORAL} 100%)`,
+                boxShadow: `0 12px 24px -8px ${COLORS.TEAL}88` }}
               >
                 Reserve Now
               </Button>
