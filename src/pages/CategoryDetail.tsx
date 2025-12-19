@@ -5,14 +5,13 @@ import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { SearchBarWithSuggestions } from "@/components/SearchBarWithSuggestions";
 import { ListingCard } from "@/components/ListingCard";
 import { FilterBar } from "@/components/FilterBar";
-import { ListingSkeleton, ListingGridSkeleton } from "@/components/ui/listing-skeleton";
+import { ListingGridSkeleton } from "@/components/ui/listing-skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { getUserId } from "@/lib/sessionManager";
 import { cn } from "@/lib/utils";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
-import { useRatings, sortByRating, RatingData } from "@/hooks/useRatings";
+import { useRatings, sortByRating } from "@/hooks/useRatings";
 
 const CategoryDetail = () => {
   const { category } = useParams<{ category: string }>();
@@ -21,12 +20,9 @@ const CategoryDetail = () => {
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
   const { savedItems, handleSave } = useSavedItems();
   const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   
-  const { position, requestLocation } = useGeolocation();
-  const [isSticky, setIsSticky] = useState(false);
-  const [isSearchVisible, setIsSearchVisible] = useState(true);
+  const { position } = useGeolocation();
   const [showSearchIcon, setShowSearchIcon] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -50,24 +46,13 @@ const CategoryDetail = () => {
     initializeData();
   }, [category]);
 
-  // Handle Scroll logic for Desktop (Header hiding) vs Mobile (Always visible search)
+  // Handle Header Search Icon visibility only
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
-      // On Desktop (md and up), we toggle search visibility based on scroll
+      // If user scrolls down on desktop, show the icon in the main header
       if (window.innerWidth >= 768) {
-        if (currentScrollY > 100) {
-          setIsSearchVisible(false);
-          setShowSearchIcon(true);
-        } else {
-          setIsSearchVisible(true);
-          setShowSearchIcon(false);
-        }
-      } else {
-        // On Mobile, search is always visible at the top
-        setIsSearchVisible(true);
-        setShowSearchIcon(false);
+        setShowSearchIcon(currentScrollY > 100);
       }
     };
 
@@ -77,7 +62,7 @@ const CategoryDetail = () => {
 
   const loadInitialData = async () => {
     setLoading(true);
-    const data = await fetchData(0, 15);
+    const data = await fetchData(0, 20);
     setItems(data);
     setLoading(false);
   };
@@ -86,7 +71,10 @@ const CategoryDetail = () => {
     if (!config) return [];
     const allData: any[] = [];
     for (const table of config.tables) {
-      const { data } = await supabase.from(table as any).select("*").range(offset, offset + limit - 1);
+      const { data } = await supabase
+        .from(table as any)
+        .select("*")
+        .range(offset, offset + limit - 1);
       if (data) allData.push(...data.map((item: any) => ({ ...item, table })));
     }
     return allData;
@@ -107,22 +95,21 @@ const CategoryDetail = () => {
     setFilteredItems(filtered);
   };
 
-  if (!config) return <div>Category not found</div>;
+  if (!config) return <div className="p-10 text-center">Category not found</div>;
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
-      {/* HEADER: Hidden on mobile */}
+    <div className="min-h-screen bg-background pb-20 md:pb-10">
+      {/* HEADER: Standard navigation header */}
       <div className="hidden md:block">
-        <Header onSearchClick={() => window.scrollTo(0, 0)} showSearchIcon={showSearchIcon} />
+        <Header onSearchClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} showSearchIcon={showSearchIcon} />
       </div>
 
-      {/* SEARCH BAR: Fixed/Sticky at top on mobile, normal on desktop */}
+      {/* SEARCH BAR: STICKY AT TOP FOR BOTH MOBILE AND DESKTOP */}
       <div 
         ref={searchRef} 
         className={cn(
-          "bg-background border-b z-50 transition-all duration-300",
-          "sticky top-0 md:relative", // Sticky on mobile, relative on desktop
-          !isSearchVisible && "md:opacity-0 md:-translate-y-full md:h-0 md:overflow-hidden",
+          "bg-white dark:bg-background border-b z-50 transition-all duration-300",
+          "sticky top-0", // This keeps it at the very top on scroll
           isSearchFocused && "z-[600]"
         )}
       >
@@ -142,26 +129,28 @@ const CategoryDetail = () => {
         </div>
       </div>
 
-      {/* FILTER BAR: Not sticky on mobile - will disappear on scroll */}
+      {/* FILTER BAR: RELATIVE (Will scroll away with the page content) */}
       <div className={cn(
         "bg-background border-b relative z-10",
-        "md:sticky md:top-16", // Only sticky on desktop
         isSearchFocused && "opacity-0 pointer-events-none"
       )}>
         <div className="container px-4 py-3">
           <FilterBar 
             type={category === "hotels" ? "hotels" : "trips-events"} 
-            onApplyFilters={(f) => console.log(f)} 
+            onApplyFilters={(filters) => {
+              console.log("Filters applied:", filters);
+              // Implement filter logic here if needed
+            }} 
           />
         </div>
       </div>
 
       {/* MAIN CONTENT */}
       <main className={cn(
-        "container px-4 py-6 space-y-4", 
-        isSearchFocused && "pointer-events-none opacity-50"
+        "container px-4 py-6 space-y-4 transition-opacity duration-200", 
+        isSearchFocused && "pointer-events-none opacity-20"
       )}>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
           {loading ? (
             <ListingGridSkeleton count={10} />
           ) : (
@@ -181,6 +170,12 @@ const CategoryDetail = () => {
             ))
           )}
         </div>
+
+        {!loading && filteredItems.length === 0 && (
+          <div className="text-center py-20 text-muted-foreground">
+            No items found matching your search.
+          </div>
+        )}
       </main>
 
       <MobileBottomBar />
