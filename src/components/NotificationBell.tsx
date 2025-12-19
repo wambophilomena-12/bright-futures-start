@@ -59,6 +59,20 @@ export const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  /**
+   * UNIFIED ICON STYLING
+   * Exactly matching the Menu icon:
+   * - Mobile: bg-black/50 (for visibility on hero images)
+   * - Desktop: md:bg-white/15 (glass effect on teal)
+   */
+  const headerIconStyles = `
+    h-11 w-11 rounded-2xl flex items-center justify-center transition-all duration-200 
+    active:scale-90 shadow-md md:shadow-none text-white
+    bg-black/50 hover:bg-black/60 
+    md:bg-white/15 md:hover:bg-white/25
+    relative group
+  `;
+
   useEffect(() => {
     audioRef.current = new Audio(NOTIFICATION_SOUND_URL);
     audioRef.current.volume = 0.5;
@@ -125,15 +139,12 @@ export const NotificationBell = () => {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <button 
-          className="rounded-xl h-12 w-12 flex items-center justify-center transition-all bg-white shadow-sm border border-slate-100 hover:scale-105 active:scale-95 group relative" 
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5 transition-colors group-hover:text-[#008080]" style={{ color: COLORS.TEAL }} />
+        <button className={headerIconStyles} aria-label="Notifications">
+          <Bell className="h-5 w-5 transition-transform group-hover:rotate-12" />
           {unreadCount > 0 && (
             <Badge
               className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center border-2 border-white text-[10px] font-black"
-              style={{ backgroundColor: COLORS.RED }}
+              style={{ backgroundColor: COLORS.RED, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
