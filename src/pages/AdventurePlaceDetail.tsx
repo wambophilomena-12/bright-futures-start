@@ -58,10 +58,9 @@ const AdventurePlaceDetail = () => {
       fetchLiveRating();
     }
     requestLocation();
-    window.scrollTo(0, 0); // Reset scroll on load
+    window.scrollTo(0, 0);
   }, [id, slug]);
 
-  // Real-time Status Logic
   useEffect(() => {
     if (!place) return;
     const checkOpenStatus = () => {
@@ -191,58 +190,14 @@ const AdventurePlaceDetail = () => {
       <main className="container px-4 max-w-6xl mx-auto -mt-10 relative z-50">
         <div className="flex flex-col lg:grid lg:grid-cols-[1.7fr,1fr] gap-6">
           
-          <div className="space-y-6">
-            {/* Description */}
-            <section className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
-              <h2 className="text-xl font-black uppercase tracking-tight mb-4 text-[#008080]">Description</h2>
-              <p className="text-slate-500 text-sm leading-relaxed whitespace-pre-line">{place.description}</p>
-            </section>
+          {/* 1. Description - Top on Mobile, Left on Large */}
+          <section className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100 order-1">
+            <h2 className="text-xl font-black uppercase tracking-tight mb-4 text-[#008080]">Description</h2>
+            <p className="text-slate-500 text-sm leading-relaxed whitespace-pre-line">{place.description}</p>
+          </section>
 
-            {/* Facilities */}
-            {place.facilities?.length > 0 && (
-              <section className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
-                <div className="flex items-center gap-3 mb-6"><Tent className="h-5 w-5 text-[#008080]" /><h2 className="text-xl font-black uppercase tracking-tight text-[#008080]">Facilities</h2></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {place.facilities.map((f: any, i: number) => (
-                    <div key={i} className="p-5 rounded-[22px] bg-slate-50 border border-slate-100 flex justify-between items-center"><span className="text-sm font-black uppercase text-slate-700">{f.name}</span><Badge className="bg-white text-[#008080] text-[10px] font-black">KSH {f.price}</Badge></div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Activities */}
-            {place.activities?.length > 0 && (
-              <section className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
-                <div className="flex items-center gap-3 mb-6"><Zap className="h-5 w-5 text-[#FF9800]" /><h2 className="text-xl font-black uppercase tracking-tight text-[#FF9800]">Activities</h2></div>
-                <div className="flex flex-wrap gap-3">
-                  {place.activities.map((act: any, i: number) => (
-                    <div key={i} className="px-5 py-3 rounded-2xl bg-orange-50/50 border border-orange-100 flex items-center gap-3">
-                      <span className="text-[11px] font-black text-slate-700 uppercase">{act.name}</span>
-                      <span className="text-[10px] font-bold text-[#FF9800]">KSh {act.price}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Amenities */}
-            {place.amenities && (
-              <section className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
-                <div className="flex items-center gap-3 mb-6"><ShieldCheck className="h-5 w-5 text-red-600" /><h2 className="text-xl font-black uppercase tracking-tight text-red-600">Amenities</h2></div>
-                <div className="flex flex-wrap gap-2">
-                  {(Array.isArray(place.amenities) ? place.amenities : place.amenities.split(',')).map((item: string, i: number) => (
-                    <div key={i} className="flex items-center gap-2 bg-red-50/50 px-4 py-2.5 rounded-2xl border border-red-100">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                      <span className="text-[11px] font-black text-red-700 uppercase">{item.trim()}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:sticky lg:top-24 h-fit">
+          {/* 2. Sidebar / Reserve Card - Second on Mobile, Right on Large */}
+          <div className="lg:sticky lg:top-24 h-fit order-2 lg:order-none">
             <div className="bg-white rounded-[32px] p-8 shadow-2xl border border-slate-100">
               <div className="flex justify-between items-end mb-8">
                 <div>
@@ -283,14 +238,60 @@ const AdventurePlaceDetail = () => {
               </div>
             </div>
           </div>
+
+          {/* Wrapper for remaining left-column items to maintain grid flow on large screens */}
+          <div className="flex flex-col gap-6 order-3 lg:col-start-1 lg:row-start-2 lg:order-none">
+            
+            {/* 3. Amenities */}
+            {place.amenities && (
+              <section className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
+                <div className="flex items-center gap-3 mb-6"><ShieldCheck className="h-5 w-5 text-red-600" /><h2 className="text-xl font-black uppercase tracking-tight text-red-600">Amenities</h2></div>
+                <div className="flex flex-wrap gap-2">
+                  {(Array.isArray(place.amenities) ? place.amenities : place.amenities.split(',')).map((item: string, i: number) => (
+                    <div key={i} className="flex items-center gap-2 bg-red-50/50 px-4 py-2.5 rounded-2xl border border-red-100">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      <span className="text-[11px] font-black text-red-700 uppercase">{item.trim()}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* 4. Facilities */}
+            {place.facilities?.length > 0 && (
+              <section className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
+                <div className="flex items-center gap-3 mb-6"><Tent className="h-5 w-5 text-[#008080]" /><h2 className="text-xl font-black uppercase tracking-tight text-[#008080]">Facilities</h2></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {place.facilities.map((f: any, i: number) => (
+                    <div key={i} className="p-5 rounded-[22px] bg-slate-50 border border-slate-100 flex justify-between items-center"><span className="text-sm font-black uppercase text-slate-700">{f.name}</span><Badge className="bg-white text-[#008080] text-[10px] font-black">KSH {f.price}</Badge></div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* 5. Activities */}
+            {place.activities?.length > 0 && (
+              <section className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
+                <div className="flex items-center gap-3 mb-6"><Zap className="h-5 w-5 text-[#FF9800]" /><h2 className="text-xl font-black uppercase tracking-tight text-[#FF9800]">Activities</h2></div>
+                <div className="flex flex-wrap gap-3">
+                  {place.activities.map((act: any, i: number) => (
+                    <div key={i} className="px-5 py-3 rounded-2xl bg-orange-50/50 border border-orange-100 flex items-center gap-3">
+                      <span className="text-[11px] font-black text-slate-700 uppercase">{act.name}</span>
+                      <span className="text-[10px] font-bold text-[#FF9800]">KSh {act.price}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         </div>
 
-        {/* Reviews Section */}
+        {/* 6. Review Section */}
         <div className="mt-12 bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
           <ReviewSection itemId={place.id} itemType="adventure_place" />
         </div>
 
-        {/* Similar Items Section */}
+        {/* 7. Similar Items Section */}
         <div className="mt-16">
           <h2 className="text-2xl font-black uppercase tracking-tighter mb-8 text-slate-800">Explore Similar Adventures</h2>
           <SimilarItems currentItemId={place.id} itemType="adventure" country={place.country} />
