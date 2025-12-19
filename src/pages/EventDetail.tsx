@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
-import { MapPin, Share2, Heart, Calendar, Copy, CheckCircle2, ArrowLeft, Star, Phone, Mail, Clock } from "lucide-react";
+import { MapPin, Share2, Heart, Calendar, Copy, CheckCircle2, ArrowLeft, Star, Phone, Mail, Clock, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,9 +62,7 @@ const EventDetail = () => {
       setEvent(data);
     } catch (error) {
       toast({ title: "Event not found", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleSave = () => id && handleSaveItem(id, "event");
@@ -150,34 +148,16 @@ const EventDetail = () => {
         </Carousel>
 
         <div className="absolute bottom-10 left-0 z-40 w-full md:w-3/4 lg:w-1/2 p-8 pointer-events-none">
-          <div 
-            className="absolute inset-0 z-0 opacity-80"
-            style={{
-              background: `radial-gradient(circle at 20% 50%, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 85%)`,
-              filter: 'blur(15px)',
-              marginLeft: '-20px'
-            }}
-          />
-          
+          <div className="absolute inset-0 z-0 opacity-80" style={{ background: `radial-gradient(circle at 20% 50%, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 85%)`, filter: 'blur(15px)', marginLeft: '-20px' }} />
           <div className="relative z-10 space-y-4 pointer-events-auto">
-            <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg">
-              Experience
-            </Button>
-            
+            <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.15em] text-[10px] rounded-full shadow-lg">Experience</Button>
             <div>
-              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl mb-3">
-                {event.name}
-              </h1>
-              
+              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl mb-3">{event.name}</h1>
               <div className="flex items-center gap-3 cursor-pointer group w-fit" onClick={openInMaps}>
-                <div className="bg-white/20 backdrop-blur-md p-2 rounded-xl group-hover:bg-[#FF7F50] transition-all duration-300">
-                  <MapPin className="h-5 w-5 text-white" />
-                </div>
+                <div className="bg-white/20 backdrop-blur-md p-2 rounded-xl group-hover:bg-[#FF7F50] transition-all duration-300"><MapPin className="h-5 w-5 text-white" /></div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-[#FF7F50] uppercase tracking-widest">Location</span>
-                  <span className="text-sm font-black text-white uppercase tracking-wider group-hover:text-[#008080] transition-colors">
-                    {event.location}
-                  </span>
+                  <span className="text-sm font-black text-white uppercase tracking-wider group-hover:text-[#008080] transition-colors">{event.location}</span>
                 </div>
               </div>
             </div>
@@ -221,10 +201,7 @@ const EventDetail = () => {
                   </div>
                 )}
               </div>
-              
-              <div className="min-h-[100px]">
-                <ReviewSection itemId={event.id} itemType="event" />
-              </div>
+              <ReviewSection itemId={event.id} itemType="event" />
             </div>
           </div>
 
@@ -233,7 +210,7 @@ const EventDetail = () => {
               
               <div className="flex justify-between items-end mb-8">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pricing Starts at</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ticket Price</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-black" style={{ color: COLORS.RED }}>KSh {event.price}</span>
                     <span className="text-slate-400 text-[10px] font-bold uppercase tracking-tighter">/ adult</span>
@@ -242,8 +219,26 @@ const EventDetail = () => {
                 <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 flex items-center gap-2">
                   <Clock className="h-4 w-4" style={{ color: COLORS.TEAL }} />
                   <span className={`text-xs font-black uppercase ${isSoldOut ? "text-red-500" : "text-slate-600"}`}>
-                    {event.available_tickets} Left
+                    {isSoldOut ? "FULL" : `${event.available_tickets} Left`}
                   </span>
+                </div>
+              </div>
+
+              {/* NEW: DETAILED EVENT AVAILABILITY INDICATOR */}
+              <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <Users className="h-3 w-3" /> Event Availability
+                  </span>
+                  <span className={`text-[10px] font-black uppercase ${event.available_tickets < 5 ? 'text-red-500' : 'text-emerald-600'}`}>
+                    {isSoldOut ? "Sold Out" : `${event.available_tickets} Slots Available`}
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                   <div 
+                    className={`h-full transition-all duration-500 ${event.available_tickets < 5 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                    style={{ width: `${Math.min((event.available_tickets / 50) * 100, 100)}%` }}
+                   />
                 </div>
               </div>
 
@@ -264,12 +259,6 @@ const EventDetail = () => {
                 <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
                   <span className="text-slate-400">Child (Under 12)</span>
                   <span className="text-slate-700">KSh {event.price_child || 0}</span>
-                </div>
-                <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
-                  <span className="text-slate-400">Current Status</span>
-                  <span className={`font-black uppercase ${isSoldOut ? "text-red-500" : "text-emerald-600"}`}>
-                    {isSoldOut ? "Fully Booked" : isExpired ? "Event Passed" : "Open for Booking"}
-                  </span>
                 </div>
               </div>
 
