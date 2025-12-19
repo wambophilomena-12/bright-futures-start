@@ -410,6 +410,9 @@ const EditListing = () => {
 
       // Map field to update data
       switch (field) {
+        case "name":
+          updateData.name = name;
+          break;
         case "description":
           updateData.description = description;
           break;
@@ -620,7 +623,7 @@ const EditListing = () => {
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
-          className="mb-4"
+          className="mb-4 text-[#008080] hover:bg-[#008080]/10"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
@@ -628,15 +631,19 @@ const EditListing = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Edit {type === 'adventure' ? 'Experience' : type === 'trip' ? 'Tour' : type}</h1>
-              <p className="text-muted-foreground">Click the edit icons to modify any detail</p>
+              <p className="text-[10px] font-black text-[#FF7F50] uppercase tracking-[0.2em] mb-1">Manage Your Listing</p>
+              <h1 className="text-3xl font-black uppercase tracking-tighter text-[#008080]">Edit {type === 'adventure' ? 'Experience' : type === 'trip' ? 'Tour' : type}</h1>
+              <p className="text-slate-500 text-sm">Click the edit icons to modify any detail</p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant={approvalStatus === 'approved' ? 'default' : approvalStatus === 'pending' ? 'secondary' : 'destructive'}>
+              <Badge 
+                variant={approvalStatus === 'approved' ? 'default' : approvalStatus === 'pending' ? 'secondary' : 'destructive'}
+                className={approvalStatus === 'approved' ? 'bg-[#008080]' : ''}
+              >
                 {approvalStatus}
               </Badge>
               {isHidden && (
-                <Badge variant="outline" className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                <Badge variant="outline" className="bg-[#F0E68C]/20 text-[#857F3E] border-[#F0E68C]">
                   Hidden from Public View
                 </Badge>
               )}
@@ -644,11 +651,11 @@ const EditListing = () => {
           </div>
           
           {isResubmitting && approvalStatus === 'rejected' && (
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+            <div className="mt-4 p-4 bg-[#008080]/10 border border-[#008080]/30 rounded-xl">
+              <p className="text-sm text-[#008080] mb-3">
                 Make your desired changes, then click the button below to re-submit your listing for approval.
               </p>
-              <Button onClick={handleResubmit} disabled={saving}>
+              <Button onClick={handleResubmit} disabled={saving} className="bg-[#008080] hover:bg-[#006666]">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Re-submit for Approval
               </Button>
@@ -713,75 +720,107 @@ const EditListing = () => {
 
         {/* Grid Layout for Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Name */}
-          <div className="bg-card rounded-lg border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Pencil className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">Name</span>
+          {/* Name - Now editable */}
+          <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Pencil className="h-4 w-4 text-[#FF7F50]" />
+                <span className="text-sm font-bold text-slate-500 uppercase tracking-tight">Name</span>
+              </div>
+              <EditButton field="name" onSave={() => handleSaveField("name")} />
             </div>
-            <p className="font-medium truncate">{name}</p>
-            <p className="text-xs text-muted-foreground mt-1">Cannot be changed</p>
+            {editMode.name ? (
+              <Input 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                className="border-[#008080]/30 focus:border-[#008080]"
+              />
+            ) : (
+              <p className="font-bold text-[#008080] truncate">{name}</p>
+            )}
           </div>
 
           {/* Location */}
-          <div className="bg-card rounded-lg border p-4">
+          <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">Location</span>
+              <MapPin className="h-4 w-4 text-[#FF7F50]" />
+              <span className="text-sm font-bold text-slate-500 uppercase tracking-tight">Location</span>
             </div>
-            <p className="font-medium truncate">{location || "Not set"}</p>
-            <p className="text-xs text-muted-foreground mt-1">Cannot be changed</p>
+            <p className="font-bold text-[#008080] truncate">{location || "Not set"}</p>
+            <p className="text-xs text-slate-400 mt-1">Cannot be changed</p>
           </div>
 
           {/* Map Link */}
-          <div className="bg-card rounded-lg border p-4">
+          <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">Map Link</span>
+              <MapPin className="h-4 w-4 text-[#FF7F50]" />
+              <span className="text-sm font-bold text-slate-500 uppercase tracking-tight">Map Link</span>
             </div>
-            <p className="font-medium truncate text-sm">{mapLink || "Not set"}</p>
-            <p className="text-xs text-muted-foreground mt-1">Cannot be changed</p>
+            <p className="font-bold text-[#008080] truncate text-sm">{mapLink || "Not set"}</p>
+            <p className="text-xs text-slate-400 mt-1">Cannot be changed</p>
           </div>
 
           {/* Contact Email */}
-          <div className="bg-card rounded-lg border p-4">
+          <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-muted-foreground">Email</span>
+                <Mail className="h-4 w-4 text-[#FF7F50]" />
+                <span className="text-sm font-bold text-slate-500 uppercase tracking-tight">Email</span>
               </div>
               <EditButton field="email" onSave={() => handleSaveField("email")} />
             </div>
             {editMode.email ? (
-              <EmailVerification
-                email={email}
-                onEmailChange={(newEmail) => {
-                  setEmail(newEmail);
-                  if (newEmail !== originalEmail) {
-                    setEmailVerified(false);
-                  } else {
-                    setEmailVerified(true);
-                  }
-                }}
-                isVerified={emailVerified}
-                onVerificationChange={setEmailVerified}
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border-[#008080]/30 focus:border-[#008080]"
               />
             ) : (
-              <p className="font-medium truncate">{email || "Not set"}</p>
+              <p className="font-bold text-[#008080] truncate">{email || "Not set"}</p>
             )}
           </div>
 
-          {/* Phone Numbers */}
-          <div className="bg-card rounded-lg border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">Phone</span>
+          {/* Phone Numbers - Now editable */}
+          <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-[#FF7F50]" />
+                <span className="text-sm font-bold text-slate-500 uppercase tracking-tight">Phone</span>
+              </div>
+              <EditButton field="phone" onSave={() => handleSaveField("phone")} />
             </div>
-            <p className="font-medium">{phoneNumbers.length > 0 ? phoneNumbers[0] : "Not set"}</p>
-            {phoneNumbers.length > 1 && (
-              <p className="text-xs text-muted-foreground">+{phoneNumbers.length - 1} more</p>
+            {editMode.phone ? (
+              <div className="space-y-2">
+                {phoneNumbers.map((phone, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <Input
+                      value={phone}
+                      onChange={(e) => updatePhoneNumber(idx, e.target.value)}
+                      placeholder="Phone number"
+                      className="border-[#008080]/30 focus:border-[#008080] h-8"
+                    />
+                    {phoneNumbers.length > 1 && (
+                      <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => removePhoneNumber(idx)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {phoneNumbers.length < 3 && (
+                  <Button size="sm" variant="outline" onClick={addPhoneNumber} className="w-full text-[#008080] border-[#008080]/30">
+                    <Plus className="h-3 w-3 mr-1" /> Add Phone
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <>
+                <p className="font-bold text-[#008080]">{phoneNumbers.length > 0 ? phoneNumbers[0] : "Not set"}</p>
+                {phoneNumbers.length > 1 && (
+                  <p className="text-xs text-slate-400">+{phoneNumbers.length - 1} more</p>
+                )}
+              </>
             )}
-            <p className="text-xs text-muted-foreground mt-1">Cannot be changed</p>
           </div>
 
           {/* Operating Hours - Only for hotels, adventures, and attractions */}
@@ -828,43 +867,54 @@ const EditListing = () => {
             </div>
           )}
 
-          {/* Trip-specific: Date */}
+          {/* Trip-specific: Date - Now editable */}
           {type === "trip" && (
-            <div className="bg-card rounded-lg border p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-muted-foreground">Date</span>
+            <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-[#FF7F50]" />
+                  <span className="text-sm font-bold text-slate-500 uppercase tracking-tight">Date</span>
+                </div>
+                <EditButton field="date" onSave={() => handleSaveField("date")} />
               </div>
-              <p className="font-medium">{date ? new Date(date).toLocaleDateString() : "Not set"}</p>
-              <p className="text-xs text-muted-foreground mt-1">Cannot be changed</p>
+              {editMode.date ? (
+                <Input 
+                  type="date" 
+                  value={date} 
+                  onChange={(e) => setDate(e.target.value)} 
+                  className="border-[#008080]/30 focus:border-[#008080] h-8"
+                />
+              ) : (
+                <p className="font-bold text-[#008080]">{date ? new Date(date).toLocaleDateString() : "Not set"}</p>
+              )}
             </div>
           )}
 
           {/* Trip-specific: Pricing */}
           {type === "trip" && (
-            <div className="bg-card rounded-lg border p-4">
+            <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">Pricing</span>
+                  <DollarSign className="h-4 w-4 text-[#FF7F50]" />
+                  <span className="text-sm font-bold text-slate-500 uppercase tracking-tight">Pricing</span>
                 </div>
                 <EditButton field="price" onSave={() => handleSaveField("price")} />
               </div>
               {editMode.price ? (
                 <div className="space-y-2">
                   <div>
-                    <Label className="text-xs">Adult (KSh)</Label>
-                    <Input type="number" value={price} onChange={(e) => setPrice(parseFloat(e.target.value) || 0)} min={0} className="h-8" />
+                    <Label className="text-xs text-slate-500">Adult (KSh)</Label>
+                    <Input type="number" value={price} onChange={(e) => setPrice(parseFloat(e.target.value) || 0)} min={0} className="h-8 border-[#008080]/30" />
                   </div>
                   <div>
-                    <Label className="text-xs">Child (KSh)</Label>
-                    <Input type="number" value={priceChild} onChange={(e) => setPriceChild(parseFloat(e.target.value) || 0)} min={0} className="h-8" />
+                    <Label className="text-xs text-slate-500">Child (KSh)</Label>
+                    <Input type="number" value={priceChild} onChange={(e) => setPriceChild(parseFloat(e.target.value) || 0)} min={0} className="h-8 border-[#008080]/30" />
                   </div>
                 </div>
               ) : (
                 <>
-                  <p className="font-medium">KSh {price}</p>
-                  <p className="text-xs text-muted-foreground">Child: KSh {priceChild}</p>
+                  <p className="font-bold text-[#FF0000]">KSh {price}</p>
+                  <p className="text-xs text-slate-500">Child: KSh {priceChild}</p>
                 </>
               )}
             </div>
@@ -872,11 +922,11 @@ const EditListing = () => {
 
           {/* Trip-specific: Tickets */}
           {type === "trip" && (
-            <div className="bg-card rounded-lg border p-4">
+            <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">Tickets</span>
+                  <Users className="h-4 w-4 text-[#FF7F50]" />
+                  <span className="text-sm font-bold text-slate-500 uppercase tracking-tight">Tickets</span>
                 </div>
                 <EditButton field="slots" onSave={() => handleSaveField("slots")} />
               </div>
@@ -886,28 +936,28 @@ const EditListing = () => {
                   value={availableSlots}
                   onChange={(e) => setAvailableSlots(parseInt(e.target.value) || 0)}
                   min={0}
-                  className="h-8"
+                  className="h-8 border-[#008080]/30"
                 />
               ) : (
-                <p className="font-medium">{availableSlots} tickets</p>
+                <p className="font-bold text-[#008080]">{availableSlots} tickets</p>
               )}
             </div>
           )}
 
           {/* Entrance Fee */}
           {(type === "adventure" || type === "attraction") && (
-            <div className="bg-card rounded-lg border p-4">
+            <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">Entry Fee</span>
+                  <DollarSign className="h-4 w-4 text-[#FF7F50]" />
+                  <span className="text-sm font-bold text-slate-500 uppercase tracking-tight">Entry Fee</span>
                 </div>
                 <EditButton field="entranceFee" onSave={() => handleSaveField("entranceFee")} />
               </div>
               {editMode.entranceFee ? (
                 <div className="space-y-2">
                   <Select value={entranceFeeType} onValueChange={setEntranceFeeType}>
-                    <SelectTrigger className="h-8">
+                    <SelectTrigger className="h-8 border-[#008080]/30">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -922,12 +972,12 @@ const EditListing = () => {
                       value={entranceFee}
                       onChange={(e) => setEntranceFee(parseFloat(e.target.value) || 0)}
                       min={0}
-                      className="h-8"
+                      className="h-8 border-[#008080]/30"
                     />
                   )}
                 </div>
               ) : (
-                <p className="font-medium capitalize">{entranceFeeType === "free" ? "Free" : `KSh ${entranceFee}`}</p>
+                <p className="font-bold text-[#008080] capitalize">{entranceFeeType === "free" ? "Free" : `KSh ${entranceFee}`}</p>
               )}
             </div>
           )}

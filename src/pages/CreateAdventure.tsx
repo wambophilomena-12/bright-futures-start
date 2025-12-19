@@ -14,6 +14,7 @@ import { MapPin, Mail, Navigation, Clock, X, Plus, Camera, CheckCircle2, Info, A
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CountrySelector } from "@/components/creation/CountrySelector";
 import { PhoneInput } from "@/components/creation/PhoneInput";
+import { compressImages } from "@/lib/imageCompression";
 
 const COLORS = {
   TEAL: "#008080",
@@ -79,10 +80,16 @@ const CreateAdventure = () => {
     }
   };
 
-  const handleImageUpload = (files: FileList | null) => {
+  const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
     const newFiles = Array.from(files).slice(0, 5 - galleryImages.length);
-    setGalleryImages(prev => [...prev, ...newFiles].slice(0, 5));
+    try {
+      const compressed = await compressImages(newFiles);
+      setGalleryImages(prev => [...prev, ...compressed.map(c => c.file)].slice(0, 5));
+    } catch (error) {
+      console.error("Error compressing images:", error);
+      setGalleryImages(prev => [...prev, ...newFiles].slice(0, 5));
+    }
   };
 
   const removeImage = (index: number) => setGalleryImages(prev => prev.filter((_, i) => i !== index));

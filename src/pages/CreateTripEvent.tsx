@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CountrySelector } from "@/components/creation/CountrySelector";
 import { PhoneInput } from "@/components/creation/PhoneInput";
 import { approvalStatusSchema } from "@/lib/validation";
+import { compressImages } from "@/lib/imageCompression";
 
 const COLORS = {
   TEAL: "#008080",
@@ -81,10 +82,16 @@ const CreateTripEvent = () => {
     }
   };
 
-  const handleImageUpload = (files: FileList | null) => {
+  const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
     const newFiles = Array.from(files).slice(0, 5 - galleryImages.length);
-    setGalleryImages(prev => [...prev, ...newFiles].slice(0, 5));
+    try {
+      const compressed = await compressImages(newFiles);
+      setGalleryImages(prev => [...prev, ...compressed.map(c => c.file)].slice(0, 5));
+    } catch (error) {
+      console.error("Error compressing images:", error);
+      setGalleryImages(prev => [...prev, ...newFiles].slice(0, 5));
+    }
   };
 
   const removeImage = (index: number) => {

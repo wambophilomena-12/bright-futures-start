@@ -14,6 +14,7 @@ import { MapPin, Navigation, X, CheckCircle2, Plus, Camera, ArrowLeft, ArrowRigh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CountrySelector } from "@/components/creation/CountrySelector";
 import { PhoneInput } from "@/components/creation/PhoneInput";
+import { compressImages } from "@/lib/imageCompression";
 
 const COLORS = {
   TEAL: "#008080",
@@ -69,10 +70,16 @@ const CreateHotel = () => {
     }
   };
 
-  const handleImageUpload = (files: FileList | null) => {
+  const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
     const newFiles = Array.from(files).slice(0, 5 - galleryImages.length);
-    setGalleryImages(prev => [...prev, ...newFiles]);
+    try {
+      const compressed = await compressImages(newFiles);
+      setGalleryImages(prev => [...prev, ...compressed.map(c => c.file)]);
+    } catch (error) {
+      console.error("Error compressing images:", error);
+      setGalleryImages(prev => [...prev, ...newFiles]);
+    }
   };
 
   // Step validation

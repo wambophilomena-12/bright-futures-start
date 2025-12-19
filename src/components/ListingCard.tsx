@@ -93,7 +93,7 @@ export const ListingCard = ({
     <Card 
       onClick={handleCardClick} 
       className={cn(
-        "group overflow-hidden transition-all duration-300 hover:shadow-2xl cursor-pointer border-slate-100 bg-white flex flex-col",
+        "group overflow-hidden transition-all duration-300 hover:shadow-2xl cursor-pointer border-slate-200 bg-slate-50 flex flex-col",
         "rounded-[24px]",
         compact ? "h-auto" : "h-full",
         isNotAvailable && "opacity-80"

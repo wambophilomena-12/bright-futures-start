@@ -564,15 +564,12 @@ const Index = () => {
                 onClick={() => navigate(cat.path)} 
                 className="flex flex-col items-center cursor-pointer group"
               >
-                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 transition-all group-hover:bg-white/30 group-hover:scale-110">
+                <div className="w-12 h-12 rounded-full bg-[#008080]/70 backdrop-blur-sm flex items-center justify-center border border-white/30 transition-all group-hover:bg-[#008080] group-hover:scale-110">
                   <cat.icon className="h-5 w-5 text-white" />
                 </div>
                 <span className="text-[#FF7F50] text-[9px] font-bold uppercase tracking-tight mt-2 text-center leading-tight max-w-[70px]">
                   {cat.title}
                 </span>
-                <p className="text-white/80 text-[7px] text-center leading-tight mt-0.5 max-w-[80px] line-clamp-2">
-                  {cat.description}
-                </p>
               </div>
             ))}
           </div>
