@@ -181,9 +181,84 @@ const HotelDetail = () => {
       </div>
 
       <main className="container px-4 max-w-6xl mx-auto -mt-10 relative z-50">
-        <div className="grid lg:grid-cols-[1.7fr,1fr] gap-6">
+        {/* MODIFIED: Used flex-col on mobile and lg:grid on large screens to control order */}
+        <div className="flex flex-col lg:grid lg:grid-cols-[1.7fr,1fr] gap-6">
           
-          <div className="space-y-6">
+          {/* SIDEBAR SECTION (Price, Booking, Contact) */}
+          {/* order-first ensures this is on top on mobile, lg:order-2 moves it to the right on desktop */}
+          <div className="space-y-4 order-first lg:order-2">
+            <div className="bg-white rounded-[32px] p-8 shadow-2xl border border-slate-100 lg:sticky lg:top-24">
+              <div className="flex justify-between items-end mb-8">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Starting Price</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black" style={{ color: COLORS.RED }}>
+                      KSh {hotel.facilities?.[0]?.price || 0}
+                    </span>
+                    <span className="text-slate-400 text-[10px] font-bold uppercase">/ night</span>
+                  </div>
+                </div>
+                <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 flex items-center gap-2">
+                  <Clock className="h-4 w-4" style={{ color: COLORS.TEAL }} />
+                  <span className="text-xs font-black text-slate-600 uppercase">Available</span>
+                </div>
+              </div>
+
+              {/* SCHEDULE SECTION */}
+              <div className="space-y-4 mb-8 bg-slate-50/50 p-4 rounded-2xl border border-dashed border-slate-200">
+                <div className="flex justify-between text-[11px] font-black uppercase tracking-tight">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Calendar className="h-3 w-3" />
+                    <span>Working Days</span>
+                  </div>
+                  <span className="text-slate-700">{hotel.working_days || 'Mon - Sun'}</span>
+                </div>
+                <div className="flex justify-between text-[11px] font-black uppercase tracking-tight">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Clock className="h-3 w-3" />
+                    <span>Opens</span>
+                  </div>
+                  <span className="text-slate-700">{hotel.opening_hours || '12:00 PM'}</span>
+                </div>
+                <div className="flex justify-between text-[11px] font-black uppercase tracking-tight">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Clock className="h-3 w-3" />
+                    <span>Closes</span>
+                  </div>
+                  <span className="text-slate-700">{hotel.closing_hours || '10:00 AM'}</span>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => setBookingOpen(true)}
+                className="w-full py-8 rounded-2xl text-md font-black uppercase tracking-[0.2em] text-white shadow-xl border-none mb-6 transition-transform active:scale-[0.98]"
+                style={{ background: `linear-gradient(135deg, ${COLORS.CORAL_LIGHT} 0%, ${COLORS.CORAL} 100%)`,
+                boxShadow: `0 12px 24px -8px ${COLORS.TEAL}88` }}
+              >
+                Reserve Now
+              </Button>
+
+              <div className="grid grid-cols-3 gap-3 mb-8">
+                <UtilityButton icon={<MapPin className="h-5 w-5" />} label="Map" onClick={openInMaps} />
+                <UtilityButton icon={<Copy className="h-5 w-5" />} label="Copy" onClick={handleCopyLink} />
+                <UtilityButton icon={<Share2 className="h-5 w-5" />} label="Share" onClick={handleShare} />
+              </div>
+
+              <div className="space-y-4 pt-6 border-t border-slate-50">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inquiries</h3>
+                {hotel.phone_numbers?.map((phone: string, idx: number) => (
+                  <a key={idx} href={`tel:${phone}`} className="flex items-center gap-3 text-slate-600 hover:text-[#008080] transition-colors">
+                    <Phone className="h-4 w-4 text-[#008080]" />
+                    <span className="text-xs font-bold uppercase tracking-tight">{phone}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* MAIN CONTENT (Description, Amenities, Facilities, Activities) */}
+          {/* order-last ensures this is at the bottom on mobile, lg:order-1 moves it to the left on desktop */}
+          <div className="space-y-6 order-last lg:order-1">
             <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
               <h2 className="text-xl font-black uppercase tracking-tight mb-4" style={{ color: COLORS.TEAL }}>Description</h2>
               <p className="text-slate-500 text-sm leading-relaxed">{hotel.description}</p>
@@ -267,93 +342,24 @@ const HotelDetail = () => {
             )}
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-white rounded-[32px] p-8 shadow-2xl border border-slate-100 lg:sticky lg:top-24">
-              <div className="flex justify-between items-end mb-8">
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Starting Price</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black" style={{ color: COLORS.RED }}>
-                      KSh {hotel.facilities?.[0]?.price || 0}
-                    </span>
-                    <span className="text-slate-400 text-[10px] font-bold uppercase">/ night</span>
-                  </div>
-                </div>
-                <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 flex items-center gap-2">
-                  <Clock className="h-4 w-4" style={{ color: COLORS.TEAL }} />
-                  <span className="text-xs font-black text-slate-600 uppercase">Available</span>
-                </div>
-              </div>
-
-              {/* SCHEDULE SECTION */}
-              <div className="space-y-4 mb-8 bg-slate-50/50 p-4 rounded-2xl border border-dashed border-slate-200">
-                <div className="flex justify-between text-[11px] font-black uppercase tracking-tight">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Calendar className="h-3 w-3" />
-                    <span>Working Days</span>
-                  </div>
-                  <span className="text-slate-700">{hotel.working_days || 'Mon - Sun'}</span>
-                </div>
-                <div className="flex justify-between text-[11px] font-black uppercase tracking-tight">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Clock className="h-3 w-3" />
-                    <span>Opens</span>
-                  </div>
-                  <span className="text-slate-700">{hotel.opening_hours || '12:00 PM'}</span>
-                </div>
-                <div className="flex justify-between text-[11px] font-black uppercase tracking-tight">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Clock className="h-3 w-3" />
-                    <span>Closes</span>
-                  </div>
-                  <span className="text-slate-700">{hotel.closing_hours || '10:00 AM'}</span>
-                </div>
-              </div>
-
-              <Button 
-                onClick={() => setBookingOpen(true)}
-                className="w-full py-8 rounded-2xl text-md font-black uppercase tracking-[0.2em] text-white shadow-xl border-none mb-6 transition-transform active:scale-[0.98]"
-                style={{ background: `linear-gradient(135deg, ${COLORS.CORAL_LIGHT} 0%, ${COLORS.CORAL} 100%)`,
-                boxShadow: `0 12px 24px -8px ${COLORS.TEAL}88` }}
-              >
-                Reserve Now
-              </Button>
-
-              <div className="grid grid-cols-3 gap-3 mb-8">
-                <UtilityButton icon={<MapPin className="h-5 w-5" />} label="Map" onClick={openInMaps} />
-                <UtilityButton icon={<Copy className="h-5 w-5" />} label="Copy" onClick={handleCopyLink} />
-                <UtilityButton icon={<Share2 className="h-5 w-5" />} label="Share" onClick={handleShare} />
-              </div>
-
-              <div className="space-y-4 pt-6 border-t border-slate-50">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inquiries</h3>
-                {hotel.phone_numbers?.map((phone: string, idx: number) => (
-                  <a key={idx} href={`tel:${phone}`} className="flex items-center gap-3 text-slate-600 hover:text-[#008080] transition-colors">
-                    <Phone className="h-4 w-4 text-[#008080]" />
-                    <span className="text-xs font-bold uppercase tracking-tight">{phone}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="mt-12 bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
-           <div className="flex justify-between items-center mb-8">
-             <div>
-               <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: COLORS.TEAL }}>Guest Reviews</h2>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Authentic Community Feedback</p>
-             </div>
-             <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 flex items-center gap-2">
-               <Star className="h-4 w-4 fill-[#FF7F50] text-[#FF7F50]" />
-               <span className="text-lg font-black" style={{ color: COLORS.TEAL }}>4.8</span>
-             </div>
-           </div>
-           <ReviewSection itemId={hotel.id} itemType="hotel" />
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: COLORS.TEAL }}>Guest Reviews</h2>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Authentic Community Feedback</p>
+              </div>
+              <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 flex items-center gap-2">
+                <Star className="h-4 w-4 fill-[#FF7F50] text-[#FF7F50]" />
+                <span className="text-lg font-black" style={{ color: COLORS.TEAL }}>4.8</span>
+              </div>
+            </div>
+            <ReviewSection itemId={hotel.id} itemType="hotel" />
         </div>
 
         <div className="mt-16">
-           <SimilarItems currentItemId={hotel.id} itemType="hotel" country={hotel.country} />
+            <SimilarItems currentItemId={hotel.id} itemType="hotel" country={hotel.country} />
         </div>
       </main>
 
