@@ -1,13 +1,11 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { ThemeProvider } from "next-themes";
 import App from "./App.tsx";
 import "./index.css";
 
+// ThemeProvider and next-themes imports removed
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <App />
-    </ThemeProvider>
+    <App />
   </React.StrictMode>
 );
