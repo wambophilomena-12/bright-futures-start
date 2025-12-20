@@ -37,19 +37,21 @@ const MyListing = () => {
     const fetchData = async () => {
       const userEmail = user?.email;
 
-      const { data: trips } = await supabase.from("trips").select("*").eq("created_by", user.id);
-      const { data: hotels } = await supabase.from("hotels").select("*").eq("created_by", user.id);
-      const { data: adventures } = await supabase.from("adventure_places").select("*").eq("created_by", user.id);
-      
-      const { data: hotelsAsAdmin } = await supabase.from("hotels").select("*").contains("allowed_admin_emails", userEmail ? [userEmail] : []);
-      const { data: adventuresAsAdmin } = await supabase.from("adventure_places").select("*").contains("allowed_admin_emails", userEmail ? [userEmail] : []);
+      // Fetch all data in parallel with specific fields
+      const [tripsRes, hotelsRes, adventuresRes, hotelsAdminRes, adventuresAdminRes] = await Promise.all([
+        supabase.from("trips").select("id,name,location,country,image_url,price,approval_status,is_hidden,type").eq("created_by", user.id),
+        supabase.from("hotels").select("id,name,location,country,image_url,approval_status,is_hidden,created_by").eq("created_by", user.id),
+        supabase.from("adventure_places").select("id,name,location,country,image_url,entry_fee,approval_status,is_hidden,created_by").eq("created_by", user.id),
+        userEmail ? supabase.from("hotels").select("id,name,location,country,image_url,approval_status,is_hidden,created_by").contains("allowed_admin_emails", [userEmail]) : Promise.resolve({ data: [] }),
+        userEmail ? supabase.from("adventure_places").select("id,name,location,country,image_url,entry_fee,approval_status,is_hidden,created_by").contains("allowed_admin_emails", [userEmail]) : Promise.resolve({ data: [] })
+      ]);
 
       const allContent = [
-        ...(trips?.map(t => ({ ...t, type: "trip", isCreator: true })) || []),
-        ...(hotels?.map(h => ({ ...h, type: "hotel", isCreator: true })) || []),
-        ...(adventures?.map(a => ({ ...a, type: "adventure", isCreator: true })) || []),
-        ...(hotelsAsAdmin?.filter(h => h.created_by !== user.id).map(h => ({ ...h, type: "hotel", isCreator: false })) || []),
-        ...(adventuresAsAdmin?.filter(a => a.created_by !== user.id).map(a => ({ ...a, type: "adventure", isCreator: false })) || [])
+        ...(tripsRes.data?.map(t => ({ ...t, type: "trip", isCreator: true })) || []),
+        ...(hotelsRes.data?.map(h => ({ ...h, type: "hotel", isCreator: true })) || []),
+        ...(adventuresRes.data?.map(a => ({ ...a, type: "adventure", isCreator: true })) || []),
+        ...(hotelsAdminRes.data?.filter(h => h.created_by !== user.id).map(h => ({ ...h, type: "hotel", isCreator: false })) || []),
+        ...(adventuresAdminRes.data?.filter(a => a.created_by !== user.id).map(a => ({ ...a, type: "adventure", isCreator: false })) || [])
       ];
 
       setMyContent(allContent);
@@ -58,7 +60,7 @@ const MyListing = () => {
       if (allIds.length > 0) {
         const { data } = await supabase
           .from("creator_booking_summary")
-          .select("*")
+          .select("id,item_id,booking_type,status,payment_status,total_amount,created_at")
           .in("item_id", allIds)
           .order("created_at", { ascending: false });
         setBookings(data || []);

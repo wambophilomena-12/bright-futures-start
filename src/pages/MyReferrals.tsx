@@ -42,63 +42,40 @@ export default function MyReferrals() {
 
     const fetchStats = async () => {
       try {
-        // Fetch referral tracking data
-        const { data: referrals, error: referralsError } = await supabase
-          .from("referral_tracking")
-          .select("*")
-          .eq("referrer_id", user.id);
+        // Fetch all data in parallel
+        const [referralsRes, commissionsRes, settingsRes] = await Promise.all([
+          supabase.from("referral_tracking").select("referred_user_id").eq("referrer_id", user.id),
+          supabase.from("referral_commissions").select("commission_type,commission_amount,booking_amount,status").eq("referrer_id", user.id),
+          supabase.from("referral_settings").select("platform_referral_commission_rate").single()
+        ]);
 
-        if (referralsError) throw referralsError;
+        const referrals = referralsRes.data || [];
+        const commissions = commissionsRes.data || [];
+        const settings = settingsRes.data;
 
-        const uniqueReferred = new Set(
-          referrals?.map((r) => r.referred_user_id).filter(Boolean) || []
-        );
+        const uniqueReferred = new Set(referrals.map((r) => r.referred_user_id).filter(Boolean));
 
-        // Fetch commission data
-        const { data: commissions, error: commissionsError } = await supabase
-          .from("referral_commissions")
-          .select("*")
-          .eq("referrer_id", user.id);
-
-        if (commissionsError) throw commissionsError;
-
-        // Fetch referral settings for service fee info
-        const { data: settings } = await supabase
-          .from("referral_settings")
-          .select("*")
-          .single();
-
-        const hostEarnings = commissions?.filter(c => c.commission_type === 'host')
-          .reduce((sum, c) => sum + Number(c.commission_amount), 0) || 0;
+        const hostEarnings = commissions.filter(c => c.commission_type === 'host')
+          .reduce((sum, c) => sum + Number(c.commission_amount), 0);
         
-        const bookingEarnings = commissions?.filter(c => c.commission_type === 'booking')
-          .reduce((sum, c) => sum + Number(c.commission_amount), 0) || 0;
+        const bookingEarnings = commissions.filter(c => c.commission_type === 'booking')
+          .reduce((sum, c) => sum + Number(c.commission_amount), 0);
 
         const totalCommission = hostEarnings + bookingEarnings;
         
-        // Calculate gross balance from all paid commissions
-        const grossBalance = commissions?.filter(c => c.status === 'paid')
-          .reduce((sum, c) => sum + Number(c.commission_amount), 0) || 0;
+        const grossBalance = commissions.filter(c => c.status === 'paid')
+          .reduce((sum, c) => sum + Number(c.commission_amount), 0);
 
-        // Calculate total booking amounts for service fee calculation display
-        const totalBookingAmount = commissions?.filter(c => c.status === 'paid')
-          .reduce((sum, c) => sum + Number(c.booking_amount), 0) || 0;
+        const totalBookingAmount = commissions.filter(c => c.status === 'paid')
+          .reduce((sum, c) => sum + Number(c.booking_amount), 0);
 
-        // Average service fee rate from settings (for display purposes)
         const avgServiceFeeRate = settings?.platform_referral_commission_rate || 5.0;
-        
-        // Service fee is already factored into commission calculation, but we show breakdown
-        // The commission IS what the user earns (after platform takes its cut)
-        // So withdrawable = gross balance (the commission amount already reflects net earnings)
         const withdrawableBalance = grossBalance;
-        
-        // For display: show estimated platform fee that was deducted from booking total
-        // This is informational - commission_amount already reflects net amount to user
         const estimatedServiceFee = totalBookingAmount * (avgServiceFeeRate / 100) - grossBalance;
 
         setStats({
           totalReferred: uniqueReferred.size,
-          totalBookings: commissions?.length || 0,
+          totalBookings: commissions.length,
           totalCommission,
           hostEarnings,
           bookingEarnings,

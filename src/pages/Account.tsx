@@ -38,12 +38,16 @@ export default function Account() {
     }
     const fetchUserData = async () => {
       try {
-        const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-        if (profile) setUserName(profile.name);
+        // Fetch profile and roles in parallel
+        const [profileRes, rolesRes] = await Promise.all([
+          supabase.from("profiles").select("name").eq("id", user.id).single(),
+          supabase.from("user_roles").select("role").eq("user_id", user.id)
+        ]);
+        
+        if (profileRes.data) setUserName(profileRes.data.name);
 
-        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-        if (roles && roles.length > 0) {
-          const roleList = roles.map(r => r.role);
+        if (rolesRes.data && rolesRes.data.length > 0) {
+          const roleList = rolesRes.data.map(r => r.role);
           setUserRole(roleList.includes("admin") ? "admin" : "user");
         }
         setLoading(false);

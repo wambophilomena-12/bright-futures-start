@@ -33,28 +33,29 @@ const CreatorDashboard = () => {
     }
 
     const fetchData = async () => {
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const userEmail = currentUser?.email;
+      const userEmail = user?.email;
 
-      const { data: trips } = await supabase.from("trips").select("id").eq("created_by", user.id);
-      const { data: hotels } = await supabase.from("hotels").select("id").eq("created_by", user.id);
-      const { data: adventures } = await supabase.from("adventure_places").select("id").eq("created_by", user.id);
-      
-      const { data: hotelsAsAdmin } = await supabase.from("hotels").select("id").contains("allowed_admin_emails", userEmail ? [userEmail] : []);
-      const { data: adventuresAsAdmin } = await supabase.from("adventure_places").select("id").contains("allowed_admin_emails", userEmail ? [userEmail] : []);
+      // Fetch all item IDs in parallel
+      const [tripsRes, hotelsRes, adventuresRes, hotelsAdminRes, adventuresAdminRes] = await Promise.all([
+        supabase.from("trips").select("id").eq("created_by", user.id),
+        supabase.from("hotels").select("id").eq("created_by", user.id),
+        supabase.from("adventure_places").select("id").eq("created_by", user.id),
+        userEmail ? supabase.from("hotels").select("id").contains("allowed_admin_emails", [userEmail]) : Promise.resolve({ data: [] }),
+        userEmail ? supabase.from("adventure_places").select("id").contains("allowed_admin_emails", [userEmail]) : Promise.resolve({ data: [] })
+      ]);
 
       const allIds = [
-        ...(trips?.map(t => t.id) || []),
-        ...(hotels?.map(h => h.id) || []),
-        ...(adventures?.map(a => a.id) || []),
-        ...(hotelsAsAdmin?.map(h => h.id) || []),
-        ...(adventuresAsAdmin?.map(a => a.id) || [])
+        ...(tripsRes.data?.map(t => t.id) || []),
+        ...(hotelsRes.data?.map(h => h.id) || []),
+        ...(adventuresRes.data?.map(a => a.id) || []),
+        ...(hotelsAdminRes.data?.map(h => h.id) || []),
+        ...(adventuresAdminRes.data?.map(a => a.id) || [])
       ];
 
       if (allIds.length > 0) {
         const { data } = await supabase
           .from("creator_booking_summary")
-          .select("*")
+          .select("id,item_id,booking_type,status,payment_status,total_amount,created_at,guest_name_masked,guest_email_limited,guest_phone_limited,booking_details")
           .in("item_id", allIds)
           .eq("payment_status", "paid")
           .order("created_at", { ascending: false });

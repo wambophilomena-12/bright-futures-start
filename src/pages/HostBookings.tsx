@@ -41,79 +41,63 @@ const HostBookings = () => {
     }
 
     const fetchHostedItems = async () => {
-      const { data: trips } = await supabase
-        .from("trips")
-        .select("id, name, image_url, type")
-        .eq("created_by", user.id);
+      // Fetch all items in parallel
+      const [tripsRes, hotelsRes, adventuresRes] = await Promise.all([
+        supabase.from("trips").select("id,name,image_url,type").eq("created_by", user.id),
+        supabase.from("hotels").select("id,name,image_url").eq("created_by", user.id),
+        supabase.from("adventure_places").select("id,name,image_url").eq("created_by", user.id)
+      ]);
 
-      const { data: hotels } = await supabase
-        .from("hotels")
-        .select("id, name, image_url")
-        .eq("created_by", user.id);
+      const trips = tripsRes.data || [];
+      const hotels = hotelsRes.data || [];
+      const adventures = adventuresRes.data || [];
 
-      const { data: adventures } = await supabase
-        .from("adventure_places")
-        .select("id, name, image_url")
-        .eq("created_by", user.id);
+      // Get all item IDs for batch booking count
+      const allItemIds = [
+        ...trips.map(t => t.id),
+        ...hotels.map(h => h.id),
+        ...adventures.map(a => a.id)
+      ];
 
-      const allItems: HostedItem[] = [];
-
-      if (trips) {
-        for (const trip of trips) {
-          const { count } = await supabase
-            .from("bookings")
-            .select("*", { count: "exact", head: true })
-            .eq("item_id", trip.id)
-            .in("booking_type", ["trip", "event"])
-            .in("payment_status", ["paid", "completed"]);
-
-          allItems.push({
-            id: trip.id,
-            name: trip.name,
-            type: trip.type || "trip",
-            image_url: trip.image_url,
-            paidBookingsCount: count || 0,
+      // Fetch all booking counts in one query
+      let bookingCounts: Record<string, number> = {};
+      if (allItemIds.length > 0) {
+        const { data: bookingsData } = await supabase
+          .from("bookings")
+          .select("item_id")
+          .in("item_id", allItemIds)
+          .in("payment_status", ["paid", "completed"]);
+        
+        if (bookingsData) {
+          bookingsData.forEach(b => {
+            bookingCounts[b.item_id] = (bookingCounts[b.item_id] || 0) + 1;
           });
         }
       }
 
-      if (hotels) {
-        for (const hotel of hotels) {
-          const { count } = await supabase
-            .from("bookings")
-            .select("*", { count: "exact", head: true })
-            .eq("item_id", hotel.id)
-            .eq("booking_type", "hotel")
-            .in("payment_status", ["paid", "completed"]);
-
-          allItems.push({
-            id: hotel.id,
-            name: hotel.name,
-            type: "hotel",
-            image_url: hotel.image_url,
-            paidBookingsCount: count || 0,
-          });
-        }
-      }
-
-      if (adventures) {
-        for (const adventure of adventures) {
-          const { count } = await supabase
-            .from("bookings")
-            .select("*", { count: "exact", head: true })
-            .eq("item_id", adventure.id)
-            .in("booking_type", ["adventure", "adventure_place"])
-            .in("payment_status", ["paid", "completed"]);
-
-          allItems.push({
-            id: adventure.id,
-            name: adventure.name,
-            type: "adventure",
-            image_url: adventure.image_url,
-            paidBookingsCount: count || 0,
-          });
-        }
-      }
+      const allItems: HostedItem[] = [
+        ...trips.map(trip => ({
+          id: trip.id,
+          name: trip.name,
+          type: trip.type || "trip",
+          image_url: trip.image_url,
+          paidBookingsCount: bookingCounts[trip.id] || 0,
+        })),
+        ...hotels.map(hotel => ({
+          id: hotel.id,
+          name: hotel.name,
+          type: "hotel",
+          image_url: hotel.image_url,
+          paidBookingsCount: bookingCounts[hotel.id] || 0,
+        })),
+        ...adventures.map(adventure => ({
+          id: adventure.id,
+          name: adventure.name,
+          type: "adventure",
+          image_url: adventure.image_url,
+          paidBookingsCount: bookingCounts[adventure.id] || 0,
+        }))
+      ];
 
       allItems.sort((a, b) => b.paidBookingsCount - a.paidBookingsCount);
       setHostedItems(allItems);
