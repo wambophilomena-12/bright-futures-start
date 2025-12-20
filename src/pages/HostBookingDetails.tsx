@@ -63,55 +63,68 @@ const HostBookingDetails = () => {
     }
 
     const fetchBookings = async () => {
-      let ownershipQuery;
-      if (type === "trip" || type === "event") {
-        ownershipQuery = supabase.from("trips").select("name, created_by").eq("id", itemId).single();
-      } else if (type === "hotel") {
-        ownershipQuery = supabase.from("hotels").select("name, created_by").eq("id", itemId).single();
-      } else if (type === "adventure" || type === "adventure_place") {
-        ownershipQuery = supabase.from("adventure_places").select("name, created_by").eq("id", itemId).single();
-      }
-
-      if (!ownershipQuery) {
+      // Determine table and fetch item ownership
+      let tableName = "";
+      if (type === "trip" || type === "event") tableName = "trips";
+      else if (type === "hotel") tableName = "hotels";
+      else if (type === "adventure" || type === "adventure_place") tableName = "adventure_places";
+      
+      if (!tableName) {
         navigate("/host-bookings");
         return;
       }
 
-      const { data: item } = await ownershipQuery;
-      if (!item || item.created_by !== user.id) {
+      const { data: item } = await supabase
+        .from(tableName as any)
+        .select("name,created_by")
+        .eq("id", itemId)
+        .single();
+        
+      if (!item || (item as any).created_by !== user.id) {
         navigate("/host-bookings");
         return;
       }
 
-      setItemName(item.name);
+      setItemName((item as any).name);
 
+      // Fetch bookings with specific fields
       const { data: bookingsData } = await supabase
         .from("bookings")
-        .select("*")
+        .select("id,user_id,guest_name,guest_email,guest_phone,total_amount,created_at,visit_date,slots_booked,status,payment_status,booking_type,is_guest_booking,booking_details")
         .eq("item_id", itemId)
         .in("payment_status", ["paid", "completed"])
         .order("created_at", { ascending: false });
 
-      if (bookingsData) {
-        const enrichedBookings = await Promise.all(
-          bookingsData.map(async (booking) => {
-            if (!booking.is_guest_booking && booking.user_id) {
-              const { data: profile } = await supabase
-                .from("profiles")
-                .select("name, email, phone_number")
-                .eq("id", booking.user_id)
-                .maybeSingle();
+      if (bookingsData && bookingsData.length > 0) {
+        // Batch fetch profiles for non-guest bookings
+        const userIds = bookingsData
+          .filter(b => !b.is_guest_booking && b.user_id)
+          .map(b => b.user_id);
+        
+        let profilesMap: Record<string, any> = {};
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id,name,email,phone_number")
+            .in("id", userIds);
+          
+          (profiles || []).forEach(p => {
+            profilesMap[p.id] = p;
+          });
+        }
 
-              return {
-                ...booking,
-                userName: profile?.name || "N/A",
-                userEmail: profile?.email || "N/A",
-                userPhone: profile?.phone_number || "N/A",
-              };
-            }
-            return booking;
-          })
-        );
+        const enrichedBookings = bookingsData.map(booking => {
+          if (!booking.is_guest_booking && booking.user_id && profilesMap[booking.user_id]) {
+            const profile = profilesMap[booking.user_id];
+            return {
+              ...booking,
+              userName: profile.name || "N/A",
+              userEmail: profile.email || "N/A",
+              userPhone: profile.phone_number || "N/A",
+            };
+          }
+          return booking;
+        });
         setBookings(enrichedBookings);
       }
       setLoading(false);

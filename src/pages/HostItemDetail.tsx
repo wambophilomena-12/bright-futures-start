@@ -45,31 +45,35 @@ const HostItemDetail = () => {
   const fetchItemDetails = async () => {
     try {
       let tableName = "";
-      if (type === "trip") tableName = "trips";
-      else if (type === "hotel") tableName = "hotels";
-      else if (type === "adventure") tableName = "adventure_places";
+      let selectFields = "";
+      if (type === "trip") {
+        tableName = "trips";
+        selectFields = "id,name,location,country,image_url,description,approval_status,created_by,email,phone_number,registration_number";
+      } else if (type === "hotel") {
+        tableName = "hotels";
+        selectFields = "id,name,location,country,image_url,description,approval_status,created_by,email,phone_numbers,registration_number";
+      } else if (type === "adventure") {
+        tableName = "adventure_places";
+        selectFields = "id,name,location,country,image_url,description,approval_status,created_by,email,phone_numbers,registration_number";
+      }
 
-      const { data: itemData, error: itemError } = await supabase
-        .from(tableName as any)
-        .select("*")
-        .eq("id", id)
-        .single();
+      // Fetch item and bookings in parallel
+      const [itemRes, bookingsRes] = await Promise.all([
+        supabase.from(tableName as any).select(selectFields).eq("id", id).single(),
+        supabase.from("creator_booking_summary")
+          .select("id,guest_name_masked,status,total_amount,created_at,payment_status")
+          .eq("item_id", id)
+          .order("created_at", { ascending: false })
+      ]);
 
-      if (itemError) throw itemError;
-      if ((itemData as any).created_by !== user.id) {
+      if (itemRes.error) throw itemRes.error;
+      if ((itemRes.data as any).created_by !== user.id) {
         toast({ title: "Access Denied", variant: "destructive" });
         navigate("/become-host");
         return;
       }
-      setItem({ ...(itemData as any), type });
-
-      const { data: bookingsData } = await supabase
-        .from("creator_booking_summary")
-        .select("*")
-        .eq("item_id", id)
-        .order("created_at", { ascending: false });
-
-      setBookings(bookingsData || []);
+      setItem({ ...(itemRes.data as any), type });
+      setBookings(bookingsRes.data || []);
     } catch (error) {
       toast({ title: "Error", description: "Failed to load details", variant: "destructive" });
     } finally {

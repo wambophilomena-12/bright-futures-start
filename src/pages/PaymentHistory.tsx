@@ -62,7 +62,7 @@ export default function PaymentHistory() {
     try {
       const { data, error } = await supabase
         .from("bookings")
-        .select("*")
+        .select("id,booking_type,total_amount,booking_details,payment_status,status,created_at,guest_name,guest_email,guest_phone,slots_booked,visit_date,item_id")
         .eq("user_id", user?.id)
         .in("payment_status", ["paid", "completed"])
         .order("created_at", { ascending: false });
@@ -85,8 +85,11 @@ export default function PaymentHistory() {
       });
 
       setBookings(validBookings);
-      const itemIds = [...new Set(validBookings.map(b => ({ id: b.item_id, type: b.booking_type })))];
-      await fetchItemDetails(itemIds);
+      
+      // Batch fetch item details
+      if (validBookings.length > 0) {
+        await fetchItemDetailsBatch(validBookings);
+      }
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
@@ -94,24 +97,25 @@ export default function PaymentHistory() {
     }
   };
 
-  const fetchItemDetails = async (items: { id: string; type: string }[]) => {
+  const fetchItemDetailsBatch = async (bookings: Booking[]) => {
     const details: Record<string, ItemDetails> = {};
-    for (const item of items) {
-      try {
-        let data: any = null;
-        if (item.type === "trip" || item.type === "event") {
-          const { data: tripData } = await supabase.from("trips").select("name").eq("id", item.id).maybeSingle();
-          data = tripData;
-        } else if (item.type === "hotel") {
-          const { data: hotelData } = await supabase.from("hotels").select("name").eq("id", item.id).maybeSingle();
-          data = hotelData;
-        } else if (item.type === "adventure" || item.type === "adventure_place") {
-          const { data: adventureData } = await supabase.from("adventure_places").select("name").eq("id", item.id).maybeSingle();
-          data = adventureData;
-        }
-        if (data) details[item.id] = { name: data.name, type: item.type };
-      } catch (error) { console.error(error); }
-    }
+    
+    // Group by type
+    const tripIds = bookings.filter(b => b.booking_type === "trip" || b.booking_type === "event").map(b => b.item_id);
+    const hotelIds = bookings.filter(b => b.booking_type === "hotel").map(b => b.item_id);
+    const adventureIds = bookings.filter(b => b.booking_type === "adventure" || b.booking_type === "adventure_place").map(b => b.item_id);
+    
+    // Fetch all in parallel
+    const [tripsData, hotelsData, adventuresData] = await Promise.all([
+      tripIds.length > 0 ? supabase.from("trips").select("id,name").in("id", tripIds) : { data: [] },
+      hotelIds.length > 0 ? supabase.from("hotels").select("id,name").in("id", hotelIds) : { data: [] },
+      adventureIds.length > 0 ? supabase.from("adventure_places").select("id,name").in("id", adventureIds) : { data: [] }
+    ]);
+    
+    (tripsData.data || []).forEach((t: any) => { details[t.id] = { name: t.name, type: "trip" }; });
+    (hotelsData.data || []).forEach((h: any) => { details[h.id] = { name: h.name, type: "hotel" }; });
+    (adventuresData.data || []).forEach((a: any) => { details[a.id] = { name: a.name, type: "adventure" }; });
+    
     setItemDetails(details);
   };
 
