@@ -17,7 +17,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { ReviewSection } from "@/components/ReviewSection";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiStepBooking";
-import { generateReferralLink } from "@/lib/referralUtils";
+import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
@@ -53,6 +53,10 @@ const AdventurePlaceDetail = () => {
       fetchPlace();
       fetchLiveRating();
     }
+    // Track referral click when page loads with ref parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const refSlug = urlParams.get("ref");
+    if (refSlug && id) trackReferralClick(refSlug, id, "adventure_place", "booking");
     requestLocation();
     window.scrollTo(0, 0);
   }, [id, slug]);

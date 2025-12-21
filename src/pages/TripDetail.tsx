@@ -14,7 +14,7 @@ import { ReviewSection } from "@/components/ReviewSection";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import { useAuth } from "@/contexts/AuthContext";
 import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiStepBooking";
-import { generateReferralLink } from "@/lib/referralUtils";
+import { generateReferralLink, trackReferralClick } from "@/lib/referralUtils";
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
 import { useRealtimeItemAvailability } from "@/hooks/useRealtimeBookings";
@@ -47,6 +47,10 @@ const TripDetail = () => {
 
   useEffect(() => {
     if (id) fetchTrip();
+    // Track referral click when page loads with ref parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const refSlug = urlParams.get("ref");
+    if (refSlug && id) trackReferralClick(refSlug, id, "trip", "booking");
   }, [id]);
 
   const fetchTrip = async () => {

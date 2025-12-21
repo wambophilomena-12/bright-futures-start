@@ -11,11 +11,13 @@ export const useRealtimeBookings = (itemIds: string[]) => {
   const fetchBookingStats = useCallback(async () => {
     if (itemIds.length === 0) return;
 
+    // Only count bookings that are confirmed/pending AND have paid/completed payment
     const { data: bookingsData } = await supabase
       .from('bookings')
       .select('item_id, slots_booked')
       .in('item_id', itemIds)
-      .in('status', ['confirmed', 'pending']);
+      .in('status', ['confirmed', 'pending'])
+      .in('payment_status', ['paid', 'completed']);
 
     if (bookingsData) {
       const stats: BookingStats = {};
@@ -63,11 +65,13 @@ export const useRealtimeItemAvailability = (itemId: string | undefined, totalCap
   const fetchBookedSlots = useCallback(async () => {
     if (!itemId) return;
 
+    // Only count bookings that are confirmed/pending AND have paid/completed payment
     const { data } = await supabase
       .from('bookings')
       .select('slots_booked')
       .eq('item_id', itemId)
-      .in('status', ['confirmed', 'pending']);
+      .in('status', ['confirmed', 'pending'])
+      .in('payment_status', ['paid', 'completed']);
 
     const total = data?.reduce((sum, b) => sum + (b.slots_booked || 0), 0) || 0;
     setBookedSlots(total);

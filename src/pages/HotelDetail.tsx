@@ -20,6 +20,7 @@ import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiSte
 import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
+import { trackReferralClick } from "@/lib/referralUtils";
 
 const HotelDetail = () => {
   const { slug } = useParams();
@@ -70,6 +71,10 @@ const HotelDetail = () => {
       fetchHotel();
       fetchLiveRating();
     }
+    // Track referral click when page loads with ref parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const refSlug = urlParams.get("ref");
+    if (refSlug && id) trackReferralClick(refSlug, id, "hotel", "booking");
     requestLocation();
     window.scrollTo(0, 0);
   }, [id]);
