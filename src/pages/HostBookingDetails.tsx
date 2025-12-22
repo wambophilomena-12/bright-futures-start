@@ -67,15 +67,20 @@ const HostBookingDetails = () => {
     // Determine table and fetch item ownership
     let tableName = "";
     let capacityField = "";
+    let selectFields = "name,created_by";
+    
     if (type === "trip" || type === "event") {
       tableName = "trips";
       capacityField = "available_tickets";
+      selectFields = `name,created_by,${capacityField},date,is_flexible_date,is_custom_date`;
     } else if (type === "hotel") {
       tableName = "hotels";
       capacityField = "available_rooms";
+      selectFields = `name,created_by,${capacityField},facilities`;
     } else if (type === "adventure" || type === "adventure_place") {
       tableName = "adventure_places";
       capacityField = "available_slots";
+      selectFields = `name,created_by,${capacityField},facilities`;
     }
     
     if (!tableName) {
@@ -83,11 +88,17 @@ const HostBookingDetails = () => {
       return;
     }
 
-    const { data: item } = await supabase
+    const { data: item, error: itemError } = await supabase
       .from(tableName as any)
-      .select(`name,created_by,${capacityField},facilities,date,is_flexible_date,is_custom_date`)
+      .select(selectFields)
       .eq("id", itemId)
       .single();
+    
+    if (itemError) {
+      console.error("Error fetching item:", itemError);
+      navigate("/host-bookings");
+      return;
+    }
       
     if (!item || (item as any).created_by !== user.id) {
       navigate("/host-bookings");
@@ -97,16 +108,18 @@ const HostBookingDetails = () => {
     setItemName((item as any).name);
     setItemCapacity((item as any)[capacityField] || 0);
     
-    // Extract facilities for hotels/adventures
-    const facilitiesData = (item as any).facilities;
-    if (facilitiesData && Array.isArray(facilitiesData)) {
-      const parsedFacilities = facilitiesData
-        .filter((f: any) => f.name && f.price > 0)
-        .map((f: any) => ({ name: f.name, price: Number(f.price) }));
-      setItemFacilities(parsedFacilities);
+    // Extract facilities for hotels/adventures only
+    if (type === 'hotel' || type === 'adventure' || type === 'adventure_place') {
+      const facilitiesData = (item as any).facilities;
+      if (facilitiesData && Array.isArray(facilitiesData)) {
+        const parsedFacilities = facilitiesData
+          .filter((f: any) => f.name && f.price > 0)
+          .map((f: any) => ({ name: f.name, price: Number(f.price) }));
+        setItemFacilities(parsedFacilities);
+      }
     }
     
-    // Extract trip date info
+    // Extract trip date info for trips/events only
     if (type === 'trip' || type === 'event') {
       setTripDate((item as any).date || null);
       setIsFlexibleDate((item as any).is_flexible_date || (item as any).is_custom_date || false);

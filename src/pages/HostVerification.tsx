@@ -11,10 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-// Assuming MultiStepForm handles internal styling, we'll try to pass color if possible, 
-// but we'll focus on elements we can directly control.
 import { MultiStepForm } from "@/components/creation/MultiStepForm"; 
-import { Upload, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+import { DocumentUploadWithCamera } from "@/components/verification/DocumentUploadWithCamera";
 
 // Define the specified Teal color
 const TEAL_COLOR = "#008080";
@@ -423,46 +422,24 @@ const HostVerification = () => {
 
             {currentStep === 2 && (
               <div className="space-y-6">
-                <div>
-                  <Label htmlFor="documentFront">Upload Front Side of Document *</Label>
-                  <div className="mt-2">
-                    <Input
-                      id="documentFront"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setDocumentFront(e.target.files?.[0] || null)}
-                      required
-                    />
-                    {documentFront && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {/* Icon color changed to Teal (was text-green-600) */}
-                        <CheckCircle2 className="h-4 w-4 inline mr-1" style={{ color: TEAL_COLOR }} /> 
-                        {documentFront.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <DocumentUploadWithCamera
+                  documentType={documentType as "national_id" | "passport" | "driving_licence"}
+                  label={documentType === "passport" ? "Passport Photo Page" : "Front Side of Document"}
+                  side="front"
+                  file={documentFront}
+                  onFileChange={setDocumentFront}
+                  required
+                />
 
                 {documentType !== "passport" && (
-                  <div>
-                    <Label htmlFor="documentBack">Upload Back Side of Document *</Label>
-                    <div className="mt-2">
-                      <Input
-                        id="documentBack"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setDocumentBack(e.target.files?.[0] || null)}
-                        required
-                      />
-                      {documentBack && (
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {/* Icon color changed to Teal (was text-green-600) */}
-                          <CheckCircle2 className="h-4 w-4 inline mr-1" style={{ color: TEAL_COLOR }} />
-                          {documentBack.name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  <DocumentUploadWithCamera
+                    documentType={documentType as "national_id" | "passport" | "driving_licence"}
+                    label="Back Side of Document"
+                    side="back"
+                    file={documentBack}
+                    onFileChange={setDocumentBack}
+                    required
+                  />
                 )}
 
                 {documentType === "passport" && (
@@ -475,35 +452,14 @@ const HostVerification = () => {
 
             {currentStep === 3 && (
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="selfie">Upload a Clear Selfie *</Label>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Please upload a clear photo of yourself. This will be used to verify your identity.
-                  </p>
-                  <div className="mt-2">
-                    <Input
-                      id="selfie"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setSelfie(e.target.files?.[0] || null)}
-                      required
-                    />
-                    {selfie && (
-                      <div className="mt-4">
-                        <img
-                          src={URL.createObjectURL(selfie)}
-                          alt="Selfie preview"
-                          className="max-w-xs mx-auto rounded-lg border"
-                        />
-                        <p className="text-sm text-muted-foreground mt-2 text-center">
-                          {/* Icon color changed to Teal (was text-green-600) */}
-                          <CheckCircle2 className="h-4 w-4 inline mr-1" style={{ color: TEAL_COLOR }} />
-                          {selfie.name}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <DocumentUploadWithCamera
+                  documentType={documentType as "national_id" | "passport" | "driving_licence"}
+                  label="Selfie for Verification"
+                  side="selfie"
+                  file={selfie}
+                  onFileChange={setSelfie}
+                  required
+                />
               </div>
             )}
           </MultiStepForm>
