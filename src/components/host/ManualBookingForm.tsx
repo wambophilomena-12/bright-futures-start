@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,9 +6,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-import { CalendarIcon, Loader2, AlertTriangle, CheckCircle2, UserPlus, Trash2, Lock } from "lucide-react";
+import { format, eachDayOfInterval, parseISO } from "date-fns";
+import { CalendarIcon, Loader2, AlertTriangle, CheckCircle2, UserPlus, Trash2, Lock, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AvailabilityIndicator } from "@/components/booking/AvailabilityIndicator";
 
 interface SelectedFacility {
   name: string;
@@ -44,6 +45,10 @@ export const ManualBookingForm = ({
   const [availableSlots, setAvailableSlots] = useState<number | null>(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [existingBookings, setExistingBookings] = useState<any[]>([]);
+  
+  // Date range availability state for hotels/adventures
+  const [dateRangeAvailable, setDateRangeAvailable] = useState<boolean | null>(null);
+  const [checkingDateRange, setCheckingDateRange] = useState(false);
 
   // Form state for slots-based bookings (trips/events)
   const [formData, setFormData] = useState({
@@ -85,6 +90,49 @@ export const ManualBookingForm = ({
     
     setExistingBookings(data || []);
   };
+
+  // Check date range availability when facility dates change
+  const checkDateRangeAvailability = useCallback(async (startDate: string, endDate: string) => {
+    if (!startDate || !endDate || !isFacilityBased) return;
+    
+    setCheckingDateRange(true);
+    setDateRangeAvailable(null);
+    
+    try {
+      const dates = eachDayOfInterval({
+        start: parseISO(startDate),
+        end: parseISO(endDate),
+      });
+      const dateStrings = dates.map(d => format(d, 'yyyy-MM-dd'));
+      
+      const { data: availability } = await supabase
+        .from('item_availability_by_date')
+        .select('visit_date, booked_slots')
+        .eq('item_id', itemId)
+        .in('visit_date', dateStrings);
+      
+      const availabilityMap = new Map(
+        (availability || []).map(a => [a.visit_date, a.booked_slots])
+      );
+      
+      // Check if any date is fully booked
+      let allAvailable = true;
+      for (const dateStr of dateStrings) {
+        const bookedSlots = availabilityMap.get(dateStr) || 0;
+        if (bookedSlots >= totalCapacity) {
+          allAvailable = false;
+          break;
+        }
+      }
+      
+      setDateRangeAvailable(allAvailable);
+    } catch (error) {
+      console.error('Error checking date range:', error);
+      setDateRangeAvailable(null);
+    } finally {
+      setCheckingDateRange(false);
+    }
+  }, [itemId, totalCapacity, isFacilityBased]);
 
   // Calculate total from selected facilities
   const calculateFacilityTotal = () => {
@@ -188,10 +236,15 @@ export const ManualBookingForm = ({
       const facility = updated[index];
       if (field === 'startDate' || field === 'endDate') {
         setConflictError(null);
+        setDateRangeAvailable(null);
         if (facility.startDate && facility.endDate) {
           const overlap = checkFacilityOverlap(facility.name, facility.startDate, facility.endDate);
           if (overlap) {
             setConflictError(overlap);
+            setDateRangeAvailable(false);
+          } else {
+            // Check overall date range availability
+            checkDateRangeAvailability(facility.startDate, facility.endDate);
           }
         }
       }
@@ -234,6 +287,12 @@ export const ManualBookingForm = ({
           toast({ title: "Booking Conflict", description: overlap, variant: "destructive" });
           return;
         }
+      }
+      
+      // Block if date range is not available
+      if (dateRangeAvailable === false) {
+        toast({ title: "Dates Unavailable", description: "The selected date range is not available. Please choose different dates.", variant: "destructive" });
+        return;
       }
     } else {
       // Standard validation for trips/events
@@ -478,6 +537,16 @@ export const ManualBookingForm = ({
                   </div>
                 </div>
               ))}
+              
+              {/* Date Range Availability Indicator */}
+              {selectedFacilities.some(f => f.startDate && f.endDate) && (
+                <AvailabilityIndicator
+                  isAvailable={dateRangeAvailable}
+                  loading={checkingDateRange}
+                  itemName={itemName}
+                  errorMessage={dateRangeAvailable === false ? 'Some dates in the selected range are fully booked. Please choose different dates.' : null}
+                />
+              )}
             </div>
           )}
 

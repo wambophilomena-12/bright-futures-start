@@ -6,7 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Users, DollarSign, Wallet, TrendingUp, Award, Percent, MinusCircle } from "lucide-react";
+import { ArrowLeft, Users, DollarSign, Wallet, TrendingUp, Award, Percent, ShieldX, ShieldCheck, Clock } from "lucide-react";
+import { useHostVerificationStatus } from "@/hooks/useHostVerificationStatus";
 
 const COLORS = {
   TEAL: "#008080",
@@ -21,6 +22,7 @@ const COLORS = {
 export default function MyReferrals() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isVerifiedHost, status: verificationStatus, loading: verificationLoading } = useHostVerificationStatus();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalReferred: 0,
@@ -37,6 +39,12 @@ export default function MyReferrals() {
   useEffect(() => {
     if (!user) {
       navigate("/auth");
+      return;
+    }
+
+    // Don't fetch stats if not a verified host
+    if (!verificationLoading && !isVerifiedHost) {
+      setLoading(false);
       return;
     }
 
@@ -92,10 +100,12 @@ export default function MyReferrals() {
       }
     };
 
-    fetchStats();
-  }, [user, navigate]);
+    if (isVerifiedHost) {
+      fetchStats();
+    }
+  }, [user, navigate, isVerifiedHost, verificationLoading]);
 
-  if (loading) {
+  if (loading || verificationLoading) {
     return (
       <div className="min-h-screen bg-[#F8F9FA]">
         <Header />
@@ -108,6 +118,70 @@ export default function MyReferrals() {
             ))}
           </div>
         </main>
+      </div>
+    );
+  }
+
+  // Show eligibility error if not a verified host
+  if (!isVerifiedHost) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FA] pb-24">
+        <Header />
+        <main className="container px-4 max-w-4xl mx-auto py-8">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/account")}
+            className="w-fit rounded-full bg-white shadow-sm border border-slate-100 hover:bg-slate-50 px-6 mb-6"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" style={{ color: COLORS.TEAL }} />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Back to Account</span>
+          </Button>
+
+          <div className="bg-white rounded-[32px] p-8 md:p-12 shadow-sm border border-slate-100">
+            <div className="flex flex-col items-center text-center space-y-6">
+              <div 
+                className="p-6 rounded-full"
+                style={{ 
+                  backgroundColor: verificationStatus === 'pending' ? `${COLORS.CORAL}15` : '#FEE2E2'
+                }}
+              >
+                {verificationStatus === 'pending' ? (
+                  <Clock className="h-12 w-12" style={{ color: COLORS.CORAL }} />
+                ) : verificationStatus === 'rejected' ? (
+                  <ShieldX className="h-12 w-12 text-red-500" />
+                ) : (
+                  <ShieldCheck className="h-12 w-12 text-slate-400" />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-slate-900">
+                  {verificationStatus === 'pending' 
+                    ? 'Verification Pending'
+                    : verificationStatus === 'rejected'
+                    ? 'Verification Required'
+                    : 'Become a Verified Host'}
+                </h1>
+                <p className="text-slate-500 text-sm max-w-md">
+                  {verificationStatus === 'pending'
+                    ? 'Your host verification is being reviewed. The referral program will be unlocked once your verification is approved.'
+                    : verificationStatus === 'rejected'
+                    ? 'Your host verification was not approved. Please update your documents and resubmit to access the referral program.'
+                    : 'The referral program is exclusively available to verified hosts. Complete your host verification to start earning commissions.'}
+                </p>
+              </div>
+
+              <Button
+                onClick={() => navigate(verificationStatus === 'none' ? '/host-verification' : '/verification-status')}
+                className="rounded-2xl px-8 py-6 h-auto font-black uppercase tracking-widest text-xs"
+                style={{ backgroundColor: COLORS.TEAL }}
+              >
+                {verificationStatus === 'none' ? 'Start Verification' : 'View Status'}
+              </Button>
+            </div>
+          </div>
+        </main>
+        <MobileBottomBar />
       </div>
     );
   }
