@@ -9,9 +9,51 @@ const slugifyEmailName = (email: string): string => {
 };
 
 /**
+ * Check if user is a verified host (required for referral eligibility)
+ */
+export const checkReferralEligibility = async (): Promise<{
+  isEligible: boolean;
+  reason: string | null;
+}> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return { isEligible: false, reason: 'You must be logged in to use referrals.' };
+  }
+
+  // Check host verification status
+  const { data: verification, error } = await supabase
+    .from('host_verifications')
+    .select('status')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error checking host verification:', error);
+    return { isEligible: false, reason: 'Failed to verify host status.' };
+  }
+
+  if (!verification) {
+    return { isEligible: false, reason: 'You must be a verified host to use the referral program.' };
+  }
+
+  if (verification.status !== 'approved') {
+    return { 
+      isEligible: false, 
+      reason: verification.status === 'pending' 
+        ? 'Your host verification is pending. Referrals will be enabled once approved.'
+        : 'Your host verification was rejected. Please resubmit to use referrals.'
+    };
+  }
+
+  return { isEligible: true, reason: null };
+};
+
+/**
  * Generate referral link based on user status
  * - Guests: Clean base URL only
- * - Logged-in users: Base URL + ?ref={slugified-email-name}
+ * - Verified hosts: Base URL + ?ref={slugified-email-name}
+ * - Non-verified users: Clean base URL only (referrals disabled)
  */
 export const generateReferralLink = async (
   itemId: string,
@@ -51,8 +93,16 @@ export const generateReferralLink = async (
     // Guest user - return clean URL without referral parameter
     return cleanUrl;
   }
+
+  // Check referral eligibility (must be verified host)
+  const { isEligible } = await checkReferralEligibility();
   
-  // Logged-in user - append slugified email name as ref parameter
+  if (!isEligible) {
+    // Not a verified host - return clean URL without referral parameter
+    return cleanUrl;
+  }
+  
+  // Verified host - append slugified email name as ref parameter
   const refSlug = slugifyEmailName(user.email);
   return `${cleanUrl}?ref=${refSlug}`;
 };
