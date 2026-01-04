@@ -1,153 +1,148 @@
-import { useState, useEffect } from "react";
-import { Menu, Heart, Ticket, Home, User, Search } from "lucide-react";
+import { Home, Ticket, Heart, Phone, Info, LogIn, LogOut, User, FileText, Shield, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { NavigationDrawer } from "./NavigationDrawer";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { NotificationBell } from "./NotificationBell";
 
-const COLORS = {
-  TEAL: "#008080",
-  CORAL: "#FF7F50",
-  SOFT_GRAY: "#F8F9FA",
-  DARK_BG: "rgba(0, 0, 0, 0.5)"
-};
-
-export interface HeaderProps {
-  onSearchClick?: () => void;
-  showSearchIcon?: boolean;
-  className?: string;
-  hideIcons?: boolean;
+interface NavigationDrawerProps {
+  onClose: () => void;
 }
 
-export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIcons = false }: HeaderProps) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isIndexPage = location.pathname === '/';
-  const { user } = useAuth();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+const Separator = () => (
+  <hr className="my-1 border-slate-100 dark:border-gray-800/50" />
+);
+
+export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
+  const { user, signOut } = useAuth();
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Keeping database fetch code as requested
-        await supabase.from('profiles').select('name').eq('id', session.user.id).single();
-      }
+    const fetchUserData = async () => {
+      if (!user) return;
+      // Keeping database fetch code as requested
+      const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+      if (profile?.name) setUserName(profile.name);
     };
-    fetchUserProfile();
+    fetchUserData();
   }, [user]);
 
-  const mobileHeaderClasses = isIndexPage 
-    ? "fixed top-0 left-0 right-0 bg-transparent flex" 
-    : "hidden md:flex sticky top-0 left-0 right-0 border-b border-slate-100 shadow-sm";
+  const handleProtectedNavigation = (path: string) => {
+    window.location.href = user ? path : "/auth";
+    onClose();
+  };
 
-  // Updated styles: dark icons and subtle borders for high visibility on white
-  const headerIconStyles = `
-    h-11 w-11 rounded-2xl flex items-center justify-center transition-all duration-200 
-    active:scale-90 shadow-sm border border-slate-200
-    ${isIndexPage ? 'text-slate-800 bg-white/90 hover:bg-white' : 'text-slate-700 bg-slate-50 hover:bg-slate-100'}
-  `;
+  const NavItem = ({ icon: Icon, label, path, isProtected = false }: any) => (
+    <li>
+      <button
+        onClick={() => isProtected ? handleProtectedNavigation(path) : (window.location.href = path, onClose())}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-800 transition-all group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-slate-100 dark:bg-gray-800 group-hover:bg-[#008080] transition-colors">
+            <Icon className="h-4 w-4 text-slate-600 dark:text-slate-300 group-hover:text-white" />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">
+            {label}
+          </span>
+        </div>
+        <ChevronRight className="h-3 w-3 text-slate-300 group-hover:text-[#008080] transition-transform group-hover:translate-x-1" />
+      </button>
+      <Separator />
+    </li>
+  );
 
   return (
-    <header 
-      className={`z-[100] transition-all duration-300 md:h-20 items-center ${mobileHeaderClasses} ${className || ''}`}
-      style={{ 
-        backgroundColor: isIndexPage 
-          ? (window.innerWidth >= 768 ? 'white' : 'transparent') 
-          : 'white' 
-      }}
-    >
-      <div className="container mx-auto px-4 flex items-center justify-between h-full">
-        
-        {/* Left Section: Menu & Logo */}
-        <div className={`flex items-center gap-4 ${isIndexPage && 'mt-4 md:mt-0'}`}>
-          <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-            <SheetTrigger asChild>
-              {/* Visible Menu Icon */}
-              <button className={headerIconStyles} aria-label="Open Menu">
-                <Menu className="h-5 w-5 stroke-[2.5px]" />
-              </button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0 h-screen border-none">
-              <NavigationDrawer onClose={() => setIsDrawerOpen(false)} />
-            </SheetContent>
-          </Sheet>
-          
-          <Link to="/" className={`flex items-center gap-3 group ${isIndexPage ? 'hidden md:flex' : 'flex'}`}>
-            <img 
-              src="/fulllogo.png" 
-              alt="Realtravo Logo"
-              className="h-10 w-10 rounded-full shadow-md object-contain bg-slate-50 p-1 border border-slate-100"
-            />
-            <div className="hidden sm:block">
-              <span 
-                className="font-bold text-2xl tracking-tight block italic leading-none"
-                style={{
-                  background: "linear-gradient(to right, #1a365d, #2b6cb0, #4fd1c5)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                Realtravo
-              </span>
-              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                Click.Pack.Go!.
-              </span>
-            </div>
-          </Link>
-        </div>
-
-        {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-8">
-          {[
-            { to: "/", icon: <Home className="h-4 w-4" />, label: "Home" },
-            { to: "/bookings", icon: <Ticket className="h-4 w-4" />, label: "Bookings" },
-            { to: "/saved", icon: <Heart className="h-4 w-4" />, label: "Wishlist" }
-          ].map((item) => (
-            <Link 
-              key={item.label}
-              to={item.to} 
-              className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-colors"
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        {/* Right Section: Actions */}
-        <div className={`flex items-center gap-3 ${isIndexPage && 'mt-4 md:mt-0'}`}>
-          {showSearchIcon && (
-            <button 
-              onClick={() => onSearchClick ? onSearchClick() : navigate('/')}
-              className={headerIconStyles}
-              aria-label="Search"
-            >
-              <Search className="h-5 w-5" />
-            </button>
-          )}
-          
-          {/* Visible Notification Bell Wrapper */}
-          <div className={`${headerIconStyles} text-slate-700`}>
-            <NotificationBell />
-          </div>
-
-          <div className="hidden md:flex items-center gap-3">
-            <button 
-              onClick={() => user ? navigate('/account') : navigate('/auth')}
-              className="h-11 px-6 rounded-2xl flex items-center gap-3 transition-all font-black text-[10px] uppercase tracking-widest shadow-lg border-none text-white hover:brightness-110 active:scale-95"
-              style={{ 
-                background: `linear-gradient(135deg, ${COLORS.CORAL} 0%, #FF6B35 100%)`
+    <div className="flex flex-col h-full bg-white dark:bg-gray-950">
+      {/* Brand Header - Now White with Gradient Text Styling */}
+      <div className="p-6 bg-white dark:bg-gray-950 border-b border-slate-100 dark:border-gray-800">
+        <div className="flex items-center gap-4">
+          <img 
+            src="/fulllogo.png" 
+            alt="Realtravo Logo"
+            className="h-10 w-10 rounded-full shadow-md object-contain bg-slate-50 p-1 border border-slate-100"
+          />
+          <div>
+            <span 
+              className="font-bold text-2xl tracking-tight leading-none block italic"
+              style={{
+                background: "linear-gradient(to right, #1a365d, #2b6cb0, #4fd1c5)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0px 2px 2px rgba(0,0,0,0.1))"
               }}
             >
-              <User className="h-4 w-4" />
-              {user ? "Profile" : "Login"}
-            </button>
+              Realtravo
+            </span>
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-1">
+              Click.Pack.Go!.
+            </p>
           </div>
         </div>
       </div>
-    </header>
+
+      <nav className="flex-1 p-4 overflow-y-auto scrollbar-hide">
+        {/* User Profile Card / Auth Section */}
+        <div className="mb-6">
+          {user ? (
+            <div className="p-4 rounded-[24px] bg-slate-50 dark:bg-gray-900 border border-slate-100 dark:border-gray-800">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-[#008080] flex items-center justify-center text-white font-black">
+                  {userName?.charAt(0) || "U"}
+                </div>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Welcome back</span>
+                  <span className="text-sm font-black uppercase tracking-tight truncate dark:text-white text-slate-900">
+                    {userName || "Explorer"}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Link 
+                  to="/profile" onClick={onClose}
+                  className="flex items-center justify-center gap-2 py-2 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-[9px] font-black uppercase tracking-widest hover:border-[#008080] transition-colors text-slate-600"
+                >
+                  <User className="h-3 w-3" /> Profile
+                </Link>
+                <button 
+                  onClick={() => { signOut(); onClose(); }}
+                  className="flex items-center justify-center gap-2 py-2 rounded-lg bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-widest hover:bg-red-100 transition-colors"
+                >
+                  <LogOut className="h-3 w-3" /> Logout
+                </button>
+              </div>
+            </div>
+          ) : (
+            <Link
+              to="/auth" onClick={onClose}
+              className="flex items-center justify-center w-full py-4 rounded-[20px] bg-[#008080] text-white shadow-lg shadow-[#008080]/20 active:scale-95 transition-all"
+            >
+              <LogIn className="h-4 w-4 mr-2" />
+              <span className="text-[11px] font-black uppercase tracking-[0.2em]">Login / Register</span>
+            </Link>
+          )}
+        </div>
+
+        <ul className="space-y-1">
+          <p className="px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Main Menu</p>
+          <NavItem icon={Home} label="Home" path="/" />
+          <NavItem icon={Ticket} label="My Bookings" path="/bookings" isProtected />
+          <NavItem icon={Heart} label="Wishlist" path="/saved" isProtected />
+          
+          <div className="h-4" />
+          <p className="px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Support & Legal</p>
+          <NavItem icon={Phone} label="Contact" path="/contact" />
+          <NavItem icon={Info} label="About" path="/about" />
+          <NavItem icon={FileText} label="Terms" path="/terms-of-service" />
+          <NavItem icon={Shield} label="Privacy" path="/privacy-policy" />
+        </ul>
+      </nav>
+      
+      {/* Footer Label */}
+      <div className="p-6 border-t border-slate-50 dark:border-gray-900 text-center">
+        <span className="text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em]">
+          TripTrac v2.0
+        </span>
+      </div>
+    </div>
   );
 };

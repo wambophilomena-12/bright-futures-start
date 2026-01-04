@@ -39,15 +39,15 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIc
     fetchUserProfile();
   }, [user]);
 
+  // Mobile/Desktop background logic updated for white theme
   const mobileHeaderClasses = isIndexPage 
     ? "fixed top-0 left-0 right-0 bg-transparent flex" 
     : "hidden md:flex sticky top-0 left-0 right-0 border-b border-slate-100 shadow-sm";
 
-  // Updated icon styles for high visibility on white background
   const headerIconStyles = `
     h-11 w-11 rounded-2xl flex items-center justify-center transition-all duration-200 
-    active:scale-90 shadow-sm border border-slate-200
-    ${isIndexPage ? 'text-slate-800 bg-white/90 hover:bg-white' : 'text-slate-700 bg-slate-50 hover:bg-slate-100'}
+    active:scale-90 shadow-md md:shadow-none
+    ${isIndexPage ? 'text-white bg-black/50 hover:bg-black/60 md:bg-white/15' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}
   `;
 
   return (
@@ -65,7 +65,6 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIc
         <div className={`flex items-center gap-4 ${isIndexPage && 'mt-4 md:mt-0'}`}>
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>
-              {/* Menu Icon Button - Now clearly visible */}
               <button className={headerIconStyles} aria-label="Open Menu">
                 <Menu className="h-5 w-5" />
               </button>
@@ -99,7 +98,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIc
           </Link>
         </div>
 
-        {/* Desktop Nav */}
+        {/* Desktop Nav - Colors updated for white background */}
         <nav className="hidden lg:flex items-center gap-8">
           {[
             { to: "/", icon: <Home className="h-4 w-4" />, label: "Home" },
@@ -129,10 +128,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIc
             </button>
           )}
           
-          {/* Notification Bell Container - Wrapper to ensure visibility */}
-          <div className={`${headerIconStyles} p-0 overflow-hidden`}>
-            <NotificationBell />
-          </div>
+          <NotificationBell />
 
           <div className="hidden md:flex items-center gap-3">
             <button 
