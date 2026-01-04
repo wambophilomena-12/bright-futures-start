@@ -16,6 +16,12 @@ interface SelectedFacility {
   endDate: string;
 }
 
+interface SelectedActivity {
+  name: string;
+  price: number;
+  numberOfPeople: number;
+}
+
 interface ItemDetails {
   id: string;
   name: string;
@@ -24,8 +30,11 @@ interface ItemDetails {
   location: string;
   capacity: number;
   facilities: Array<{ name: string; price: number }>;
+  activities: Array<{ name: string; price: number }>;
   tripDate?: string;
   isFlexibleDate?: boolean;
+  priceAdult?: number;
+  priceChild?: number;
 }
 
 const PublicManualBooking = () => {
@@ -50,6 +59,7 @@ const PublicManualBooking = () => {
     visitDate: '',
   });
   const [selectedFacilities, setSelectedFacilities] = useState<SelectedFacility[]>([]);
+  const [selectedActivities, setSelectedActivities] = useState<SelectedActivity[]>([]);
 
   const isFacilityBased = itemType === 'hotel' || itemType === 'adventure' || itemType === 'adventure_place';
 
@@ -80,8 +90,11 @@ const PublicManualBooking = () => {
             location: trip.location,
             capacity: trip.available_tickets || 0,
             facilities: [],
+            activities: Array.isArray(trip.activities) ? trip.activities : [],
             tripDate: trip.date,
             isFlexibleDate: trip.is_flexible_date,
+            priceAdult: trip.price || 0,
+            priceChild: trip.price_child || 0,
           };
         }
       } else if (itemType === 'hotel') {
@@ -99,6 +112,7 @@ const PublicManualBooking = () => {
             location: hotel.location,
             capacity: hotel.available_rooms || 0,
             facilities: Array.isArray(hotel.facilities) ? hotel.facilities : [],
+            activities: Array.isArray(hotel.activities) ? hotel.activities : [],
           };
         }
       } else if (itemType === 'adventure' || itemType === 'adventure_place') {
@@ -116,6 +130,7 @@ const PublicManualBooking = () => {
             location: adventure.location,
             capacity: adventure.available_slots || 0,
             facilities: Array.isArray(adventure.facilities) ? adventure.facilities : [],
+            activities: Array.isArray(adventure.activities) ? adventure.activities : [],
           };
         }
       }
@@ -282,6 +297,46 @@ const PublicManualBooking = () => {
     setConflictError(null);
   };
 
+  // Activity management
+  const toggleActivity = (activityTemplate: { name: string; price: number }) => {
+    const exists = selectedActivities.find(a => a.name === activityTemplate.name);
+    if (exists) {
+      setSelectedActivities(prev => prev.filter(a => a.name !== activityTemplate.name));
+    } else {
+      setSelectedActivities(prev => [...prev, { ...activityTemplate, numberOfPeople: formData.slotsBooked || 1 }]);
+    }
+  };
+
+  const updateActivityPeople = (name: string, count: number) => {
+    setSelectedActivities(prev => prev.map(a => 
+      a.name === name ? { ...a, numberOfPeople: Math.max(1, count) } : a
+    ));
+  };
+
+  // Calculate total price
+  const calculateTotal = () => {
+    let total = 0;
+    
+    // Facility costs (per day)
+    selectedFacilities.forEach(f => {
+      if (f.startDate && f.endDate) {
+        const start = new Date(f.startDate).getTime();
+        const end = new Date(f.endDate).getTime();
+        if (end >= start) {
+          const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) || 1;
+          total += f.price * days;
+        }
+      }
+    });
+    
+    // Activity costs (per person)
+    selectedActivities.forEach(a => {
+      total += a.price * a.numberOfPeople;
+    });
+    
+    return total;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!itemDetails) return;
@@ -334,6 +389,7 @@ const PublicManualBooking = () => {
     try {
       const entryDetails: Record<string, any> = {
         source: 'public_form',
+        totalAmount: calculateTotal(),
       };
 
       let primaryVisitDate = formData.visitDate || null;
@@ -348,8 +404,18 @@ const PublicManualBooking = () => {
         const earliestDate = selectedFacilities.map(f => f.startDate).filter(Boolean).sort()[0];
         primaryVisitDate = earliestDate || null;
       }
+      
+      // Include activities if any selected
+      if (selectedActivities.length > 0) {
+        entryDetails.selectedActivities = selectedActivities.map(a => ({
+          name: a.name,
+          price: a.price,
+          numberOfPeople: a.numberOfPeople,
+          visitDate: primaryVisitDate, // Sync activity date with booking date
+        }));
+      }
 
-      // Insert into manual_entries table
+      // Insert into manual_entries table - AUTO CONFIRM for shareable link entries
       const { error } = await supabase.from('manual_entries').insert({
         item_id: itemId,
         item_type: itemType === 'adventure_place' ? 'adventure' : itemType,
@@ -358,7 +424,7 @@ const PublicManualBooking = () => {
         slots_booked: isFacilityBased ? selectedFacilities.length : formData.slotsBooked,
         visit_date: primaryVisitDate,
         entry_details: entryDetails,
-        status: 'pending',
+        status: 'confirmed', // Auto-confirm entries from shareable link
       });
 
       if (error) throw error;
@@ -381,6 +447,7 @@ const PublicManualBooking = () => {
   }
 
   if (submitted) {
+    const totalAmount = calculateTotal();
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-lg">
@@ -388,21 +455,27 @@ const PublicManualBooking = () => {
             <CheckCircle2 className="h-10 w-10 text-green-600" />
           </div>
           <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 mb-2">
-            Entry Submitted!
+            Booking Confirmed!
           </h1>
-          <p className="text-slate-500 mb-6">
-            Your entry for <strong>{itemDetails?.name}</strong> has been submitted. 
-            The host will confirm your reservation soon.
+          <p className="text-slate-500 mb-4">
+            Your booking for <strong>{itemDetails?.name}</strong> has been confirmed.
           </p>
+          {totalAmount > 0 && (
+            <div className="bg-slate-50 rounded-xl p-4 mb-6">
+              <p className="text-xs font-black uppercase text-slate-400 mb-1">Estimated Total</p>
+              <p className="text-2xl font-black text-[#008080]">KES {totalAmount.toLocaleString()}</p>
+            </div>
+          )}
           <Button
             onClick={() => {
               setSubmitted(false);
               setFormData({ guestName: '', guestContact: '', slotsBooked: 1, visitDate: '' });
               setSelectedFacilities([]);
+              setSelectedActivities([]);
             }}
             className="bg-[#008080] hover:bg-[#006666] text-white rounded-xl"
           >
-            Submit Another Entry
+            Submit Another Booking
           </Button>
         </div>
       </div>
@@ -612,11 +685,70 @@ const PublicManualBooking = () => {
               </div>
             )}
 
+            {/* Activities Section */}
+            {itemDetails.activities && itemDetails.activities.length > 0 && (
+              <div className="space-y-4">
+                <Label className="text-xs font-black uppercase tracking-widest text-slate-500">
+                  Activities (Optional)
+                </Label>
+                <div className="space-y-2">
+                  {itemDetails.activities.filter((a: any) => a.price > 0).map((activity: any) => {
+                    const isSelected = selectedActivities.some(sa => sa.name === activity.name);
+                    const selectedActivity = selectedActivities.find(sa => sa.name === activity.name);
+                    return (
+                      <div key={activity.name} className="bg-slate-50 rounded-xl p-4">
+                        <div className="flex items-center justify-between">
+                          <Button
+                            type="button"
+                            variant={isSelected ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleActivity(activity)}
+                            className={cn(
+                              "rounded-xl text-xs",
+                              isSelected && "bg-[#FF7F50] hover:bg-[#FF6B3D] text-white"
+                            )}
+                          >
+                            {isSelected ? 'Selected' : 'Add'}
+                          </Button>
+                          <span className="font-bold text-sm">{activity.name}</span>
+                          <span className="text-xs font-black text-[#FF7F50]">
+                            KES {activity.price.toLocaleString()}/person
+                          </span>
+                        </div>
+                        {isSelected && selectedActivity && (
+                          <div className="mt-3 pt-3 border-t border-slate-200">
+                            <Label className="text-[10px] text-slate-400">Number of People</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              value={selectedActivity.numberOfPeople}
+                              onChange={(e) => updateActivityPeople(activity.name, parseInt(e.target.value) || 1)}
+                              className="rounded-lg text-sm mt-1 w-24"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Conflict Error */}
             {conflictError && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-red-700">{conflictError}</p>
+              </div>
+            )}
+            
+            {/* Price Summary */}
+            {calculateTotal() > 0 && (
+              <div className="bg-[#008080]/10 rounded-xl p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold text-slate-600">Estimated Total</span>
+                  <span className="text-xl font-black text-[#008080]">KES {calculateTotal().toLocaleString()}</span>
+                </div>
               </div>
             )}
 
@@ -639,7 +771,7 @@ const PublicManualBooking = () => {
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-6">
-          Your entry will be pending until confirmed by the host
+          Your booking will be automatically confirmed
         </p>
       </div>
     </div>

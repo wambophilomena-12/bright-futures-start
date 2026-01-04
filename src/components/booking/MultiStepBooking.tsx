@@ -1,9 +1,9 @@
 // src/components/MultiStepBooking.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Users, Loader2, CheckCircle2, Phone, CreditCard, X, AlertTriangle } from "lucide-react";
+import { Calendar, Users, Loader2, CheckCircle2, Phone, CreditCard, X, AlertTriangle, Check } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import { PaymentStatusDialog } from "./PaymentStatusDialog";
 import { useMpesaPayment } from "@/hooks/useMpesaPayment";
 import { cn } from "@/lib/utils";
 import { useRealtimeItemAvailability } from "@/hooks/useRealtimeBookings";
+import { useFacilityRangeAvailability } from "@/hooks/useDateRangeAvailability";
 
 interface Facility {
     name: string;
@@ -88,6 +89,11 @@ export const MultiStepBooking = ({
         totalCapacity
     );
     
+    // Facility availability checking
+    const { checkFacilityAvailability, loading: checkingFacility } = useFacilityRangeAvailability(itemId || undefined);
+    const [facilityAvailabilityStatus, setFacilityAvailabilityStatus] = useState<Record<string, { isAvailable: boolean; message: string | null }>>({});
+    const [checkingAvailability, setCheckingAvailability] = useState(false);
+
     // Separate facilities and activities into sequential steps to reduce cognitive load
     const hasFacilities = facilities.filter(f => f.price > 0).length > 0;
     const hasActivities = activities.filter(a => a.price > 0).length > 0;
@@ -176,8 +182,17 @@ export const MultiStepBooking = ({
             if (!f.startDate || !f.endDate) return false; 
             const start = new Date(f.startDate).getTime();
             const end = new Date(f.endDate).getTime();
-            return end >= start;
+            if (end < start) return false;
+            // Check if facility is available
+            const status = facilityAvailabilityStatus[f.name];
+            if (status && !status.isAvailable) return false;
+            return true;
         });
+    };
+    
+    // Check if any facility has availability conflict
+    const hasAvailabilityConflict = () => {
+        return Object.values(facilityAvailabilityStatus).some(status => !status.isAvailable);
     };
 
     // Check if booking has any items (prevent zero booking)
@@ -292,14 +307,37 @@ export const MultiStepBooking = ({
         });
     };
 
-    const updateFacilityDates = (name: string, field: 'startDate' | 'endDate', value: string) => {
-        setFormData({
-            ...formData,
-            selectedFacilities: formData.selectedFacilities.map(f =>
-                f.name === name ? { ...f, [field]: value } : f
-            ),
+    const updateFacilityDates = useCallback((name: string, field: 'startDate' | 'endDate', value: string) => {
+        setFormData(prev => {
+            const updated = {
+                ...prev,
+                selectedFacilities: prev.selectedFacilities.map(f =>
+                    f.name === name ? { ...f, [field]: value } : f
+                ),
+            };
+            
+            // Check availability after updating dates
+            const facility = updated.selectedFacilities.find(f => f.name === name);
+            if (facility?.startDate && facility?.endDate) {
+                setCheckingAvailability(true);
+                const result = checkFacilityAvailability(name, facility.startDate, facility.endDate);
+                setFacilityAvailabilityStatus(prevStatus => ({
+                    ...prevStatus,
+                    [name]: { isAvailable: result.isAvailable, message: result.conflictMessage }
+                }));
+                setCheckingAvailability(false);
+            } else {
+                // Clear status if dates incomplete
+                setFacilityAvailabilityStatus(prevStatus => {
+                    const newStatus = { ...prevStatus };
+                    delete newStatus[name];
+                    return newStatus;
+                });
+            }
+            
+            return updated;
         });
-    };
+    }, [checkFacilityAvailability]);
 
     const calculateTotal = () => {
         let total = 0;
@@ -541,6 +579,34 @@ export const MultiStepBooking = ({
                                                 </div>
                                                 {isDateInvalid && (
                                                     <p className="text-xs text-red-500 mt-2 font-medium">Please select valid dates.</p>
+                                                )}
+                                                {/* Availability Status Indicator */}
+                                                {selected.startDate && selected.endDate && !isDateInvalid && (
+                                                    <div className={cn(
+                                                        "flex items-center gap-2 mt-3 p-2 rounded-lg text-sm font-medium",
+                                                        facilityAvailabilityStatus[facility.name]?.isAvailable === true 
+                                                            ? "bg-green-50 text-green-700"
+                                                            : facilityAvailabilityStatus[facility.name]?.isAvailable === false
+                                                            ? "bg-red-50 text-red-700"
+                                                            : "bg-slate-50 text-slate-500"
+                                                    )}>
+                                                        {checkingAvailability ? (
+                                                            <>
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                                Checking availability...
+                                                            </>
+                                                        ) : facilityAvailabilityStatus[facility.name]?.isAvailable === true ? (
+                                                            <>
+                                                                <Check className="h-4 w-4" />
+                                                                Facility Available
+                                                            </>
+                                                        ) : facilityAvailabilityStatus[facility.name]?.isAvailable === false ? (
+                                                            <>
+                                                                <X className="h-4 w-4" />
+                                                                {facilityAvailabilityStatus[facility.name]?.message || 'Dates not available'}
+                                                            </>
+                                                        ) : null}
+                                                    </div>
                                                 )}
                                             </div>
                                         )}

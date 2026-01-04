@@ -100,14 +100,28 @@ export const useFacilityRangeAvailability = (itemId: string | undefined) => {
     const fetchExistingBookings = async () => {
       if (!itemId) return;
       
-      const { data } = await supabase
+      // Fetch from bookings table
+      const { data: bookingsData } = await supabase
         .from('bookings')
         .select('booking_details, visit_date')
         .eq('item_id', itemId)
         .in('status', ['confirmed', 'pending'])
         .in('payment_status', ['paid', 'completed', 'pending']);
       
-      setExistingBookings(data || []);
+      // Fetch from manual_entries table
+      const { data: manualData } = await supabase
+        .from('manual_entries')
+        .select('entry_details, visit_date')
+        .eq('item_id', itemId)
+        .in('status', ['confirmed', 'pending']);
+      
+      // Combine both sources
+      const combined = [
+        ...(bookingsData || []).map(b => ({ booking_details: b.booking_details, visit_date: b.visit_date })),
+        ...(manualData || []).map(m => ({ booking_details: m.entry_details, visit_date: m.visit_date }))
+      ];
+      
+      setExistingBookings(combined);
     };
 
     fetchExistingBookings();
@@ -152,14 +166,28 @@ export const useFacilityRangeAvailability = (itemId: string | undefined) => {
     if (!itemId) return;
     setLoading(true);
     
-    const { data } = await supabase
+    // Fetch from bookings table
+    const { data: bookingsData } = await supabase
       .from('bookings')
       .select('booking_details, visit_date')
       .eq('item_id', itemId)
       .in('status', ['confirmed', 'pending'])
       .in('payment_status', ['paid', 'completed', 'pending']);
     
-    setExistingBookings(data || []);
+    // Fetch from manual_entries table
+    const { data: manualData } = await supabase
+      .from('manual_entries')
+      .select('entry_details, visit_date')
+      .eq('item_id', itemId)
+      .in('status', ['confirmed', 'pending']);
+    
+    // Combine both sources
+    const combined = [
+      ...(bookingsData || []).map(b => ({ booking_details: b.booking_details, visit_date: b.visit_date })),
+      ...(manualData || []).map(m => ({ booking_details: m.entry_details, visit_date: m.visit_date }))
+    ];
+    
+    setExistingBookings(combined);
     setLoading(false);
   }, [itemId]);
 

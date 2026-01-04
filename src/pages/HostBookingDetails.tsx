@@ -71,6 +71,7 @@ const HostBookingDetails = () => {
   const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [pendingEntries, setPendingEntries] = useState<ManualEntry[]>([]);
+  const [confirmedEntries, setConfirmedEntries] = useState<ManualEntry[]>([]);
   const [itemName, setItemName] = useState("");
   const [itemCapacity, setItemCapacity] = useState(0);
   const [itemFacilities, setItemFacilities] = useState<Array<{ name: string; price: number }>>([]);
@@ -159,7 +160,16 @@ const HostBookingDetails = () => {
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
+    // Fetch confirmed entries from manual_entries table (from public forms)
+    const { data: confirmedEntriesData } = await supabase
+      .from("manual_entries")
+      .select("*")
+      .eq("item_id", itemId)
+      .eq("status", "confirmed")
+      .order("created_at", { ascending: false });
+
     setPendingEntries(entriesData || []);
+    setConfirmedEntries(confirmedEntriesData || []);
 
     const allBookingsToEnrich = bookingsData || [];
 
@@ -356,6 +366,59 @@ const HostBookingDetails = () => {
                         <XCircle className="h-4 w-4" />
                         Reject
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteEntry(entry.id)}
+                        className="text-slate-400 hover:text-red-600 rounded-xl"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Confirmed Manual Entries Section */}
+        {confirmedEntries.length > 0 && (
+          <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-xl bg-green-50">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">
+                  Confirmed Entries ({confirmedEntries.length})
+                </h2>
+                <p className="text-xs text-slate-500">Reservations from public booking form</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {confirmedEntries.map((entry) => (
+                <div key={entry.id} className="bg-green-50 rounded-2xl p-4 border border-green-100">
+                  <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div className="space-y-1">
+                      <p className="font-bold text-slate-800">{entry.guest_name}</p>
+                      <p className="text-sm text-slate-500">{entry.guest_contact}</p>
+                      {entry.visit_date && (
+                        <p className="text-xs text-slate-600 mt-1">
+                          Visit: {format(new Date(entry.visit_date), "MMM d, yyyy")}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-500">
+                        People: {entry.slots_booked}
+                      </p>
+                      {entry.entry_details?.totalAmount > 0 && (
+                        <p className="text-sm font-bold text-green-700 mt-2">
+                          Total: KES {entry.entry_details.totalAmount.toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-2 items-start">
+                      <Badge className="bg-green-600 text-white text-[9px]">Confirmed</Badge>
                       <Button
                         size="sm"
                         variant="ghost"

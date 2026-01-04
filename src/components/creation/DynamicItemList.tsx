@@ -18,6 +18,7 @@ interface DynamicItemListProps {
   label: string;
   placeholder?: string;
   showCapacity?: boolean;
+  showPrice?: boolean;
   accentColor?: string;
 }
 
@@ -27,6 +28,7 @@ export const DynamicItemList = ({
   label,
   placeholder = "Item name",
   showCapacity = false,
+  showPrice = true,
   accentColor = "#008080"
 }: DynamicItemListProps) => {
   const [newItem, setNewItem] = useState<DynamicItem>({
@@ -61,15 +63,17 @@ export const DynamicItemList = ({
               <div className="flex-1">
                 <span className="font-bold text-sm">{item.name}</span>
                 <div className="flex items-center gap-2 mt-1">
-                  <span 
-                    className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full"
-                    style={{ 
-                      backgroundColor: item.priceType === "free" ? "#10b98120" : "#f59e0b20",
-                      color: item.priceType === "free" ? "#10b981" : "#f59e0b"
-                    }}
-                  >
-                    {item.priceType === "free" ? "Free" : `KSh ${item.price}`}
-                  </span>
+                  {showPrice && (
+                    <span 
+                      className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full"
+                      style={{ 
+                        backgroundColor: item.priceType === "free" ? "#10b98120" : "#f59e0b20",
+                        color: item.priceType === "free" ? "#10b981" : "#f59e0b"
+                      }}
+                    >
+                      {item.priceType === "free" ? "Free" : `KSh ${item.price}`}
+                    </span>
+                  )}
                   {showCapacity && item.capacity && (
                     <span className="text-[10px] font-bold text-slate-400">
                       Cap: {item.capacity}
@@ -100,22 +104,24 @@ export const DynamicItemList = ({
             placeholder={placeholder}
             className="rounded-xl border-slate-100 bg-white h-11 font-bold text-sm"
           />
-          <Select 
-            value={newItem.priceType} 
-            onValueChange={(v: "free" | "paid") => setNewItem({ ...newItem, priceType: v })}
-          >
-            <SelectTrigger className="rounded-xl border-slate-100 bg-white h-11 font-bold">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-white rounded-xl">
-              <SelectItem value="free">Free</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-            </SelectContent>
-          </Select>
+          {showPrice && (
+            <Select 
+              value={newItem.priceType} 
+              onValueChange={(v: "free" | "paid") => setNewItem({ ...newItem, priceType: v })}
+            >
+              <SelectTrigger className="rounded-xl border-slate-100 bg-white h-11 font-bold">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-xl">
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {newItem.priceType === "paid" && (
+          {showPrice && newItem.priceType === "paid" && (
             <Input
               type="number"
               value={newItem.price}

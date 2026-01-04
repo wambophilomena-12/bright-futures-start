@@ -205,7 +205,7 @@ const CreateAdventure = () => {
         gallery_images: uploadedUrls,
         entry_fee_type: formData.entranceFeeType,
         entry_fee: formData.entranceFeeType === "paid" ? parseFloat(formData.adultPrice) : 0,
-        amenities: formatItemsForDB(amenities),
+        amenities: amenities.map(a => a.name),
         facilities: formatItemsForDB(facilities),
         activities: formatItemsForDB(activities),
         created_by: user.id,
@@ -463,6 +463,7 @@ const CreateAdventure = () => {
                 label="Amenities"
                 placeholder="e.g. Parking, Restrooms, Picnic Area"
                 showCapacity={false}
+                showPrice={false}
                 accentColor={COLORS.TEAL}
               />
 

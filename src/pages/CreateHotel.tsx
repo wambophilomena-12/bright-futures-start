@@ -389,6 +389,7 @@ const CreateHotel = () => {
                 label="Amenities"
                 placeholder="e.g. Free WiFi, Pool, Gym"
                 showCapacity={false}
+                showPrice={false}
                 accentColor={COLORS.TEAL}
               />
 
