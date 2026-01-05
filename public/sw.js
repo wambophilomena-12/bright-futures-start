@@ -1,21 +1,63 @@
 // 1. UPDATE THESE VERSIONS to force an app-wide update
-const STATIC_CACHE = 'realtravo-static-v6'; 
-const IMAGE_CACHE = 'realtravo-images-v6';
-const DATA_CACHE = 'realtravo-data-v6';
+const STATIC_CACHE = 'realtravo-static-v8'; 
+const IMAGE_CACHE = 'realtravo-images-v8';
+const DATA_CACHE = 'realtravo-data-v8';
 
-// 2. FILES TO DOWNLOAD IMMEDIATELY (The App Shell)
+// 2. FILES TO DOWNLOAD IMMEDIATELY (The App Shell + All Routes from App.tsx)
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/fulllogo.png', // Updated to match your manifest
+  '/fulllogo.png',
   '/favicon.ico',
-  // Routes to ensure they work offline
+  
+  // Public & Discovery
+  '/auth',
+  '/about',
+  '/contact',
+  '/saved',
   '/bookings',
-  '/host-bookings',
+  '/install',
+  '/terms-of-service',
+  '/privacy-policy',
   '/qr-scanner',
+  
+  // User Account
+  '/profile',
+  '/profile/edit',
   '/account',
-  '/my-listing'
+  '/my-referrals',
+  '/payment',
+  '/payment-history',
+  '/reset-password',
+  '/verify-email',
+  '/forgot-password',
+  
+  // Host / Provider
+  '/become-host',
+  '/creator-dashboard',
+  '/my-listing',
+  '/host-verification',
+  '/verification-status',
+  '/create-trip',
+  '/create-hotel',
+  '/create-adventure',
+  '/create-attraction',
+  '/host/trips',
+  '/host/hotels',
+  '/host/experiences',
+  '/host-bookings',
+  
+  // Admin
+  '/admin',
+  '/admin/pending',
+  '/admin/approved',
+  '/admin/rejected',
+  '/admin/bookings',
+  '/admin/all-bookings',
+  '/admin/verification',
+  '/admin/payment-verification',
+  '/admin/referral-settings'
 ];
 
 const IMAGE_PATTERNS = [
@@ -27,7 +69,7 @@ const IMAGE_PATTERNS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
-      console.log('Realtravo: Precaching App Shell...');
+      console.log('Realtravo: Precaching updated routes...');
       return cache.addAll(PRECACHE_ASSETS);
     })
   );
@@ -60,13 +102,23 @@ self.addEventListener('fetch', (event) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
         if (networkResponse && networkResponse.ok) {
           const isImage = IMAGE_PATTERNS.some(p => p.test(url.href)) || event.request.destination === 'image';
-          const cacheName = isImage ? IMAGE_CACHE : (url.pathname.includes('/rest/v1/') ? DATA_CACHE : STATIC_CACHE);
           
+          // Determine cache bucket
+          let cacheName = STATIC_CACHE;
+          if (isImage) {
+            cacheName = IMAGE_CACHE;
+          } else if (url.pathname.includes('/rest/v1/')) {
+            cacheName = DATA_CACHE;
+          }
+
           const responseClone = networkResponse.clone();
           caches.open(cacheName).then((cache) => cache.put(event.request, responseClone));
         }
         return networkResponse;
       }).catch(() => {
+        // Fallback for Navigation (SPA support)
+        // If the user is offline and goes to a dynamic route (like /trip/paris), 
+        // return index.html so React Router can take over.
         if (event.request.mode === 'navigate') {
           return caches.match('/index.html');
         }
