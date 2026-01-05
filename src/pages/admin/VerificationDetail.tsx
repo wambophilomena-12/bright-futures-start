@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, CheckCircle2, XCircle, Clock, ShieldCheck, Mail, User, FileText, MapPin } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Clock, ShieldCheck, Mail, User, FileText, MapPin, Loader2 } from "lucide-react";
 
 const COLORS = {
   TEAL: "#008080",
@@ -31,6 +31,11 @@ const VerificationDetail = () => {
   const [verification, setVerification] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [signedUrls, setSignedUrls] = useState<{
+    front: string | null;
+    back: string | null;
+    selfie: string | null;
+  }>({ front: null, back: null, selfie: null });
 
   useEffect(() => {
     if (!user) {
@@ -57,6 +62,42 @@ const VerificationDetail = () => {
     checkAdminAndFetch();
   }, [user, navigate, id]);
 
+  // Helper to extract path from storage URL and generate signed URL
+  const getSignedUrl = async (url: string | null): Promise<string | null> => {
+    if (!url) return null;
+    
+    try {
+      // Check if it's already a signed URL or external URL
+      if (url.includes('token=') || !url.includes('supabase')) {
+        return url;
+      }
+
+      // Extract the path from the URL
+      // URL format: .../storage/v1/object/public/bucket-name/path
+      // or: .../storage/v1/object/sign/bucket-name/path (for private)
+      const bucketName = 'verification-documents';
+      const pathMatch = url.match(/\/verification-documents\/(.+)$/);
+      
+      if (pathMatch && pathMatch[1]) {
+        const filePath = pathMatch[1];
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(filePath, 3600); // 1 hour expiry
+        
+        if (error) {
+          console.error('Error creating signed URL:', error);
+          return url; // Fall back to original URL
+        }
+        return data.signedUrl;
+      }
+      
+      return url;
+    } catch (error) {
+      console.error('Error processing URL:', error);
+      return url;
+    }
+  };
+
   const fetchVerification = async () => {
     setLoading(true);
     try {
@@ -69,6 +110,19 @@ const VerificationDetail = () => {
       if (error) throw error;
       setVerification(data);
       if (data.rejection_reason) setRejectionReason(data.rejection_reason);
+
+      // Generate signed URLs for private bucket access
+      const [frontUrl, backUrl, selfieUrl] = await Promise.all([
+        getSignedUrl(data.document_front_url),
+        getSignedUrl(data.document_back_url),
+        getSignedUrl(data.selfie_url),
+      ]);
+      
+      setSignedUrls({
+        front: frontUrl,
+        back: backUrl,
+        selfie: selfieUrl,
+      });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       navigate("/admin/verification");
@@ -178,17 +232,17 @@ const VerificationDetail = () => {
               <div className="space-y-12">
                 <DocumentPreview 
                   label="Government ID (Front)" 
-                  url={verification.document_front_url} 
+                  url={signedUrls.front || verification.document_front_url} 
                 />
                 {verification.document_back_url && (
                   <DocumentPreview 
                     label="Government ID (Back)" 
-                    url={verification.document_back_url} 
+                    url={signedUrls.back || verification.document_back_url} 
                   />
                 )}
                 <DocumentPreview 
                   label="Verification Selfie" 
-                  url={verification.selfie_url} 
+                  url={signedUrls.selfie || verification.selfie_url} 
                 />
               </div>
             </div>
@@ -272,32 +326,62 @@ const VerificationDetail = () => {
   );
 };
 
-const DocumentPreview = ({ label, url }: { label: string, url: string }) => (
-  <div className="space-y-4">
-    <div className="flex items-center justify-between">
-      <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{label}</h3>
-      <Button 
-        variant="link" 
-        className="text-[10px] font-black uppercase text-[#008080] h-auto p-0"
-        onClick={() => window.open(url, "_blank")}
-      >
-        View Original
-      </Button>
-    </div>
-    <div className="relative group overflow-hidden rounded-[24px] border-4 border-slate-50 bg-slate-100 aspect-video md:aspect-auto">
-      <img
-        src={url}
-        alt={label}
-        className="w-full h-auto max-h-[600px] object-contain transition-transform duration-500 group-hover:scale-[1.02]"
-      />
-      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-        <span className="bg-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">
-          Click to Zoom
-        </span>
+const DocumentPreview = ({ label, url }: { label: string, url: string }) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{label}</h3>
+        <Button 
+          variant="link" 
+          className="text-[10px] font-black uppercase text-[#008080] h-auto p-0"
+          onClick={() => window.open(url, "_blank")}
+        >
+          View Original
+        </Button>
+      </div>
+      <div className="relative group overflow-hidden rounded-[24px] border-4 border-slate-50 bg-slate-100 aspect-video md:aspect-auto min-h-[200px]">
+        {imageLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          </div>
+        )}
+        {imageError ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 text-slate-400">
+            <p className="text-sm font-bold">Unable to load image</p>
+            <Button 
+              variant="link" 
+              className="text-[#008080] text-xs mt-2"
+              onClick={() => window.open(url, "_blank")}
+            >
+              Try opening directly
+            </Button>
+          </div>
+        ) : (
+          <img
+            src={url}
+            alt={label}
+            className={`w-full h-auto max-h-[600px] object-contain transition-transform duration-500 group-hover:scale-[1.02] ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
+            onLoad={() => setImageLoading(false)}
+            onError={() => {
+              setImageLoading(false);
+              setImageError(true);
+            }}
+          />
+        )}
+        {!imageError && !imageLoading && (
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+            <span className="bg-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">
+              Click to Zoom
+            </span>
+          </div>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const InfoItem = ({ icon, label, value }: { icon: React.ReactElement, label: string, value: string }) => (
   <div className="flex items-start gap-3">

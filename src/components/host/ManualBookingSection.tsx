@@ -14,6 +14,7 @@ interface ManualBookingSectionProps {
   itemName: string;
   totalCapacity: number;
   facilities?: Array<{ name: string; price: number }>;
+  activities?: Array<{ name: string; price: number }>;
   tripDate?: string | null;
   isFlexibleDate?: boolean;
   onBookingCreated: () => void;
@@ -25,6 +26,7 @@ export const ManualBookingSection = ({
   itemName,
   totalCapacity,
   facilities = [],
+  activities = [],
   tripDate,
   isFlexibleDate = false,
   onBookingCreated
@@ -77,6 +79,7 @@ export const ManualBookingSection = ({
               itemName={itemName}
               totalCapacity={totalCapacity}
               facilities={facilities}
+              activities={activities}
               tripDate={tripDate}
               isFlexibleDate={isFlexibleDate}
               onBookingCreated={onBookingCreated}

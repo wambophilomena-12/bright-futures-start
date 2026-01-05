@@ -7,6 +7,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,14 +65,11 @@ export const NotificationBell = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const isIndexPage = location.pathname === '/';
 
-  /**
-   * VISUAL STYLING UPDATE
-   * Matches the Menu Bar: Border, Background, and Icon Color
-   */
   const headerIconStyles = `
     h-11 w-11 rounded-2xl flex items-center justify-center transition-all duration-200 
     active:scale-90 shadow-sm border border-slate-200 relative group
@@ -98,6 +100,7 @@ export const NotificationBell = () => {
     const deepLink = getNotificationDeepLink(notification);
     if (deepLink) {
       setIsOpen(false);
+      setIsPopoverOpen(false);
       navigate(deepLink);
     }
   }, [getNotificationDeepLink, navigate]);
@@ -116,10 +119,13 @@ export const NotificationBell = () => {
   }, []);
 
   const showInAppNotification = useCallback((notification: Notification) => {
+    // Show toast notification
     toast({ title: notification.title, description: notification.message });
+    // Also briefly show the popover
+    setIsPopoverOpen(true);
+    setTimeout(() => setIsPopoverOpen(false), 5000);
   }, []);
 
-  // Keeping database fetch code as requested
   const fetchNotifications = async () => {
     if (!user) return;
     const { data, error } = await supabase
@@ -165,121 +171,198 @@ export const NotificationBell = () => {
   };
 
   const categorizedNotifications = useMemo(() => categorizeNotifications(notifications), [notifications]);
+  const latestUnread = useMemo(() => notifications.filter(n => !n.is_read).slice(0, 3), [notifications]);
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <button className={headerIconStyles} aria-label="Notifications">
-          {/* Bell icon weight matched to menu icon */}
-          <Bell className="h-5 w-5 stroke-[2.5px] transition-transform group-hover:rotate-12" />
-          {unreadCount > 0 && (
-            <Badge
-              className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center border-2 border-white text-[10px] font-black"
-              style={{ backgroundColor: COLORS.RED, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
-            >
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </Badge>
-          )}
-        </button>
-      </SheetTrigger>
-      
-      <SheetContent className="w-full sm:max-w-md p-0 border-none bg-[#F8F9FA]">
-        <div className="p-6 bg-white border-b border-slate-100">
-          <SheetHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-[#FF7F50] uppercase tracking-[0.2em] mb-1">Stay Updated</p>
-                <SheetTitle className="text-2xl font-black uppercase tracking-tighter" style={{ color: COLORS.TEAL }}>
-                  Inbox
-                </SheetTitle>
-              </div>
-              {unreadCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={markAllAsRead}
-                  className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[#008080] hover:bg-[#008080]/10"
+    <>
+      {/* Popover for quick preview on hover/new notification */}
+      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+        <PopoverTrigger asChild>
+          <div className="relative">
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <button 
+                  className={headerIconStyles} 
+                  aria-label="Notifications"
+                  onMouseEnter={() => unreadCount > 0 && setIsPopoverOpen(true)}
+                  onMouseLeave={() => setTimeout(() => setIsPopoverOpen(false), 300)}
                 >
-                  Clear All
-                </Button>
+                  <Bell className="h-5 w-5 stroke-[2.5px] transition-transform group-hover:rotate-12" />
+                  {unreadCount > 0 && (
+                    <Badge
+                      className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center border-2 border-white text-[10px] font-black"
+                      style={{ backgroundColor: COLORS.RED, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Badge>
+                  )}
+                </button>
+              </SheetTrigger>
+              
+              <SheetContent className="w-full sm:max-w-md p-0 border-none bg-[#F8F9FA]">
+                <div className="p-6 bg-white border-b border-slate-100">
+                  <SheetHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] font-black text-[#FF7F50] uppercase tracking-[0.2em] mb-1">Stay Updated</p>
+                        <SheetTitle className="text-2xl font-black uppercase tracking-tighter" style={{ color: COLORS.TEAL }}>
+                          Inbox
+                        </SheetTitle>
+                      </div>
+                      {unreadCount > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={markAllAsRead}
+                          className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[#008080] hover:bg-[#008080]/10"
+                        >
+                          Clear All
+                        </Button>
+                      )}
+                    </div>
+                  </SheetHeader>
+                </div>
+
+                <ScrollArea className="h-[calc(100vh-100px)] p-6">
+                  {notifications.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <div className="bg-white p-6 rounded-[28px] shadow-sm mb-4">
+                        <Bell className="h-10 w-10 text-slate-200" />
+                      </div>
+                      <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">All caught up!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-8">
+                      {categorizedNotifications.map(group => (
+                        <div key={group.title} className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">
+                              {group.title}
+                            </h3>
+                            <div className="h-[1px] w-full bg-slate-100" />
+                          </div>
+                          
+                          <div className="space-y-3">
+                            {group.notifications.map((notification) => {
+                              const hasDeepLink = !!getNotificationDeepLink(notification);
+                              return (
+                                <button
+                                  key={notification.id}
+                                  onClick={() => handleNotificationClick(notification)}
+                                  className={`w-full text-left p-5 rounded-[24px] border transition-all duration-300 group relative overflow-hidden ${
+                                    notification.is_read
+                                      ? "bg-white border-slate-100 hover:border-[#008080]/30"
+                                      : "bg-white border-transparent shadow-md"
+                                  }`}
+                                >
+                                  {!notification.is_read && (
+                                    <div 
+                                      className="absolute top-0 left-0 w-1.5 h-full" 
+                                      style={{ background: `linear-gradient(to bottom, ${COLORS.CORAL}, ${COLORS.RED})` }}
+                                    />
+                                  )}
+                                  
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div className="space-y-1 flex-1">
+                                      <h4 className={`text-sm font-black uppercase tracking-tight ${notification.is_read ? 'text-slate-600' : 'text-[#008080]'}`}>
+                                        {notification.title}
+                                      </h4>
+                                      <p className="text-xs font-medium text-slate-500 leading-relaxed">
+                                        {notification.message}
+                                      </p>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-2">
+                                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter whitespace-nowrap">
+                                        {format(new Date(notification.created_at), 'h:mm a')}
+                                      </span>
+                                      {!notification.is_read ? (
+                                        <div className="p-1.5 rounded-lg bg-[#FF7F50]/10 text-[#FF7F50]">
+                                          <Clock className="h-3 w-3" />
+                                        </div>
+                                      ) : hasDeepLink && (
+                                        <div className="p-1.5 rounded-lg bg-slate-50 text-slate-400 group-hover:bg-[#008080]/10 group-hover:text-[#008080] transition-colors">
+                                          <ChevronRight className="h-3 w-3" />
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </PopoverTrigger>
+
+        {/* Quick Preview Popover */}
+        <PopoverContent 
+          className="w-80 p-0 rounded-2xl border-slate-100 shadow-xl" 
+          align="end"
+          onMouseEnter={() => setIsPopoverOpen(true)}
+          onMouseLeave={() => setIsPopoverOpen(false)}
+        >
+          <div className="p-4 border-b border-slate-100 bg-white rounded-t-2xl">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-700">
+                New Notifications
+              </p>
+              {unreadCount > 0 && (
+                <Badge className="bg-[#FF7F50] text-white text-[9px]">
+                  {unreadCount}
+                </Badge>
               )}
             </div>
-          </SheetHeader>
-        </div>
-
-        <ScrollArea className="h-[calc(100vh-100px)] p-6">
-          {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="bg-white p-6 rounded-[28px] shadow-sm mb-4">
-                <Bell className="h-10 w-10 text-slate-200" />
+          </div>
+          
+          <div className="max-h-64 overflow-y-auto">
+            {latestUnread.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-xs text-slate-400">No new notifications</p>
               </div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">All caught up!</p>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {categorizedNotifications.map(group => (
-                <div key={group.title} className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">
-                      {group.title}
-                    </h3>
-                    <div className="h-[1px] w-full bg-slate-100" />
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {group.notifications.map((notification) => {
-                      const hasDeepLink = !!getNotificationDeepLink(notification);
-                      return (
-                        <button
-                          key={notification.id}
-                          onClick={() => handleNotificationClick(notification)}
-                          className={`w-full text-left p-5 rounded-[24px] border transition-all duration-300 group relative overflow-hidden ${
-                            notification.is_read
-                              ? "bg-white border-slate-100 hover:border-[#008080]/30"
-                              : "bg-white border-transparent shadow-md"
-                          }`}
-                        >
-                          {!notification.is_read && (
-                            <div 
-                              className="absolute top-0 left-0 w-1.5 h-full" 
-                              style={{ background: `linear-gradient(to bottom, ${COLORS.CORAL}, ${COLORS.RED})` }}
-                            />
-                          )}
-                          
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="space-y-1 flex-1">
-                              <h4 className={`text-sm font-black uppercase tracking-tight ${notification.is_read ? 'text-slate-600' : 'text-[#008080]'}`}>
-                                {notification.title}
-                              </h4>
-                              <p className="text-xs font-medium text-slate-500 leading-relaxed">
-                                {notification.message}
-                              </p>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter whitespace-nowrap">
-                                {format(new Date(notification.created_at), 'h:mm a')}
-                              </span>
-                              {!notification.is_read ? (
-                                <div className="p-1.5 rounded-lg bg-[#FF7F50]/10 text-[#FF7F50]">
-                                  <Clock className="h-3 w-3" />
-                                </div>
-                              ) : hasDeepLink && (
-                                <div className="p-1.5 rounded-lg bg-slate-50 text-slate-400 group-hover:bg-[#008080]/10 group-hover:text-[#008080] transition-colors">
-                                  <ChevronRight className="h-3 w-3" />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
+            ) : (
+              <div className="divide-y divide-slate-50">
+                {latestUnread.map((notification) => (
+                  <button
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification)}
+                    className="w-full text-left p-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <p className="text-sm font-bold text-slate-800 line-clamp-1">
+                      {notification.title}
+                    </p>
+                    <p className="text-xs text-slate-500 line-clamp-2 mt-1">
+                      {notification.message}
+                    </p>
+                    <p className="text-[9px] text-slate-400 mt-2">
+                      {format(new Date(notification.created_at), 'h:mm a')}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="p-3 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setIsPopoverOpen(false);
+                setIsOpen(true);
+              }}
+              className="w-full text-[10px] font-black uppercase tracking-widest text-[#008080] hover:bg-[#008080]/10"
+            >
+              View All Notifications
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </>
   );
 };

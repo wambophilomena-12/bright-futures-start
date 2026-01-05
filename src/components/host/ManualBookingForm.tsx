@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
@@ -18,12 +19,19 @@ interface SelectedFacility {
   endDate: string;
 }
 
+interface SelectedActivity {
+  name: string;
+  price: number;
+  numberOfPeople: number;
+}
+
 interface ManualBookingFormProps {
   itemId: string;
   itemType: 'trip' | 'event' | 'hotel' | 'adventure' | 'adventure_place';
   itemName: string;
   totalCapacity: number;
   facilities?: Array<{ name: string; price: number }>;
+  activities?: Array<{ name: string; price: number }>;
   tripDate?: string | null;
   isFlexibleDate?: boolean;
   onBookingCreated: () => void;
@@ -35,6 +43,7 @@ export const ManualBookingForm = ({
   itemName,
   totalCapacity,
   facilities = [],
+  activities = [],
   tripDate,
   isFlexibleDate = false,
   onBookingCreated
@@ -45,6 +54,7 @@ export const ManualBookingForm = ({
   const [availableSlots, setAvailableSlots] = useState<number | null>(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [existingBookings, setExistingBookings] = useState<any[]>([]);
+  const [existingEntries, setExistingEntries] = useState<any[]>([]);
   
   // Date range availability state for hotels/adventures
   const [dateRangeAvailable, setDateRangeAvailable] = useState<boolean | null>(null);
@@ -60,6 +70,10 @@ export const ManualBookingForm = ({
 
   // Form state for facility-based bookings (hotels/adventures)
   const [selectedFacilities, setSelectedFacilities] = useState<SelectedFacility[]>([]);
+  
+  // Activities state - default to true (checked)
+  const [includeActivities, setIncludeActivities] = useState(true);
+  const [selectedActivities, setSelectedActivities] = useState<SelectedActivity[]>([]);
 
   const isFacilityBased = itemType === 'hotel' || itemType === 'adventure' || itemType === 'adventure_place';
   const isTrip = itemType === 'trip' || itemType === 'event';
@@ -73,22 +87,29 @@ export const ManualBookingForm = ({
     }
   }, [hasFixedDate, tripDate]);
 
-  // Fetch existing bookings for facility overlap check
+  // Fetch existing bookings AND manual_entries for overlap check
   useEffect(() => {
-    if (isFacilityBased) {
-      fetchExistingBookings();
-    }
-  }, [itemId, isFacilityBased]);
+    fetchExistingData();
+  }, [itemId]);
 
-  const fetchExistingBookings = async () => {
-    const { data } = await supabase
+  const fetchExistingData = async () => {
+    // Fetch from bookings table
+    const { data: bookingsData } = await supabase
       .from('bookings')
       .select('booking_details,visit_date')
       .eq('item_id', itemId)
       .in('status', ['confirmed', 'pending'])
       .in('payment_status', ['paid', 'completed', 'pending']);
     
-    setExistingBookings(data || []);
+    // Fetch from manual_entries table
+    const { data: entriesData } = await supabase
+      .from('manual_entries')
+      .select('entry_details,visit_date,status')
+      .eq('item_id', itemId)
+      .in('status', ['pending', 'confirmed']);
+    
+    setExistingBookings(bookingsData || []);
+    setExistingEntries(entriesData || []);
   };
 
   // Check date range availability when facility dates change
@@ -149,13 +170,24 @@ export const ManualBookingForm = ({
     }, 0);
   };
 
-  // Check if facility has date overlap with existing bookings
+  // Calculate activity total
+  const calculateActivityTotal = () => {
+    return selectedActivities.reduce((sum, a) => sum + (a.price * a.numberOfPeople), 0);
+  };
+
+  // Combined total
+  const calculateTotal = () => {
+    return calculateFacilityTotal() + calculateActivityTotal();
+  };
+
+  // Check if facility has date overlap with existing bookings AND manual entries
   const checkFacilityOverlap = (facilityName: string, startDate: string, endDate: string): string | null => {
     if (!startDate || !endDate) return null;
     
     const newStart = new Date(startDate).getTime();
     const newEnd = new Date(endDate).getTime();
 
+    // Check bookings table
     for (const booking of existingBookings) {
       const details = booking.booking_details as any;
       const bookedFacilities = details?.selectedFacilities || details?.facilities || [];
@@ -165,13 +197,30 @@ export const ManualBookingForm = ({
           const bookedStart = new Date(bookedFacility.startDate || booking.visit_date).getTime();
           const bookedEnd = new Date(bookedFacility.endDate || booking.visit_date).getTime();
           
-          // Check for overlap: new booking overlaps if it starts before existing ends AND ends after existing starts
           if (newStart <= bookedEnd && newEnd >= bookedStart) {
-            return `${facilityName} is already booked from ${format(new Date(bookedFacility.startDate || booking.visit_date), 'MMM d')} to ${format(new Date(bookedFacility.endDate || booking.visit_date), 'MMM d, yyyy')}`;
+            return `${facilityName} is already booked from ${format(new Date(bookedFacility.startDate || booking.visit_date), 'MMM d')} to ${format(new Date(bookedFacility.endDate || booking.visit_date), 'MMM d, yyyy')} (online booking)`;
           }
         }
       }
     }
+
+    // Check manual_entries table
+    for (const entry of existingEntries) {
+      const details = entry.entry_details as any;
+      const entryFacilities = details?.selectedFacilities || [];
+      
+      for (const entryFacility of entryFacilities) {
+        if (entryFacility.name === facilityName) {
+          const entryStart = new Date(entryFacility.startDate || entry.visit_date).getTime();
+          const entryEnd = new Date(entryFacility.endDate || entry.visit_date).getTime();
+          
+          if (newStart <= entryEnd && newEnd >= entryStart) {
+            return `${facilityName} is already booked from ${format(new Date(entryFacility.startDate || entry.visit_date), 'MMM d')} to ${format(new Date(entryFacility.endDate || entry.visit_date), 'MMM d, yyyy')} (manual entry)`;
+          }
+        }
+      }
+    }
+    
     return null;
   };
 
@@ -183,6 +232,7 @@ export const ManualBookingForm = ({
       try {
         const dateStr = format(date, 'yyyy-MM-dd');
         
+        // Check item_availability_by_date (aggregated from bookings)
         const { data: availability } = await supabase
           .from('item_availability_by_date')
           .select('booked_slots')
@@ -190,7 +240,15 @@ export const ManualBookingForm = ({
           .eq('visit_date', dateStr)
           .maybeSingle();
 
-        const bookedSlots = availability?.booked_slots || 0;
+        // Also count manual entries for this date
+        const { count: manualCount } = await supabase
+          .from('manual_entries')
+          .select('*', { count: 'exact', head: true })
+          .eq('item_id', itemId)
+          .eq('visit_date', dateStr)
+          .in('status', ['pending', 'confirmed']);
+
+        const bookedSlots = (availability?.booked_slots || 0) + (manualCount || 0);
         const remaining = totalCapacity - bookedSlots;
         
         setAvailableSlots(remaining);
@@ -207,7 +265,7 @@ export const ManualBookingForm = ({
   };
 
   const handleDateSelect = (date: Date | undefined) => {
-    if (hasFixedDate) return; // Don't allow changing fixed date
+    if (hasFixedDate) return;
     setFormData(prev => ({ ...prev, visitDate: date }));
     if (date) {
       checkAvailability(date);
@@ -232,7 +290,6 @@ export const ManualBookingForm = ({
   const updateFacility = (index: number, field: keyof SelectedFacility, value: string | number) => {
     setSelectedFacilities(prev => {
       const updated = prev.map((f, i) => i === index ? { ...f, [field]: value } : f);
-      // Check for overlap when dates change
       const facility = updated[index];
       if (field === 'startDate' || field === 'endDate') {
         setConflictError(null);
@@ -243,7 +300,6 @@ export const ManualBookingForm = ({
             setConflictError(overlap);
             setDateRangeAvailable(false);
           } else {
-            // Check overall date range availability
             checkDateRangeAvailability(facility.startDate, facility.endDate);
           }
         }
@@ -255,6 +311,28 @@ export const ManualBookingForm = ({
   const removeFacility = (index: number) => {
     setSelectedFacilities(prev => prev.filter((_, i) => i !== index));
     setConflictError(null);
+  };
+
+  // Activity management
+  const addActivity = (activity: { name: string; price: number }) => {
+    const exists = selectedActivities.find(a => a.name === activity.name);
+    if (!exists) {
+      setSelectedActivities(prev => [...prev, {
+        name: activity.name,
+        price: activity.price,
+        numberOfPeople: formData.slotsBooked || 1,
+      }]);
+    }
+  };
+
+  const updateActivity = (index: number, numberOfPeople: number) => {
+    setSelectedActivities(prev => prev.map((a, i) => 
+      i === index ? { ...a, numberOfPeople: Math.max(1, numberOfPeople) } : a
+    ));
+  };
+
+  const removeActivity = (index: number) => {
+    setSelectedActivities(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -289,13 +367,11 @@ export const ManualBookingForm = ({
         }
       }
       
-      // Block if date range is not available
       if (dateRangeAvailable === false) {
-        toast({ title: "Dates Unavailable", description: "The selected date range is not available. Please choose different dates.", variant: "destructive" });
+        toast({ title: "Dates Unavailable", description: "The selected date range is not available.", variant: "destructive" });
         return;
       }
     } else {
-      // Standard validation for trips/events
       if (!formData.guestName.trim() || !formData.guestContact.trim() || !formData.visitDate) {
         toast({ title: "Validation Error", description: "Please fill all required fields", variant: "destructive" });
         return;
@@ -311,7 +387,7 @@ export const ManualBookingForm = ({
     try {
       const dateStr = formData.visitDate ? format(formData.visitDate, 'yyyy-MM-dd') : null;
       
-      // For non-facility based, re-check availability
+      // Re-check availability for slots-based
       if (!isFacilityBased && dateStr) {
         const { data: latestAvailability } = await supabase
           .from('item_availability_by_date')
@@ -320,7 +396,14 @@ export const ManualBookingForm = ({
           .eq('visit_date', dateStr)
           .maybeSingle();
 
-        const currentBooked = latestAvailability?.booked_slots || 0;
+        const { count: manualCount } = await supabase
+          .from('manual_entries')
+          .select('*', { count: 'exact', head: true })
+          .eq('item_id', itemId)
+          .eq('visit_date', dateStr)
+          .in('status', ['pending', 'confirmed']);
+
+        const currentBooked = (latestAvailability?.booked_slots || 0) + (manualCount || 0);
         const currentAvailable = totalCapacity - currentBooked;
         
         if (formData.slotsBooked > currentAvailable) {
@@ -330,8 +413,8 @@ export const ManualBookingForm = ({
         }
       }
 
-      // Build booking details
-      const bookingDetails: Record<string, any> = {
+      // Build entry details
+      const entryDetails: Record<string, any> = {
         source: 'manual_entry',
         entered_by: 'host',
         notes: 'Manually entered offline booking',
@@ -341,8 +424,7 @@ export const ManualBookingForm = ({
       let primaryVisitDate = dateStr;
 
       if (isFacilityBased) {
-        // Add facility details with their specific dates
-        bookingDetails.selectedFacilities = selectedFacilities.map(f => ({
+        entryDetails.selectedFacilities = selectedFacilities.map(f => ({
           name: f.name,
           price: f.price,
           startDate: f.startDate,
@@ -350,7 +432,6 @@ export const ManualBookingForm = ({
         }));
         totalAmount = calculateFacilityTotal();
         
-        // Use the earliest facility start date as visit_date
         const earliestDate = selectedFacilities
           .map(f => f.startDate)
           .filter(Boolean)
@@ -358,30 +439,32 @@ export const ManualBookingForm = ({
         primaryVisitDate = earliestDate || null;
       }
 
-      // Determine valid booking_type - only use values that exist in database
-      const validBookingTypes = ['trip', 'event', 'hotel', 'adventure_place', 'adventure', 'attraction'];
-      const dbBookingType = itemType === 'adventure_place' ? 'adventure' : itemType;
-      const finalBookingType = validBookingTypes.includes(dbBookingType) ? dbBookingType : null;
+      // Include activities if checkbox is checked and activities are selected
+      if (includeActivities && selectedActivities.length > 0) {
+        entryDetails.selectedActivities = selectedActivities.map(a => ({
+          name: a.name,
+          price: a.price,
+          numberOfPeople: a.numberOfPeople,
+          visitDate: primaryVisitDate,
+        }));
+        totalAmount += calculateActivityTotal();
+      }
 
-      // Determine valid payment_method - only use values that exist in database, otherwise null
-      const validPaymentMethods = ['mpesa', 'airtel', 'card', 'manual_entry', 'cash', 'bank_transfer'];
-      const paymentMethod = validPaymentMethods.includes('manual_entry') ? 'manual_entry' : null;
+      entryDetails.totalAmount = totalAmount;
 
-      // Insert manual booking with validated values
-      const { error } = await supabase.from('bookings').insert({
+      // Map item_type for database constraint
+      const dbItemType = itemType === 'adventure_place' ? 'adventure' : itemType;
+
+      // INSERT INTO manual_entries TABLE (bypasses payment constraints)
+      const { error } = await supabase.from('manual_entries').insert({
         item_id: itemId,
-        booking_type: finalBookingType || 'trip', // fallback to 'trip' if somehow null
+        item_type: dbItemType,
         guest_name: formData.guestName.trim(),
-        guest_email: formData.guestContact.includes('@') ? formData.guestContact.trim() : null,
-        guest_phone: !formData.guestContact.includes('@') ? formData.guestContact.trim() : null,
+        guest_contact: formData.guestContact.trim(),
         slots_booked: isFacilityBased ? selectedFacilities.length : formData.slotsBooked,
         visit_date: primaryVisitDate,
-        total_amount: totalAmount,
-        status: 'confirmed',
-        payment_status: 'paid',
-        payment_method: paymentMethod,
-        is_guest_booking: true,
-        booking_details: bookingDetails
+        entry_details: entryDetails,
+        status: 'confirmed', // Auto-confirm manual host entries
       });
 
       if (error) {
@@ -394,22 +477,22 @@ export const ManualBookingForm = ({
       }
 
       toast({
-        title: "Booking Added",
-        description: `Manual booking for ${formData.guestName} has been recorded.`
+        title: "Entry Added",
+        description: `Manual entry for ${formData.guestName} has been recorded.`
       });
 
       // Reset form
       setFormData({ guestName: '', guestContact: '', slotsBooked: 1, visitDate: hasFixedDate && tripDate ? new Date(tripDate) : undefined });
       setSelectedFacilities([]);
+      setSelectedActivities([]);
       setAvailableSlots(null);
-      // Refresh existing bookings for overlap check
-      fetchExistingBookings();
+      fetchExistingData();
       onBookingCreated();
     } catch (error: any) {
-      console.error('Error creating manual booking:', error);
+      console.error('Error creating manual entry:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create booking",
+        description: error.message || "Failed to create entry",
         variant: "destructive"
       });
     } finally {
@@ -458,7 +541,6 @@ export const ManualBookingForm = ({
             Select Facilities / Rooms *
           </Label>
 
-          {/* Available Facilities to Select */}
           {facilities.length > 0 ? (
             <div className="space-y-2">
               <p className="text-[10px] font-bold text-slate-400 uppercase">Available facilities (click to add):</p>
@@ -487,7 +569,7 @@ export const ManualBookingForm = ({
           ) : (
             <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
               <AlertTriangle className="h-4 w-4 inline mr-2" />
-              No facilities configured for this listing. Please add facilities in the listing settings.
+              No facilities configured for this listing.
             </div>
           )}
 
@@ -538,26 +620,14 @@ export const ManualBookingForm = ({
                 </div>
               ))}
               
-              {/* Date Range Availability Indicator */}
               {selectedFacilities.some(f => f.startDate && f.endDate) && (
                 <AvailabilityIndicator
                   isAvailable={dateRangeAvailable}
                   loading={checkingDateRange}
                   itemName={itemName}
-                  errorMessage={dateRangeAvailable === false ? 'Some dates in the selected range are fully booked. Please choose different dates.' : null}
+                  errorMessage={dateRangeAvailable === false ? 'Some dates in the selected range are fully booked.' : null}
                 />
               )}
-            </div>
-          )}
-
-          {/* Total Amount Display */}
-          {selectedFacilities.length > 0 && (
-            <div className="p-4 rounded-xl bg-[#008080]/10 border border-[#008080]/20">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-black uppercase tracking-widest text-[#008080]">Total Amount</span>
-                <span className="text-xl font-black text-[#008080]">KES {calculateFacilityTotal().toLocaleString()}</span>
-              </div>
-              <p className="text-[10px] text-slate-500 mt-1">This amount is for record keeping only. Manual bookings don't update account balance.</p>
             </div>
           )}
         </div>
@@ -623,6 +693,81 @@ export const ManualBookingForm = ({
         </div>
       )}
 
+      {/* Activities Section */}
+      {activities.length > 0 && (
+        <div className="space-y-3 pt-4 border-t border-slate-100">
+          <div className="flex items-center gap-3">
+            <Checkbox 
+              id="includeActivities" 
+              checked={includeActivities}
+              onCheckedChange={(checked) => setIncludeActivities(checked === true)}
+            />
+            <Label htmlFor="includeActivities" className="text-xs font-black uppercase tracking-widest text-slate-500 cursor-pointer">
+              Include Activities
+            </Label>
+          </div>
+
+          {includeActivities && (
+            <div className="space-y-3">
+              <p className="text-[10px] font-bold text-slate-400 uppercase">Available activities (click to add):</p>
+              <div className="flex flex-wrap gap-2">
+                {activities.map((activity) => {
+                  const isSelected = selectedActivities.some(a => a.name === activity.name);
+                  return (
+                    <Button
+                      key={activity.name}
+                      type="button"
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => !isSelected && addActivity(activity)}
+                      className={cn(
+                        "rounded-xl text-xs",
+                        isSelected && "bg-[#FF7F50] hover:bg-[#FF7F50] cursor-not-allowed"
+                      )}
+                      disabled={isSelected}
+                    >
+                      {activity.name} (KES {activity.price.toLocaleString()}/person)
+                    </Button>
+                  );
+                })}
+              </div>
+
+              {selectedActivities.length > 0 && (
+                <div className="space-y-2">
+                  {selectedActivities.map((activity, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-orange-50 border border-orange-200">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-slate-700">{activity.name}</span>
+                        <span className="text-xs text-orange-600">KES {activity.price}/person</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={1}
+                          value={activity.numberOfPeople}
+                          onChange={(e) => updateActivity(index, parseInt(e.target.value) || 1)}
+                          className="w-16 h-8 text-center rounded-lg text-xs"
+                        />
+                        <span className="text-xs text-slate-500">people</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeActivity(index)}
+                          className="h-8 w-8 p-0 text-red-500"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Availability Status (for slots-based only) */}
       {!isFacilityBased && formData.visitDate && (
         <div className={cn(
@@ -649,6 +794,17 @@ export const ManualBookingForm = ({
         </div>
       )}
 
+      {/* Total Amount Display */}
+      {(selectedFacilities.length > 0 || selectedActivities.length > 0) && (
+        <div className="p-4 rounded-xl bg-[#008080]/10 border border-[#008080]/20">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-black uppercase tracking-widest text-[#008080]">Total Amount</span>
+            <span className="text-xl font-black text-[#008080]">KES {calculateTotal().toLocaleString()}</span>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-1">For record keeping only. Manual entries bypass payment processing.</p>
+        </div>
+      )}
+
       {/* Submit Button */}
       <Button
         type="submit"
@@ -657,9 +813,9 @@ export const ManualBookingForm = ({
         style={{ background: '#008080' }}
       >
         {isSubmitting ? (
-          <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Adding Booking...</>
+          <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Adding Entry...</>
         ) : (
-          <><UserPlus className="h-4 w-4 mr-2" /> Add Manual Booking</>
+          <><UserPlus className="h-4 w-4 mr-2" /> Add Manual Entry</>
         )}
       </Button>
     </form>

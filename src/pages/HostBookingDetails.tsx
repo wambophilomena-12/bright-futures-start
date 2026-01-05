@@ -75,6 +75,7 @@ const HostBookingDetails = () => {
   const [itemName, setItemName] = useState("");
   const [itemCapacity, setItemCapacity] = useState(0);
   const [itemFacilities, setItemFacilities] = useState<Array<{ name: string; price: number }>>([]);
+  const [itemActivities, setItemActivities] = useState<Array<{ name: string; price: number }>>([]);
   const [tripDate, setTripDate] = useState<string | null>(null);
   const [isFlexibleDate, setIsFlexibleDate] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -91,15 +92,15 @@ const HostBookingDetails = () => {
     if (type === "trip" || type === "event") {
       tableName = "trips";
       capacityField = "available_tickets";
-      selectFields = `name,created_by,${capacityField},date,is_flexible_date,is_custom_date`;
+      selectFields = `name,created_by,${capacityField},date,is_flexible_date,is_custom_date,activities`;
     } else if (type === "hotel") {
       tableName = "hotels";
       capacityField = "available_rooms";
-      selectFields = `name,created_by,${capacityField},facilities`;
+      selectFields = `name,created_by,${capacityField},facilities,activities`;
     } else if (type === "adventure" || type === "adventure_place") {
       tableName = "adventure_places";
       capacityField = "available_slots";
-      selectFields = `name,created_by,${capacityField},facilities`;
+      selectFields = `name,created_by,${capacityField},facilities,activities`;
     }
     
     if (!tableName) {
@@ -136,6 +137,15 @@ const HostBookingDetails = () => {
           .map((f: any) => ({ name: f.name, price: Number(f.price) }));
         setItemFacilities(parsedFacilities);
       }
+    }
+
+    // Extract activities for all item types
+    const activitiesData = (item as any).activities;
+    if (activitiesData && Array.isArray(activitiesData)) {
+      const parsedActivities = activitiesData
+        .filter((a: any) => a.name && a.price > 0)
+        .map((a: any) => ({ name: a.name, price: Number(a.price) }));
+      setItemActivities(parsedActivities);
     }
     
     // Extract trip date info for trips/events only
@@ -397,40 +407,77 @@ const HostBookingDetails = () => {
               </div>
             </div>
             <div className="space-y-3">
-              {confirmedEntries.map((entry) => (
-                <div key={entry.id} className="bg-green-50 rounded-2xl p-4 border border-green-100">
-                  <div className="flex flex-col md:flex-row justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="font-bold text-slate-800">{entry.guest_name}</p>
-                      <p className="text-sm text-slate-500">{entry.guest_contact}</p>
-                      {entry.visit_date && (
-                        <p className="text-xs text-slate-600 mt-1">
-                          Visit: {format(new Date(entry.visit_date), "MMM d, yyyy")}
+              {confirmedEntries.map((entry) => {
+                const details = entry.entry_details as Record<string, any> | null;
+                const selectedActivities = details?.selectedActivities || [];
+                const selectedFacilities = details?.selectedFacilities || [];
+                
+                return (
+                  <div key={entry.id} className="bg-green-50 rounded-2xl p-4 border border-green-100">
+                    <div className="flex flex-col md:flex-row justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="font-bold text-slate-800">{entry.guest_name}</p>
+                        <p className="text-sm text-slate-500">{entry.guest_contact}</p>
+                        {entry.visit_date && (
+                          <p className="text-xs text-slate-600 mt-1">
+                            Visit: {format(new Date(entry.visit_date), "MMM d, yyyy")}
+                          </p>
+                        )}
+                        <p className="text-xs text-slate-500">
+                          People: {entry.slots_booked}
                         </p>
-                      )}
-                      <p className="text-xs text-slate-500">
-                        People: {entry.slots_booked}
-                      </p>
-                      {entry.entry_details?.totalAmount > 0 && (
-                        <p className="text-sm font-bold text-green-700 mt-2">
-                          Total: KES {entry.entry_details.totalAmount.toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-2 items-start">
-                      <Badge className="bg-green-600 text-white text-[9px]">Confirmed</Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteEntry(entry.id)}
-                        className="text-slate-400 hover:text-red-600 rounded-xl"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        
+                        {/* Display selected facilities */}
+                        {selectedFacilities.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase">Facilities:</p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {selectedFacilities.map((f: any, i: number) => (
+                                <span key={i} className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                  {f.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Display selected activities */}
+                        {selectedActivities.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase">Activities:</p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {selectedActivities.map((a: any, i: number) => (
+                                <span key={i} className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                                  {a.name} ({a.numberOfPeople} people)
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {details?.totalAmount > 0 && (
+                          <p className="text-sm font-bold text-green-700 mt-2">
+                            Total: KES {details.totalAmount.toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 items-start">
+                        <Badge className="bg-green-600 text-white text-[9px]">Confirmed</Badge>
+                        {/* Delete disabled for confirmed entries - shown as disabled button */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled
+                          className="text-slate-300 cursor-not-allowed rounded-xl"
+                          title="Confirmed entries cannot be deleted"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -443,6 +490,7 @@ const HostBookingDetails = () => {
             itemName={itemName}
             totalCapacity={itemCapacity}
             facilities={itemFacilities}
+            activities={itemActivities}
             tripDate={tripDate}
             isFlexibleDate={isFlexibleDate}
             onBookingCreated={fetchBookings}
