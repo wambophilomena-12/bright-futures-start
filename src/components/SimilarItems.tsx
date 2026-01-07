@@ -39,7 +39,7 @@ export const SimilarItems = ({ currentItemId, itemType, location, country }: Sim
           .eq("is_hidden", false)
           .neq("id", currentItemId)
           .eq("country", country || "")
-          .limit(6);
+          .limit(5);
         if (error) throw error;
         setItems((data || []).map(item => ({ ...item, route })));
       } else if (itemType === "hotel") {
@@ -51,7 +51,7 @@ export const SimilarItems = ({ currentItemId, itemType, location, country }: Sim
           .eq("is_hidden", false)
           .neq("id", currentItemId)
           .eq("country", country || "")
-          .limit(6);
+          .limit(5);
         if (error) throw error;
         setItems((data || []).map(item => ({ ...item, route, price: null })));
       } else if (itemType === "adventure") {
@@ -63,7 +63,7 @@ export const SimilarItems = ({ currentItemId, itemType, location, country }: Sim
           .eq("is_hidden", false)
           .neq("id", currentItemId)
           .eq("country", country || "")
-          .limit(6);
+          .limit(5);
         if (error) throw error;
         setItems((data || []).map(item => ({ ...item, route, price: item.entry_fee })));
       }

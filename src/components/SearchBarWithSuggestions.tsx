@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Clock, X, TrendingUp, Plane, Hotel, Tent, Landmark, ArrowLeft, Calendar, Search as SearchIcon, MapPin } from "lucide-react";
+import { Clock, X, TrendingUp, Plane, Hotel, Tent, Landmark, ArrowLeft, Calendar, Search as SearchIcon, MapPin, Loader2, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getSessionId } from "@/lib/sessionManager";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,9 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
   const { user } = useAuth();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
+  const [mostPopular, setMostPopular] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [trendingSearches, setTrendingSearches] = useState<TrendingSearch[]>([]);
   const navigate = useNavigate();
@@ -62,6 +65,7 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
     const history = localStorage.getItem(SEARCH_HISTORY_KEY);
     if (history) setSearchHistory(JSON.parse(history));
     fetchTrendingSearches();
+    fetchMostPopular();
   }, []);
 
   const fetchTrendingSearches = async () => {
@@ -70,6 +74,26 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
       if (!error && data) setTrendingSearches(data);
     } catch (error) {
       console.error("Error fetching trending searches:", error);
+    }
+  };
+
+  // Fetch most popular items to show on focus (before typing)
+  const fetchMostPopular = async () => {
+    try {
+      const [tripsData, hotelsData, adventuresData] = await Promise.all([
+        supabase.from("trips").select("id, name, location, place, country, date, image_url").eq("approval_status", "approved").eq("is_hidden", false).order("created_at", { ascending: false }).limit(3),
+        supabase.from("hotels").select("id, name, location, place, country, image_url").eq("approval_status", "approved").eq("is_hidden", false).order("created_at", { ascending: false }).limit(3),
+        supabase.from("adventure_places").select("id, name, location, place, country, image_url").eq("approval_status", "approved").eq("is_hidden", false).order("created_at", { ascending: false }).limit(3)
+      ]);
+
+      const popular: SearchResult[] = [
+        ...(tripsData.data || []).map((item) => ({ ...item, type: (item as any).type === 'event' ? "event" as const : "trip" as const })),
+        ...(hotelsData.data || []).map((item) => ({ ...item, type: "hotel" as const })),
+        ...(adventuresData.data || []).map((item) => ({ ...item, type: "adventure" as const }))
+      ];
+      setMostPopular(popular.slice(0, 6));
+    } catch (error) {
+      console.error("Error fetching most popular:", error);
     }
   };
 
@@ -86,9 +110,15 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
 
   useEffect(() => {
     if (showSuggestions && value.trim()) {
-      fetchSuggestions();
+      setIsSearching(true);
+      setHasSearched(false);
+      const debounceTimer = setTimeout(() => {
+        fetchSuggestions();
+      }, 300);
+      return () => clearTimeout(debounceTimer);
     } else {
       setSuggestions([]);
+      setHasSearched(false);
     }
   }, [value, showSuggestions]);
 
@@ -96,10 +126,10 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
     const queryValue = value.trim().toLowerCase();
     try {
       const [tripsData, eventsData, hotelsData, adventuresData] = await Promise.all([
-        supabase.from("trips").select("id, name, location, place, country, activities, date, image_url").eq("approval_status", "approved").eq("type", "trip").limit(30),
-        supabase.from("trips").select("id, name, location, place, country, activities, date, image_url").eq("approval_status", "approved").eq("type", "event").limit(30),
-        supabase.from("hotels").select("id, name, location, place, country, activities, facilities, image_url").eq("approval_status", "approved").limit(30),
-        supabase.from("adventure_places").select("id, name, location, place, country, activities, facilities, image_url").eq("approval_status", "approved").limit(30)
+        supabase.from("trips").select("id, name, location, place, country, activities, date, image_url").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "trip").limit(20),
+        supabase.from("trips").select("id, name, location, place, country, activities, date, image_url").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "event").limit(20),
+        supabase.from("hotels").select("id, name, location, place, country, activities, facilities, image_url").eq("approval_status", "approved").eq("is_hidden", false).limit(20),
+        supabase.from("adventure_places").select("id, name, location, place, country, activities, facilities, image_url").eq("approval_status", "approved").eq("is_hidden", false).limit(20)
       ]);
 
       let combined: SearchResult[] = [
@@ -123,6 +153,9 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
       setSuggestions(combined.slice(0, 15));
     } catch (error) {
       console.error("Error fetching suggestions:", error);
+    } finally {
+      setIsSearching(false);
+      setHasSearched(true);
     }
   };
 
@@ -206,9 +239,39 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
         <div 
           className="absolute left-0 right-0 top-full mt-3 bg-white border border-slate-100 rounded-[32px] shadow-2xl max-h-[70vh] md:max-h-[500px] overflow-y-auto z-[999] animate-in fade-in slide-in-from-top-2 duration-200"
         >
-          {/* History / Trending Section (Shown when input is empty) */}
+          {/* History / Trending / Most Popular Section (Shown when input is empty) */}
           {!value.trim() && (
             <div className="p-2 min-h-[100px]">
+              {/* Most Popular Section - Always shown first on focus */}
+              {mostPopular.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 px-5 py-3">
+                    <Sparkles className="h-4 w-4 text-[#FF7F50]" />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Most Popular</p>
+                  </div>
+                  <div className="space-y-1">
+                    {mostPopular.slice(0, 4).map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleSuggestionClick(item)}
+                        className="w-full p-3 flex gap-4 hover:bg-slate-50 transition-all group text-left rounded-[24px]"
+                      >
+                        <div className="relative w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden shadow-sm">
+                          <img src={item.image_url || "/placeholder.svg"} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center min-w-0">
+                          <h4 className="font-black text-slate-800 uppercase tracking-tight text-sm truncate">{item.name}</h4>
+                          <div className="flex items-center gap-1 text-slate-400">
+                            <MapPin className="h-3 w-3" />
+                            <span className="text-[10px] font-bold uppercase truncate">{item.location || item.country}</span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {searchHistory.length > 0 && (
                 <div className="mb-4">
                   <div className="flex items-center justify-between px-5 py-3">
@@ -232,13 +295,13 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
                 </div>
               )}
 
-              {trendingSearches.length > 0 ? (
+              {trendingSearches.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 px-5 py-3">
                     <TrendingUp className="h-4 w-4 text-[#FF7F50]" />
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Trending Destinations</p>
                   </div>
-                  {trendingSearches.map((item, index) => (
+                  {trendingSearches.slice(0, 5).map((item, index) => (
                     <button 
                       key={index} 
                       onClick={() => { onChange(item.query); saveToHistory(item.query); onSubmit(); setShowSuggestions(false); }} 
@@ -249,12 +312,6 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
                     </button>
                   ))}
                 </div>
-              ) : (
-                !searchHistory.length && (
-                  <div className="p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
-                    Start typing to explore...
-                  </div>
-                )
               )}
             </div>
           )}
@@ -262,7 +319,16 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
           {/* Result Suggestions (Shown when typing) */}
           {value.trim() && (
             <div className="p-2">
-              {suggestions.length > 0 ? (
+              {/* Loading State */}
+              {isSearching && (
+                <div className="p-10 flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-6 w-6 animate-spin text-[#008080]" />
+                  <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">Searching...</span>
+                </div>
+              )}
+
+              {/* Results */}
+              {!isSearching && suggestions.length > 0 && (
                 <>
                   <p className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Top Matches</p>
                   {suggestions.map((result) => (
@@ -298,9 +364,13 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
                     </button>
                   ))}
                 </>
-              ) : (
-                <div className="p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
-                  No matches found for "{value}"
+              )}
+
+              {/* Not Available - Only show after search completes with no results */}
+              {!isSearching && hasSearched && suggestions.length === 0 && (
+                <div className="p-10 text-center">
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Not Available</p>
+                  <p className="text-slate-300 text-[10px]">No results found for "{value}"</p>
                 </div>
               )}
             </div>

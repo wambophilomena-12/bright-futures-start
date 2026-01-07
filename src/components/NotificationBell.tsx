@@ -133,7 +133,7 @@ export const NotificationBell = () => {
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(20);
     if (!error) {
       setNotifications(data || []);
       setUnreadCount(data?.filter(n => !n.is_read).length || 0);

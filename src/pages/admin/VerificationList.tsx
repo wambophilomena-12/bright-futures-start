@@ -73,7 +73,8 @@ const VerificationList = () => {
           )
         `)
         .eq("status", status)
-        .order("submitted_at", { ascending: false });
+        .order("submitted_at", { ascending: false })
+        .limit(20);
 
       if (error) throw error;
       setVerifications(data || []);

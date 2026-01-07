@@ -92,7 +92,8 @@ const Bookings = () => {
         .eq("user_id", user?.id)
         .in("payment_status", ["paid", "completed"])
         .not("status", "eq", "cancelled")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(20);
       
       if (bookingsError) throw bookingsError;
       setBookings(confirmedBookings || []);

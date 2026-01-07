@@ -60,10 +60,10 @@ const Saved = () => {
   }, [authLoading]);
 
   useEffect(() => {
-    if (userId) fetchSavedItems(userId, 0, 15);
+    if (userId) fetchSavedItems(userId, 0, 20);
   }, [savedItems, userId]);
 
-  const fetchSavedItems = async (uid: string, offset: number = 0, limit: number = 15) => {
+  const fetchSavedItems = async (uid: string, offset: number = 0, limit: number = 20) => {
     setIsLoading(true);
     const { data: savedData } = await supabase
       .from("saved_items")

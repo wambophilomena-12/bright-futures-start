@@ -64,7 +64,7 @@ const CategoryDetail = () => {
 
   const loadInitialData = async () => {
     setLoading(true);
-    const data = await fetchData(0, 50);
+    const data = await fetchData(0, 20);
     setItems(data);
     setLoading(false);
   };
