@@ -1,9 +1,9 @@
-// 1. UPDATE THESE VERSIONS to force an app-wide update
-const STATIC_CACHE = 'realtravo-static-v9'; 
-const IMAGE_CACHE = 'realtravo-images-v9';
-const DATA_CACHE = 'realtravo-data-v9';
+// 1. VERSIONING: Incremented to force an app-wide update
+const STATIC_CACHE = 'realtravo-static-v10'; 
+const IMAGE_CACHE = 'realtravo-images-v10';
+const DATA_CACHE = 'realtravo-data-v10';
 
-// 2. FILES TO DOWNLOAD IMMEDIATELY (The App Shell + All Routes from App.tsx)
+// 2. PRECACHE LIST: The App Shell + All Routes
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -11,17 +11,17 @@ const PRECACHE_ASSETS = [
   '/fulllogo.png',
   '/favicon.ico',
   
-  // Local Images (Category backgrounds & Hero)
+  // Local Images
   '/images/category-campsite.jpg',
   '/images/category-hotels.jpg',
   '/images/category-trips.jpg',
   '/images/category-events.jpg',
   '/images/hero-background.jpg',
   
-  // Audio Assets (Notification sounds)
+  // Audio
   '/audio/notification.mp3',
   
-  // Public & Discovery
+  // Routes
   '/auth',
   '/about',
   '/contact',
@@ -31,8 +31,6 @@ const PRECACHE_ASSETS = [
   '/terms-of-service',
   '/privacy-policy',
   '/qr-scanner',
-  
-  // User Account
   '/profile',
   '/profile/edit',
   '/account',
@@ -42,8 +40,6 @@ const PRECACHE_ASSETS = [
   '/reset-password',
   '/verify-email',
   '/forgot-password',
-  
-  // Host / Provider
   '/become-host',
   '/creator-dashboard',
   '/my-listing',
@@ -57,8 +53,6 @@ const PRECACHE_ASSETS = [
   '/host/hotels',
   '/host/experiences',
   '/host-bookings',
-  
-  // Admin
   '/admin',
   '/admin/pending',
   '/admin/approved',
@@ -75,18 +69,19 @@ const IMAGE_PATTERNS = [
   /images\.unsplash\.com/,
 ];
 
-// --- INSTALL: Download everything now ---
+// --- INSTALL: Download assets ---
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
-      console.log('Realtravo: Precaching updated routes and assets...');
-      return cache.addAll(PRECACHE_ASSETS);
+      console.log('Realtravo: Precaching Assets...');
+      // Use cache.addAll but catch individual failures to prevent install crash
+      return cache.addAll(PRECACHE_ASSETS).catch(err => console.warn("Precache failed for some assets", err));
     })
   );
   self.skipWaiting();
 });
 
-// --- ACTIVATE: Delete old versions automatically ---
+// --- ACTIVATE: Cleanup old caches ---
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -103,17 +98,20 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// --- FETCH: Instant UI + Background Sync ---
+// --- FETCH: Stale-While-Revalidate Strategy ---
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Skip non-GET requests (like POST for database updates)
+  if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.ok) {
+        // Only cache valid responses
+        if (networkResponse && networkResponse.status === 200) {
           const isImage = IMAGE_PATTERNS.some(p => p.test(url.href)) || event.request.destination === 'image';
           
-          // Determine cache bucket
           let cacheName = STATIC_CACHE;
           if (isImage) {
             cacheName = IMAGE_CACHE;
@@ -126,9 +124,8 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(() => {
-        // Fallback for Navigation (SPA support)
-        // If the user is offline and goes to a dynamic route (like /trip/paris), 
-        // return index.html so React Router can take over.
+        // OFFLINE FALLBACK: 
+        // If navigation fails (user is offline), return the cached index.html
         if (event.request.mode === 'navigate') {
           return caches.match('/index.html');
         }
