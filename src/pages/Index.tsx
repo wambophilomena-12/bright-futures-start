@@ -606,12 +606,28 @@ const Index = () => {
       className="relative w-full h-[55vh] md:h-[45vh] lg:h-[50vh] md:mt-16 overflow-hidden"
     >
       {/* Hero background image with high priority for LCP */}
-      <img 
-        src="/images/hero-background.webp" 
-        alt="Travel destination background" 
-        fetchPriority="high"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+      <picture>
+        <source 
+          media="(max-width: 640px)" 
+          srcSet="/images/hero-background.webp" 
+          type="image/webp"
+        />
+        <source 
+          media="(max-width: 1024px)" 
+          srcSet="/images/hero-background.webp" 
+          type="image/webp"
+        />
+        <img 
+          src="/images/hero-background.webp" 
+          alt="Travel destination background" 
+          fetchPriority="high"
+          decoding="sync"
+          loading="eager"
+          width={1920}
+          height={1080}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      </picture>
       {/* Dark overlay for visibility */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/70" />
       
@@ -725,12 +741,15 @@ const Index = () => {
             {/* ICON CONTAINER with background image */}
             <div 
               className="flex items-end justify-center transition-all w-full h-40 lg:h-48 rounded-lg relative overflow-hidden"
-              style={{
-                backgroundImage: `url(${cat.bgImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
             >
+              {/* Category background image - lazy loaded */}
+              <img 
+                src={cat.bgImage}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
               {/* Dark overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 group-hover:from-black/70 group-hover:via-black/30 transition-all" />
               

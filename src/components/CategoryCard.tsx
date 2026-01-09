@@ -39,13 +39,18 @@ export const CategoryCard = ({
 
       {/* Desktop: Background image with overlay text */}
       <div 
-        className="hidden md:flex relative h-40 lg:h-48 items-end justify-center"
-        style={bgImage ? {
-          backgroundImage: `url(${bgImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        } : undefined}
+        className="hidden md:flex relative h-40 lg:h-48 items-end justify-center overflow-hidden"
       >
+        {/* Category image - lazy loaded */}
+        {bgImage && (
+          <img 
+            src={bgImage}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 group-hover:from-black/70 group-hover:via-black/30 transition-all" />
         
