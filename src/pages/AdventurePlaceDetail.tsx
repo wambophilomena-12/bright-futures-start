@@ -147,7 +147,14 @@ const AdventurePlaceDetail = () => {
     } finally { setIsProcessing(false); }
   };
 
-  if (loading) return <div className="min-h-screen bg-slate-50 animate-pulse" />;
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <div className="w-10 h-10 border-4 border-[#008080] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-black uppercase tracking-tighter animate-pulse">Loading Details...</p>
+      </div>
+    );
+  }
   if (!place) return null;
 
   const allImages = [place.image_url, ...(place.gallery_images || []), ...(place.images || [])].filter(Boolean);
@@ -338,7 +345,7 @@ const AdventurePlaceDetail = () => {
             priceAdult={place.entry_fee || 0} priceChild={place.entry_fee || 0} 
             isProcessing={isProcessing} isCompleted={isCompleted} itemName={place.name}
             itemId={place.id} bookingType="adventure_place" hostId={place.created_by || ""}
-            onPaymentSuccess={() => setIsCompleted(true)} onCancel={() => setBookingOpen(false)}
+            onPaymentSuccess={() => setIsCompleted(true)}
             primaryColor={COLORS.TEAL} accentColor={COLORS.CORAL}
           />
         </DialogContent>

@@ -199,7 +199,8 @@ export const SignupForm = () => {
   };
 
   const handleGoogleSignup = async () => {
-    const redirectUrl = `${window.location.origin}/complete-profile`;
+    // Google users get auto-profile completion via AuthContext, redirect straight to home
+    const redirectUrl = `${window.location.origin}/`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

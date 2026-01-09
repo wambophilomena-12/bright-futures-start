@@ -283,7 +283,7 @@ const HostVerification = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background pb-0">
       <Header />
       <main className="flex-1 container px-4 py-8">
         <div className="max-w-3xl mx-auto">

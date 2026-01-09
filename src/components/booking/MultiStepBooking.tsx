@@ -41,7 +41,6 @@ interface MultiStepBookingProps {
     bookingType?: string;
     hostId?: string;
     onPaymentSuccess?: () => void;
-    onCancel?: () => void;
     primaryColor?: string;
     accentColor?: string;
     totalCapacity?: number;
@@ -76,7 +75,6 @@ export const MultiStepBooking = ({
     bookingType = "",
     hostId = "",
     onPaymentSuccess,
-    onCancel,
     primaryColor = "#008080",
     accentColor = "#FF7F50",
     totalCapacity = 0,
@@ -385,10 +383,10 @@ export const MultiStepBooking = ({
     const insufficientSlots = totalCapacity > 0 && requestedSlots > remainingSlots;
 
     return (
-        <div className="flex flex-col h-[90vh] max-h-[90vh] bg-gradient-to-br from-white via-white to-slate-50 rounded-[32px] overflow-hidden shadow-2xl border border-slate-100">
+        <div className="flex flex-col bg-gradient-to-br from-white via-white to-slate-50 rounded-[32px] overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh] shadow-2xl border border-slate-100">
             {/* Sold Out Banner - Shows real-time if item becomes sold out during booking */}
             {isSoldOut && totalCapacity > 0 && (
-                <div className="flex-shrink-0 px-6 py-3 bg-red-50 border-b border-red-200 flex items-center gap-3">
+                <div className="px-6 py-3 bg-red-50 border-b border-red-200 flex items-center gap-3">
                     <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
                     <div>
                         <p className="text-sm font-bold text-red-700">This item is now fully booked</p>
@@ -397,23 +395,12 @@ export const MultiStepBooking = ({
                 </div>
             )}
 
-            {/* Fixed Header with Cancel Button */}
-            <div className="flex-shrink-0 p-6 pb-4 border-b border-slate-100">
+            {/* Header - scrolls with content */}
+            <div className="p-6 pb-4 border-b border-slate-100">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: primaryColor }}>
                         Book Your Visit
                     </h2>
-                    {onCancel && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onCancel}
-                            className="rounded-full px-4 h-8 text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                        >
-                            <X className="h-4 w-4 mr-1" />
-                            Cancel
-                        </Button>
-                    )}
                 </div>
                 <p className="text-sm text-slate-500 font-medium">{itemName}</p>
                 
@@ -435,8 +422,8 @@ export const MultiStepBooking = ({
                 <p className="text-xs text-center text-slate-400 mt-2 font-medium">Step {currentStep} of {totalSteps}</p>
             </div>
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-6 space-y-6">
+            {/* Content */}
+            <div className="p-6 space-y-6">
                 {/* Step 1: Visit Date */}
                 {currentStep === dateStepNum && !skipDateSelection && (
                     <div className="space-y-4">

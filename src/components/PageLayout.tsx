@@ -22,14 +22,18 @@ export const PageLayout = ({ children }: PageLayoutProps) => {
     pathname === "/about" || // About page
     pathname.startsWith("/category/"); // Category pages
 
+  // Pages where MobileBottomBar should be hidden
+  const shouldHideMobileBar = 
+    pathname === "/host-verification";
+
   return (
     <div className="w-full min-h-screen flex flex-col">
       <div className="flex-1 w-full pb-20 md:pb-0">
         {children}
       </div>
       {shouldShowFooter && <Footer />}
-      {/* MobileBottomBar is always visible on mobile - rendered once in PageLayout */}
-      <MobileBottomBar />
+      {/* MobileBottomBar is always visible on mobile - except specific pages */}
+      {!shouldHideMobileBar && <MobileBottomBar />}
     </div>
   );
 };

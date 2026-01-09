@@ -61,6 +61,8 @@ const EventDetail = () => {
   const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
+    // Scroll to top when page loads
+    window.scrollTo(0, 0);
     if (id) fetchEvent();
     const urlParams = new URLSearchParams(window.location.search);
     const refSlug = urlParams.get("ref");
@@ -136,7 +138,14 @@ const EventDetail = () => {
   // Real-time availability tracking
   const { remainingSlots, isSoldOut } = useRealtimeItemAvailability(id || undefined, event?.available_tickets || 0);
 
-  if (loading) return <div className="min-h-screen bg-slate-50 animate-pulse" />;
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <div className="w-10 h-10 border-4 border-[#008080] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-black uppercase tracking-tighter animate-pulse">Loading Details...</p>
+      </div>
+    );
+  }
   if (!event) return null;
 
   const today = new Date();
@@ -370,7 +379,6 @@ const EventDetail = () => {
             itemName={event.name} skipDateSelection={true} fixedDate={event.date} 
             skipFacilitiesAndActivities={true} itemId={event.id} bookingType="event" 
             hostId={event.created_by || ""} onPaymentSuccess={() => setIsCompleted(true)}
-            onCancel={() => setShowBooking(false)}
             primaryColor={COLORS.TEAL}
             accentColor={COLORS.CORAL}
             totalCapacity={event.available_tickets || 0}

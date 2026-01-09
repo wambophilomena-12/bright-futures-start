@@ -51,9 +51,8 @@ export const LoginForm = () => {
   };
 
   const handleGoogleLogin = async () => {
-    // For Google login, redirect to complete-profile which will check if profile is complete
-    // and redirect to home if it is
-    const redirectUrl = `${window.location.origin}/complete-profile`;
+    // Google users get auto-profile completion via AuthContext, redirect straight to home
+    const redirectUrl = `${window.location.origin}/`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Auto-complete profile for new Google OAuth users
+        // Auto-complete profile for Google OAuth users - skip CompleteProfile page entirely
         if (event === 'SIGNED_IN' && session?.user) {
           const isOAuth = session.user.app_metadata?.provider === 'google';
           if (isOAuth) {
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 .eq('id', session.user.id)
                 .single();
               
-              // Auto-complete profile with Google data if not already completed
+              // Auto-complete profile with Google data - no password or name input required
               if (profile && !profile.profile_completed) {
                 const googleName = session.user.user_metadata?.full_name || 
                                    session.user.user_metadata?.name || 

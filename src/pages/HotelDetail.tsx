@@ -462,7 +462,6 @@ const HotelDetail = () => {
             facilities={hotel.facilities || []}
             activities={hotel.activities || []}
             onPaymentSuccess={() => setIsCompleted(true)}
-            onCancel={() => setBookingOpen(false)}
             primaryColor="#008080"
             accentColor="#FF7F50"
           />
