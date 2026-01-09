@@ -45,15 +45,25 @@ const AdventurePlaceDetail = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [isOpenNow, setIsOpenNow] = useState(false);
   const [liveRating, setLiveRating] = useState({ avg: 0, count: 0 });
+  const [scrolled, setScrolled] = useState(false); // Track scroll position
+  
   const { savedItems, handleSave: handleSaveItem } = useSavedItems();
   const isSaved = savedItems.has(id || "");
+
+  // Handle scroll effect for the header
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (id) {
       fetchPlace();
       fetchLiveRating();
     }
-    // Track referral click when page loads with ref parameter
     const urlParams = new URLSearchParams(window.location.search);
     const refSlug = urlParams.get("ref");
     if (refSlug && id) trackReferralClick(refSlug, id, "adventure_place", "booking");
@@ -160,7 +170,6 @@ const AdventurePlaceDetail = () => {
   const allImages = [place.image_url, ...(place.gallery_images || []), ...(place.images || [])].filter(Boolean);
   const entryPrice = place.entry_fee || 0;
 
-  // Components for sections to maintain clean code
   const DescriptionSection = () => (
     <section className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100 order-1">
       <h2 className="text-xl font-black uppercase tracking-tight mb-4 text-[#008080]">Description</h2>
@@ -249,12 +258,38 @@ const AdventurePlaceDetail = () => {
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
       <Header className="hidden md:block" />
 
-      <div className="relative w-full h-[55vh] md:h-[70vh] bg-slate-900 overflow-hidden">
-        <div className="absolute top-4 left-4 right-4 z-50 flex justify-between">
-          <Button onClick={() => navigate(-1)} className="rounded-full bg-black/30 backdrop-blur-md text-white border-none w-10 h-10 p-0"><ArrowLeft className="h-5 w-5" /></Button>
-          <Button onClick={() => id && handleSaveItem(id, "adventure_place")} className={`rounded-full backdrop-blur-md border-none w-10 h-10 p-0 shadow-lg ${isSaved ? "bg-red-500" : "bg-black/30"}`}><Heart className={`h-5 w-5 text-white ${isSaved ? "fill-white" : ""}`} /></Button>
-        </div>
+      {/* FIXED TOP NAVIGATION BAR */}
+      <div 
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 px-4 py-3 flex justify-between items-center ${
+          scrolled ? "bg-white/90 backdrop-blur-md shadow-md" : "bg-transparent"
+        }`}
+      >
+        <Button 
+          onClick={() => navigate(-1)} 
+          className={`rounded-full transition-all duration-300 w-10 h-10 p-0 border-none ${
+            scrolled ? "bg-slate-100 text-slate-900 shadow-sm" : "bg-black/30 text-white backdrop-blur-md"
+          }`}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        
+        {scrolled && (
+          <h2 className="text-sm font-black uppercase tracking-tighter text-slate-900 truncate px-4 animate-in fade-in slide-in-from-top-2">
+            {place.name}
+          </h2>
+        )}
 
+        <Button 
+          onClick={() => id && handleSaveItem(id, "adventure_place")} 
+          className={`rounded-full transition-all duration-300 w-10 h-10 p-0 border-none shadow-lg ${
+            isSaved ? "bg-red-500" : scrolled ? "bg-slate-100 text-slate-900" : "bg-black/30 text-white backdrop-blur-md"
+          }`}
+        >
+          <Heart className={`h-5 w-5 ${isSaved ? "fill-white text-white" : scrolled ? "text-slate-900" : "text-white"}`} />
+        </Button>
+      </div>
+
+      <div className="relative w-full h-[55vh] md:h-[70vh] bg-slate-900 overflow-hidden">
         <Carousel plugins={[Autoplay({ delay: 4000 })]} className="w-full h-full">
           <CarouselContent className="h-full ml-0">
             {allImages.map((img, idx) => (
@@ -278,7 +313,7 @@ const AdventurePlaceDetail = () => {
                 <Badge className={`${isOpenNow ? "bg-emerald-500" : "bg-red-500"} text-white border-none px-2 py-0.5 text-[9px] font-black uppercase rounded-full flex items-center gap-1`}><Circle className={`h-2 w-2 fill-current ${isOpenNow ? "animate-pulse" : ""}`} />{isOpenNow ? "open" : "closed"}</Badge>
             </div>
             <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-white leading-none">{place.name}</h1>
-            <div className="flex items-center gap-2" onClick={() => window.open(place?.map_link || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place?.name}, ${place?.location}`)}`, "_blank")}>
+            <div className="flex items-center gap-2" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place?.name}, ${place?.location}`)}`, "_blank")}>
               <MapPin className="h-4 w-4 text-white" />
               <span className="text-xs font-bold text-white uppercase tracking-wide cursor-pointer">
                 {[place.place, place.location, place.country].filter(Boolean).join(', ')}
@@ -289,21 +324,14 @@ const AdventurePlaceDetail = () => {
       </div>
 
       <main className="container px-4 max-w-6xl mx-auto -mt-10 relative z-50">
-        {/* Main Grid: Description and Sidebar */}
         <div className="flex flex-col lg:grid lg:grid-cols-[1.7fr,1fr] gap-6">
-          
           <div className="flex flex-col gap-6">
             <DescriptionSection />
-            
-            {/* Mobile Only: Price Card below description */}
             <div className="block lg:hidden order-2"><PriceCard /></div>
-
-            {/* In Mobile: Amenities is order 3. In Desktop: it follows Description */}
             <AmenitiesSection />
             <FacilitiesSection />
             <ActivitiesSection />
 
-            {/* Mobile Only: Review Section and Similar items in specific order */}
             <div className="block lg:hidden space-y-6 order-6">
               <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
                 <ReviewSection itemId={place.id} itemType="adventure_place" />
@@ -315,13 +343,11 @@ const AdventurePlaceDetail = () => {
             </div>
           </div>
 
-          {/* Desktop Only Sidebar */}
           <div className="hidden lg:block lg:sticky lg:top-24 h-fit">
             <PriceCard />
           </div>
         </div>
 
-        {/* Desktop Only: Sections below the main grid area to maintain original column widths */}
         <div className="hidden lg:block">
            <div className="mt-12 bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
              <ReviewSection itemId={place.id} itemType="adventure_place" />
