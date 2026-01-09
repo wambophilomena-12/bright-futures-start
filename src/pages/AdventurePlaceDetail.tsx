@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,10 +49,9 @@ const AdventurePlaceDetail = () => {
   const { savedItems, handleSave: handleSaveItem } = useSavedItems();
   const isSaved = savedItems.has(id || "");
 
-  // Track scroll position to handle the sticky header appearance
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 60);
+      setScrolled(window.scrollY > 50);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -172,12 +170,9 @@ const AdventurePlaceDetail = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
-      {/* 1. Main Header - Standard behavior, scrolls away */}
-      <Header className="hidden md:block" />
-
-      {/* 2. Sticky Action Bar - Remains at top when Header is gone */}
+      {/* STICKY TOP ACTION BAR */}
       <div 
-        className={`sticky top-0 z-[100] transition-all duration-300 px-4 py-3 flex justify-between items-center w-full ${
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 px-4 py-3 flex justify-between items-center ${
           scrolled 
             ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100" 
             : "bg-transparent"
@@ -210,8 +205,8 @@ const AdventurePlaceDetail = () => {
         </Button>
       </div>
 
-      {/* 3. Hero Section - Offset negatively to tuck under the transparent sticky bar */}
-      <div className="relative w-full h-[55vh] md:h-[70vh] bg-slate-900 overflow-hidden -mt-[64px]">
+      {/* HERO SECTION - Starts from the very top */}
+      <div className="relative w-full h-[55vh] md:h-[70vh] bg-slate-900 overflow-hidden">
         <Carousel plugins={[Autoplay({ delay: 4000 })]} className="w-full h-full">
           <CarouselContent className="h-full ml-0">
             {allImages.map((img, idx) => (
@@ -343,7 +338,6 @@ const AdventurePlaceDetail = () => {
   );
 };
 
-// Extracted Sub-component for clarity
 const PriceCardComponent = ({ entryPrice, liveRating, isOpenNow, place, openInMaps, handleCopyLink, navigate }: any) => (
   <div className="bg-white rounded-[32px] p-8 shadow-2xl border border-slate-100">
     <div className="flex justify-between items-end mb-8">
