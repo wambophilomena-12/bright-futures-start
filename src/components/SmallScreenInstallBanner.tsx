@@ -27,7 +27,7 @@ export function SmallScreenInstallBanner() {
       return;
     }
 
-    // Listen for the beforeinstallprompt event
+    // Listen for the beforeinstallprompt event (Android/Chrome)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -68,7 +68,7 @@ export function SmallScreenInstallBanner() {
         console.error('Error installing app:', error);
       }
     } else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-      // iOS instructions - just close banner since they need to use Share button
+      // iOS instructions
       alert("Tap the Share button at the bottom of the browser, then 'Add to Home Screen'");
     }
   };
@@ -84,7 +84,10 @@ export function SmallScreenInstallBanner() {
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-[#008080] text-white px-3 py-2 flex items-center justify-between gap-2 shadow-lg">
+    /* Using 'relative' instead of 'fixed' so it stays in the document flow. 
+       This pushes the 'PageLayout' and all items down, preventing overlap.
+    */
+    <div className="relative w-full z-50 bg-[#008080] text-white px-3 py-2 flex items-center justify-between gap-2 shadow-sm border-b border-white/10">
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <Download className="h-4 w-4 flex-shrink-0" />
         <p className="text-xs font-medium truncate">

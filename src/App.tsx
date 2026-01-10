@@ -13,13 +13,12 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
-// Lazy load non-critical pages to reduce initial bundle size
+// Lazy load non-critical pages
 const CategoryDetail = lazy(() => import("./pages/CategoryDetail"));
 const Saved = lazy(() => import("./pages/Saved"));
 const Bookings = lazy(() => import("./pages/Bookings"));
 const Contact = lazy(() => import("./pages/Contact"));
 const About = lazy(() => import("./pages/About"));
-
 const Profile = lazy(() => import("./pages/Profile"));
 const TripDetail = lazy(() => import("./pages/TripDetail"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
@@ -70,7 +69,6 @@ const BookingPage = lazy(() => import("./pages/BookingPage"));
 
 const queryClient = new QueryClient();
 
-// Loading fallback component
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -85,7 +83,11 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            {/* 1. Placed outside PageLayout so it is at the absolute top of the DOM. 
+              2. Make sure the component itself uses 'relative' class as shown below.
+            */}
             <SmallScreenInstallBanner />
+            
             <PageLayout>
               <Suspense fallback={<PageLoader />}>
                 <div className="w-full">
@@ -95,7 +97,6 @@ const App = () => {
                     <Route path="/bookings" element={<Bookings />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/about" element={<About />} />
-                    
                     <Route path="/category/:category" element={<CategoryDetail />} />
                     <Route path="/trip/:slug" element={<TripDetail />} />
                     <Route path="/event/:slug" element={<EventDetail />} />
