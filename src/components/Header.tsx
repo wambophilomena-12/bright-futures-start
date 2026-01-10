@@ -27,6 +27,21 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIc
   const isIndexPage = location.pathname === '/';
   const { user } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Handle scroll effect for visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -38,29 +53,30 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIc
     fetchUserProfile();
   }, [user]);
 
+  // Updated mobile classes: Always flex on mobile, but background changes on scroll
   const mobileHeaderClasses = isIndexPage 
-    ? "fixed top-0 left-0 right-0 bg-transparent flex" 
-    : "hidden md:flex sticky top-0 left-0 right-0 border-b border-slate-100 shadow-sm";
+    ? `fixed top-0 left-0 right-0 flex transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}` 
+    : "hidden md:flex sticky top-0 left-0 right-0 border-b border-slate-100 shadow-sm bg-white";
 
-  // Updated to ensure overflow is visible so badges aren't cut off
+  // Updated icon styles: If scrolled, we use a slightly different look to pop against the white background
   const headerIconStyles = `
     h-11 w-11 rounded-2xl flex items-center justify-center transition-all duration-200 
     active:scale-90 shadow-sm border border-slate-200 relative overflow-visible
-    ${isIndexPage ? 'text-slate-800 bg-white/90 hover:bg-white' : 'text-slate-700 bg-slate-50 hover:bg-slate-100'}
+    ${(isIndexPage && !isScrolled) ? 'text-slate-800 bg-white/90 hover:bg-white' : 'text-slate-700 bg-slate-50 hover:bg-slate-100'}
   `;
 
   return (
     <header 
-      className={`z-[100] transition-all duration-300 md:h-20 items-center ${mobileHeaderClasses} ${className || ''}`}
+      className={`z-[100] md:h-20 items-center ${mobileHeaderClasses} ${className || ''}`}
       style={{ 
         backgroundColor: isIndexPage 
-          ? (window.innerWidth >= 768 ? 'white' : 'transparent') 
+          ? (window.innerWidth >= 768 ? 'white' : (isScrolled ? 'white' : 'transparent')) 
           : 'white' 
       }}
     >
       <div className="container mx-auto px-4 flex items-center justify-between h-full">
         
-        <div className={`flex items-center gap-4 ${isIndexPage && 'mt-4 md:mt-0'}`}>
+        <div className={`flex items-center gap-4 ${isIndexPage && !isScrolled && 'mt-4 md:mt-0'}`}>
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>
               <button className={headerIconStyles} aria-label="Open Menu">
@@ -113,7 +129,7 @@ export const Header = ({ onSearchClick, showSearchIcon = true, className, hideIc
           ))}
         </nav>
 
-        <div className={`flex items-center gap-3 ${isIndexPage && 'mt-4 md:mt-0'}`}>
+        <div className={`flex items-center gap-3 ${isIndexPage && !isScrolled && 'mt-4 md:mt-0'}`}>
           {showSearchIcon && (
             <button 
               onClick={() => onSearchClick ? onSearchClick() : navigate('/')}
