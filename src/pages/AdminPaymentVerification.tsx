@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle2, XCircle, Clock, ShieldCheck, Mail, User, Landmark } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Clock, ShieldCheck, Mail, User, Landmark, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const COLORS = {
@@ -23,6 +23,8 @@ const COLORS = {
   RED: "#FF0000",
   SOFT_GRAY: "#F8F9FA"
 };
+
+const ITEMS_PER_PAGE = 20;
 
 interface BankDetail {
   id: string;
@@ -43,10 +45,13 @@ export default function AdminPaymentVerification() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [bankDetails, setBankDetails] = useState<BankDetail[]>([]);
   const [processing, setProcessing] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -63,15 +68,26 @@ export default function AdminPaymentVerification() {
         navigate("/");
         return;
       }
-      await fetchBankDetails();
+      await fetchBankDetails(0);
     } catch (error) {
       navigate("/");
     }
   };
 
-  const fetchBankDetails = async () => {
+  const fetchBankDetails = async (fetchOffset: number) => {
+    if (fetchOffset === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
-      const { data, error } = await supabase.from("bank_details").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("bank_details")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1);
+      
       if (error) throw error;
 
       const detailsWithUserInfo = await Promise.all(
@@ -84,10 +100,26 @@ export default function AdminPaymentVerification() {
           };
         })
       );
-      setBankDetails(detailsWithUserInfo);
-      setLoading(false);
+      
+      if (fetchOffset === 0) {
+        setBankDetails(detailsWithUserInfo);
+      } else {
+        setBankDetails(prev => [...prev, ...detailsWithUserInfo]);
+      }
+      
+      setOffset(fetchOffset + ITEMS_PER_PAGE);
+      setHasMore((data || []).length >= ITEMS_PER_PAGE);
     } catch (error) {
+      console.error("Error fetching bank details:", error);
+    } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchBankDetails(offset);
     }
   };
 
@@ -102,7 +134,7 @@ export default function AdminPaymentVerification() {
       }).eq("id", id);
       if (error) throw error;
       toast({ title: "VERIFIED", description: "Details approved successfully" });
-      await fetchBankDetails();
+      await fetchBankDetails(0);
     } catch (error) {
       toast({ title: "Error", variant: "destructive" });
     } finally { setProcessing(null); }
@@ -124,7 +156,7 @@ export default function AdminPaymentVerification() {
       toast({ title: "REJECTED", description: "Notification sent to user" });
       setRejectionReason("");
       setSelectedItem(null);
-      await fetchBankDetails();
+      await fetchBankDetails(0);
     } catch (error) {
       toast({ title: "Error", variant: "destructive" });
     } finally { setProcessing(null); }
@@ -297,7 +329,29 @@ export default function AdminPaymentVerification() {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">No records found for this status</p>
                   </div>
                 ) : (
-                  bankDetails.filter(d => d.verification_status === status).map(renderBankDetailCard)
+                  <>
+                    {bankDetails.filter(d => d.verification_status === status).map(renderBankDetailCard)}
+                    
+                    {hasMore && (
+                      <div className="flex justify-center mt-10">
+                        <Button
+                          onClick={loadMore}
+                          disabled={loadingMore}
+                          className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                          style={{ background: COLORS.TEAL }}
+                        >
+                          {loadingMore ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Loading...
+                            </>
+                          ) : (
+                            "Load More"
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </TabsContent>
             ))}

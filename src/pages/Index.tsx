@@ -569,18 +569,18 @@ const Index = () => {
       result = sortedByRating;
     }
     
-    // For trips/events: filter out unavailable/expired, prioritize flexible dates
-    // HIDE: expired past-date items (unless flexible) and sold-out items
+    // For trips/events: ONLY show flexible available and available items
+    // HIDE: expired past-date items AND sold-out items completely
     if (isTripsOrEvents) {
       const today = new Date().toISOString().split('T')[0];
       const flexibleAndAvailable: any[] = [];
       const fixedDateAvailable: any[] = [];
-      const soldOutItems: any[] = [];
       
       result.forEach(item => {
         const isOutdated = item.date && !item.is_flexible_date && item.date < today;
         const bookedCount = bookingStats[item.id] || 0;
-        const isSoldOut = item.available_tickets !== null && item.available_tickets !== undefined && 
+        // Flexible trips can NEVER be sold out - allow rebooking
+        const isSoldOut = !item.is_flexible_date && item.available_tickets !== null && item.available_tickets !== undefined && 
           (item.available_tickets <= 0 || bookedCount >= item.available_tickets);
         
         // HIDE expired items completely (unless flexible date)
@@ -588,19 +588,21 @@ const Index = () => {
           return; // Skip expired items
         }
         
-        // Show sold-out items at the end (they're still visible, just last)
+        // HIDE sold-out items completely (except flexible trips which can never be sold out)
         if (isSoldOut) {
-          soldOutItems.push(item);
-        } else if (item.is_flexible_date) {
-          // Flexible date items are prioritized first
+          return; // Skip sold-out items
+        }
+        
+        if (item.is_flexible_date) {
+          // Flexible date items are prioritized first (can always be rebooked)
           flexibleAndAvailable.push(item);
         } else {
           fixedDateAvailable.push(item);
         }
       });
       
-      // Flexible first, then available by date, then sold out at end
-      return [...flexibleAndAvailable, ...fixedDateAvailable, ...soldOutItems];
+      // Flexible first, then available by date
+      return [...flexibleAndAvailable, ...fixedDateAvailable];
     }
     
     return result;

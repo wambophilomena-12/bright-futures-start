@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, User, ArrowLeft, ShieldCheck, Clock, XCircle, FileText } from "lucide-react";
+import { Search, User, ArrowLeft, ShieldCheck, Clock, XCircle, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const COLORS = {
@@ -21,14 +21,19 @@ const COLORS = {
   SOFT_GRAY: "#F8F9FA",
 };
 
+const ITEMS_PER_PAGE = 20;
+
 const VerificationList = () => {
   const { status } = useParams<{ status: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [verifications, setVerifications] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -54,14 +59,19 @@ const VerificationList = () => {
         return;
       }
 
-      await fetchVerifications();
+      await fetchVerifications(0);
     };
 
     checkAdminAndFetch();
   }, [user, navigate, status]);
 
-  const fetchVerifications = async () => {
-    setLoading(true);
+  const fetchVerifications = async (fetchOffset: number) => {
+    if (fetchOffset === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
       const { data, error } = await supabase
         .from("host_verifications")
@@ -74,10 +84,18 @@ const VerificationList = () => {
         `)
         .eq("status", status)
         .order("submitted_at", { ascending: false })
-        .limit(20);
+        .range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1);
 
       if (error) throw error;
-      setVerifications(data || []);
+      
+      if (fetchOffset === 0) {
+        setVerifications(data || []);
+      } else {
+        setVerifications(prev => [...prev, ...(data || [])]);
+      }
+      
+      setOffset(fetchOffset + ITEMS_PER_PAGE);
+      setHasMore((data || []).length >= ITEMS_PER_PAGE);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -86,6 +104,13 @@ const VerificationList = () => {
       });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchVerifications(offset);
     }
   };
 
@@ -186,66 +211,88 @@ const VerificationList = () => {
             </p>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {filteredVerifications.map((verification) => (
-              <Card
-                key={verification.id}
-                className="p-5 rounded-[28px] border-none shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer bg-white group"
-                onClick={() => navigate(`/admin/verification-detail/${verification.id}`)}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div 
-                      className="h-14 w-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
-                      style={{ backgroundColor: config.bg }}
-                    >
-                      <User className="h-6 w-6" style={{ color: config.accent }} />
-                    </div>
-                    
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-black uppercase tracking-tight text-slate-800 truncate">
-                          {verification.profiles?.name || "Anonymous User"}
-                        </h3>
-                        <Badge 
-                            className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border-none"
-                            style={{ 
-                                backgroundColor: `${COLORS.KHAKI}40`, 
-                                color: COLORS.KHAKI_DARK 
-                            }}
-                        >
-                          {verification.document_type.replace("_", " ")}
-                        </Badge>
+          <>
+            <div className="grid gap-4">
+              {filteredVerifications.map((verification) => (
+                <Card
+                  key={verification.id}
+                  className="p-5 rounded-[28px] border-none shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer bg-white group"
+                  onClick={() => navigate(`/admin/verification-detail/${verification.id}`)}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div 
+                        className="h-14 w-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
+                        style={{ backgroundColor: config.bg }}
+                      >
+                        <User className="h-6 w-6" style={{ color: config.accent }} />
                       </div>
                       
-                      <div className="flex flex-col gap-0.5">
-                        <p className="text-xs font-bold text-slate-500 truncate">
-                          {verification.profiles?.email}
-                        </p>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                          Legal: <span className="text-slate-600">{verification.legal_name}</span>
-                        </p>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-black uppercase tracking-tight text-slate-800 truncate">
+                            {verification.profiles?.name || "Anonymous User"}
+                          </h3>
+                          <Badge 
+                              className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border-none"
+                              style={{ 
+                                  backgroundColor: `${COLORS.KHAKI}40`, 
+                                  color: COLORS.KHAKI_DARK 
+                              }}
+                          >
+                            {verification.document_type.replace("_", " ")}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex flex-col gap-0.5">
+                          <p className="text-xs font-bold text-slate-500 truncate">
+                            {verification.profiles?.email}
+                          </p>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                            Legal: <span className="text-slate-600">{verification.legal_name}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <div className="text-right">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Submitted</p>
+                          <p className="text-xs font-black text-slate-700">
+                            {new Date(verification.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                          </p>
+                      </div>
+                      <div 
+                          className="p-2 rounded-xl bg-slate-50 group-hover:bg-[#FF7F50] transition-colors"
+                      >
+                          <ArrowLeft className="h-4 w-4 text-slate-300 group-hover:text-white rotate-180" />
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    <div className="text-right">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Submitted</p>
-                        <p className="text-xs font-black text-slate-700">
-                          {new Date(verification.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                        </p>
-                    </div>
-                    <div 
-                        className="p-2 rounded-xl bg-slate-50 group-hover:bg-[#FF7F50] transition-colors"
-                    >
-                        <ArrowLeft className="h-4 w-4 text-slate-300 group-hover:text-white rotate-180" />
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+            
+            {hasMore && !searchQuery && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                  style={{ background: COLORS.TEAL }}
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
       

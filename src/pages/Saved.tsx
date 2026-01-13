@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getUserId } from "@/lib/sessionManager";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Trash2, CheckCircle, Bookmark, ArrowRight } from "lucide-react";
+import { Trash2, CheckCircle, Bookmark, ArrowRight, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   AlertDialog,
@@ -33,9 +33,7 @@ const COLORS = {
   SOFT_GRAY: "#F8F9FA"
 };
 
-// Cache for saved items
-const savedCache = { data: null as any[] | null, timestamp: 0 };
-const CACHE_TTL = 5 * 60 * 1000;
+const ITEMS_PER_PAGE = 20;
 
 const Saved = () => {
   const [savedListings, setSavedListings] = useState<any[]>([]);
@@ -46,6 +44,9 @@ const Saved = () => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showClearAllDialog, setShowClearAllDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
   const hasFetched = useRef(false);
@@ -59,37 +60,35 @@ const Saved = () => {
         return;
       }
       setUserId(uid);
-      
-      // Use cache if available
-      if (savedCache.data && Date.now() - savedCache.timestamp < CACHE_TTL && !hasFetched.current) {
-        setSavedListings(savedCache.data);
-        setIsLoading(false);
-        hasFetched.current = true;
-      } else {
-        fetchSavedItems(uid);
-      }
+      fetchSavedItems(uid, 0);
     };
     initializeData();
   }, [authLoading]);
 
   useEffect(() => {
     if (userId && hasFetched.current) {
-      // Only refetch if items changed
-      fetchSavedItems(userId, 0, 20);
+      fetchSavedItems(userId, 0);
     }
   }, [savedItems]);
 
-  const fetchSavedItems = async (uid: string, offset: number = 0, limit: number = 20) => {
-    setIsLoading(true);
+  const fetchSavedItems = async (uid: string, fetchOffset: number) => {
+    if (fetchOffset === 0) {
+      setIsLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     const { data: savedData } = await supabase
       .from("saved_items")
       .select("item_id, item_type")
       .eq("user_id", uid)
-      .range(offset, offset + limit - 1)
+      .range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1)
       .order('created_at', { ascending: false });
 
     if (!savedData || savedData.length === 0) {
+      setHasMore(false);
       setIsLoading(false);
+      setLoadingMore(false);
       return [];
     }
 
@@ -125,17 +124,24 @@ const Saved = () => {
       .map(saved => itemMap.get(saved.item_id))
       .filter(Boolean);
 
-    if (offset === 0) {
+    if (fetchOffset === 0) {
       setSavedListings(items);
-      savedCache.data = items;
-      savedCache.timestamp = Date.now();
       hasFetched.current = true;
     } else {
       setSavedListings(prev => [...prev, ...items]);
     }
     
+    setOffset(fetchOffset + ITEMS_PER_PAGE);
+    setHasMore(savedData.length >= ITEMS_PER_PAGE);
     setIsLoading(false);
+    setLoadingMore(false);
     return items;
+  };
+
+  const loadMore = () => {
+    if (userId && hasMore && !loadingMore) {
+      fetchSavedItems(userId, offset);
+    }
   };
 
   const toggleItemSelection = (itemId: string) => {
@@ -279,46 +285,67 @@ const Saved = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {savedListings.map((item) => (
-              <div
-                key={item.id}
-                className={`relative transition-all duration-300 ${isSelectionMode ? 'cursor-pointer' : ''}`}
-                onClick={() => isSelectionMode && toggleItemSelection(item.id)}
-              >
-                {isSelectionMode && (
-                  <div
-                    className={`absolute top-4 left-4 z-50 h-8 w-8 rounded-xl border-2 flex items-center justify-center backdrop-blur-md transition-all ${
-                      selectedItems.has(item.id)
-                        ? "bg-[#008080] border-[#008080]"
-                        : "bg-black/20 border-white"
-                    }`}
-                  >
-                    {selectedItems.has(item.id) && (
-                      <CheckCircle className="h-5 w-5 text-white" />
-                    )}
-                  </div>
-                )}
-                
-                {/* Visual overlay when selecting */}
-                {isSelectionMode && selectedItems.has(item.id) && (
-                    <div className="absolute inset-0 bg-[#008080]/10 z-40 rounded-[32px] pointer-events-none border-2 border-[#008080]" />
-                )}
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {savedListings.map((item) => (
+                <div
+                  key={item.id}
+                  className={`relative transition-all duration-300 ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                  onClick={() => isSelectionMode && toggleItemSelection(item.id)}
+                >
+                  {isSelectionMode && (
+                    <div
+                      className={`absolute top-4 left-4 z-50 h-8 w-8 rounded-xl border-2 flex items-center justify-center backdrop-blur-md transition-all ${
+                        selectedItems.has(item.id)
+                          ? "bg-[#008080] border-[#008080]"
+                          : "bg-black/20 border-white"
+                      }`}
+                    >
+                      {selectedItems.has(item.id) && (
+                        <CheckCircle className="h-5 w-5 text-white" />
+                      )}
+                    </div>
+                  )}
+                  
+                  {isSelectionMode && selectedItems.has(item.id) && (
+                      <div className="absolute inset-0 bg-[#008080]/10 z-40 rounded-[32px] pointer-events-none border-2 border-[#008080]" />
+                  )}
 
-                <ListingCard
-                  id={item.id}
-                  type={item.savedType.replace("_", " ").toUpperCase() as any}
-                  name={item.name || item.local_name || item.location_name}
-                  imageUrl={item.image_url || item.photo_urls?.[0] || ""}
-                  location={item.location || item.location_name}
-                  country={item.country}
-                  onSave={() => handleSave(item.id, item.savedType)}
-                  isSaved={true}
-                  showBadge={true}
-                />
+                  <ListingCard
+                    id={item.id}
+                    type={item.savedType.replace("_", " ").toUpperCase() as any}
+                    name={item.name || item.local_name || item.location_name}
+                    imageUrl={item.image_url || item.photo_urls?.[0] || ""}
+                    location={item.location || item.location_name}
+                    country={item.country}
+                    onSave={() => handleSave(item.id, item.savedType)}
+                    isSaved={true}
+                    showBadge={true}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {hasMore && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                  style={{ background: COLORS.TEAL }}
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </main>
 

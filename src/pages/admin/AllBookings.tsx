@@ -45,6 +45,7 @@ const AllBookings = () => {
   }, [user]);
 
   const [hasSearched, setHasSearched] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   // Search handler - only fetch when user performs search
   const handleSearch = async () => {
@@ -55,7 +56,7 @@ const AllBookings = () => {
       return;
     }
     
-    setLoading(true);
+    setSearching(true);
     setHasSearched(true);
     try {
       const searchPattern = `%${searchQuery}%`;
@@ -78,7 +79,7 @@ const AllBookings = () => {
       if (exactMatch) setSelectedBooking(exactMatch);
     } catch (error) {
       toast({ title: "Error searching bookings", variant: "destructive" });
-    } finally { setLoading(false); }
+    } finally { setSearching(false); }
   };
 
   const checkAdminStatus = async () => {
@@ -178,9 +179,17 @@ const AllBookings = () => {
           {/* List Section */}
           <div className="space-y-3">
             <div className="bg-white/80 backdrop-blur-md p-4 rounded-t-[24px] border border-slate-100 border-b-none">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Transaction Log</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                  {searching ? "Searching..." : "Transaction Log"}
+                </span>
             </div>
             <div className="max-h-[70vh] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+              {searching && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2" style={{ borderColor: COLORS.TEAL }}></div>
+                </div>
+              )}
+              {!searching &&
               {filteredBookings.map((booking) => (
                 <Card 
                   key={booking.id} 
@@ -219,7 +228,7 @@ const AllBookings = () => {
                 </Card>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Details Section */}
           <div className="lg:sticky lg:top-24 h-fit">

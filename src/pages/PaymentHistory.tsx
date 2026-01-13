@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle2, Receipt, Calendar, Users, CreditCard, Ticket } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Receipt, Calendar, Users, CreditCard, Ticket, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -21,6 +21,8 @@ const COLORS = {
   RED: "#FF0000",
   SOFT_GRAY: "#F8F9FA"
 };
+
+const ITEMS_PER_PAGE = 20;
 
 interface Booking {
   id: string;
@@ -47,25 +49,35 @@ export default function PaymentHistory() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [itemDetails, setItemDetails] = useState<Record<string, ItemDetails>>({});
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
-    fetchBookings();
+    fetchBookings(0);
   }, [user, navigate]);
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (fetchOffset: number) => {
+    if (fetchOffset === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
       const { data, error } = await supabase
         .from("bookings")
         .select("id,booking_type,total_amount,booking_details,payment_status,status,created_at,guest_name,guest_email,guest_phone,slots_booked,visit_date,item_id")
         .eq("user_id", user?.id)
         .in("payment_status", ["paid", "completed"])
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1);
 
       if (error) throw error;
 
@@ -84,7 +96,14 @@ export default function PaymentHistory() {
         return true;
       });
 
-      setBookings(validBookings);
+      if (fetchOffset === 0) {
+        setBookings(validBookings);
+      } else {
+        setBookings(prev => [...prev, ...validBookings]);
+      }
+      
+      setOffset(fetchOffset + ITEMS_PER_PAGE);
+      setHasMore((data || []).length >= ITEMS_PER_PAGE);
       
       // Batch fetch item details
       if (validBookings.length > 0) {
@@ -94,16 +113,17 @@ export default function PaymentHistory() {
       console.error("Error fetching bookings:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  const fetchItemDetailsBatch = async (bookings: Booking[]) => {
-    const details: Record<string, ItemDetails> = {};
+  const fetchItemDetailsBatch = async (bookingsData: Booking[]) => {
+    const details: Record<string, ItemDetails> = { ...itemDetails };
     
     // Group by type
-    const tripIds = bookings.filter(b => b.booking_type === "trip" || b.booking_type === "event").map(b => b.item_id);
-    const hotelIds = bookings.filter(b => b.booking_type === "hotel").map(b => b.item_id);
-    const adventureIds = bookings.filter(b => b.booking_type === "adventure" || b.booking_type === "adventure_place").map(b => b.item_id);
+    const tripIds = bookingsData.filter(b => b.booking_type === "trip" || b.booking_type === "event").map(b => b.item_id);
+    const hotelIds = bookingsData.filter(b => b.booking_type === "hotel").map(b => b.item_id);
+    const adventureIds = bookingsData.filter(b => b.booking_type === "adventure" || b.booking_type === "adventure_place").map(b => b.item_id);
     
     // Fetch all in parallel
     const [tripsData, hotelsData, adventuresData] = await Promise.all([
@@ -117,6 +137,12 @@ export default function PaymentHistory() {
     (adventuresData.data || []).forEach((a: any) => { details[a.id] = { name: a.name, type: "adventure" }; });
     
     setItemDetails(details);
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchBookings(offset);
+    }
   };
 
   if (loading) {
@@ -170,87 +196,109 @@ export default function PaymentHistory() {
             <p className="text-slate-400 text-sm font-bold uppercase tracking-tight">Your paid bookings will appear here</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {bookings.map((booking) => (
-              <Card key={booking.id} className="bg-white rounded-[28px] p-6 md:p-8 shadow-sm border border-slate-100 overflow-hidden relative group transition-all hover:shadow-md">
-                <div className="absolute top-0 right-0 p-4">
-                   <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
-                      <CheckCircle2 className="h-3 w-3 text-green-600" />
-                      <span className="text-[9px] font-black text-green-600 uppercase tracking-widest">Paid</span>
-                   </div>
-                </div>
-
-                <div className="flex flex-col md:flex-row justify-between gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                       <div className="bg-[#008080]/10 p-2 rounded-xl">
-                          <Ticket className="h-4 w-4 text-[#008080]" />
-                       </div>
-                       <span className="text-[10px] font-black text-[#008080] uppercase tracking-[0.2em]">
-                         {booking.booking_type} Reference
-                       </span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-2xl font-black uppercase tracking-tight leading-tight text-slate-800 mb-1">
-                        {itemDetails[booking.item_id]?.name || booking.booking_details?.trip_name || 'Confirmed Booking'}
-                      </h3>
-                      <p className="text-[10px] font-mono text-slate-400 font-bold">Ref: #{booking.id.slice(0,8).toUpperCase()}</p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-4">
-                      {booking.visit_date && (
-                        <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
-                          <Calendar className="h-4 w-4 text-[#FF7F50]" />
-                          <span className="text-[11px] font-black text-slate-600 uppercase">
-                            {format(new Date(booking.visit_date), 'dd MMM yyyy')}
-                          </span>
-                        </div>
-                      )}
-                      {booking.slots_booked && (
-                        <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
-                          <Users className="h-4 w-4 text-[#FF7F50]" />
-                          <span className="text-[11px] font-black text-slate-600 uppercase">
-                            {booking.slots_booked} Pax
-                          </span>
-                        </div>
-                      )}
-                    </div>
+          <>
+            <div className="space-y-6">
+              {bookings.map((booking) => (
+                <Card key={booking.id} className="bg-white rounded-[28px] p-6 md:p-8 shadow-sm border border-slate-100 overflow-hidden relative group transition-all hover:shadow-md">
+                  <div className="absolute top-0 right-0 p-4">
+                     <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                        <CheckCircle2 className="h-3 w-3 text-green-600" />
+                        <span className="text-[9px] font-black text-green-600 uppercase tracking-widest">Paid</span>
+                     </div>
                   </div>
 
-                  <div className="flex flex-col items-start md:items-end justify-between border-t md:border-t-0 md:border-l border-slate-100 pt-6 md:pt-0 md:pl-8">
-                    <div className="text-left md:text-right mb-6">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Transaction</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-black" style={{ color: COLORS.RED }}>KES {booking.total_amount.toLocaleString()}</span>
+                  <div className="flex flex-col md:flex-row justify-between gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                         <div className="bg-[#008080]/10 p-2 rounded-xl">
+                            <Ticket className="h-4 w-4 text-[#008080]" />
+                         </div>
+                         <span className="text-[10px] font-black text-[#008080] uppercase tracking-[0.2em]">
+                           {booking.booking_type} Reference
+                         </span>
+                      </div>
+
+                      <div>
+                        <h3 className="text-2xl font-black uppercase tracking-tight leading-tight text-slate-800 mb-1">
+                          {itemDetails[booking.item_id]?.name || booking.booking_details?.trip_name || 'Confirmed Booking'}
+                        </h3>
+                        <p className="text-[10px] font-mono text-slate-400 font-bold">Ref: #{booking.id.slice(0,8).toUpperCase()}</p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-4">
+                        {booking.visit_date && (
+                          <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                            <Calendar className="h-4 w-4 text-[#FF7F50]" />
+                            <span className="text-[11px] font-black text-slate-600 uppercase">
+                              {format(new Date(booking.visit_date), 'dd MMM yyyy')}
+                            </span>
+                          </div>
+                        )}
+                        {booking.slots_booked && (
+                          <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                            <Users className="h-4 w-4 text-[#FF7F50]" />
+                            <span className="text-[11px] font-black text-slate-600 uppercase">
+                              {booking.slots_booked} Pax
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    
-                    <div className="w-full">
-                        <BookingDownloadButton
-                            booking={{
-                            bookingId: booking.id,
-                            guestName: booking.guest_name || 'Guest',
-                            guestEmail: booking.guest_email || '',
-                            guestPhone: booking.guest_phone || undefined,
-                            itemName: itemDetails[booking.item_id]?.name || booking.booking_details?.trip_name || 'Booking',
-                            bookingType: booking.booking_type,
-                            visitDate: booking.visit_date || booking.created_at,
-                            totalAmount: booking.total_amount,
-                            slotsBooked: booking.slots_booked || 1,
-                            adults: booking.booking_details?.adults,
-                            children: booking.booking_details?.children,
-                            paymentStatus: booking.payment_status,
-                            facilities: booking.booking_details?.facilities,
-                            activities: booking.booking_details?.activities,
-                            }}
-                        />
+
+                    <div className="flex flex-col items-start md:items-end justify-between border-t md:border-t-0 md:border-l border-slate-100 pt-6 md:pt-0 md:pl-8">
+                      <div className="text-left md:text-right mb-6">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Transaction</p>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl font-black" style={{ color: COLORS.RED }}>KES {booking.total_amount.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="w-full">
+                          <BookingDownloadButton
+                              booking={{
+                              bookingId: booking.id,
+                              guestName: booking.guest_name || 'Guest',
+                              guestEmail: booking.guest_email || '',
+                              guestPhone: booking.guest_phone || undefined,
+                              itemName: itemDetails[booking.item_id]?.name || booking.booking_details?.trip_name || 'Booking',
+                              bookingType: booking.booking_type,
+                              visitDate: booking.visit_date || booking.created_at,
+                              totalAmount: booking.total_amount,
+                              slotsBooked: booking.slots_booked || 1,
+                              adults: booking.booking_details?.adults,
+                              children: booking.booking_details?.children,
+                              paymentStatus: booking.payment_status,
+                              facilities: booking.booking_details?.facilities,
+                              activities: booking.booking_details?.activities,
+                              }}
+                          />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+            
+            {hasMore && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                  style={{ background: COLORS.TEAL }}
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
       <MobileBottomBar />

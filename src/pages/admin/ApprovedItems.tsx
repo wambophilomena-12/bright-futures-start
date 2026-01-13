@@ -19,7 +19,8 @@ import {
   Eye,
   Mail,
   Phone,
-  Globe
+  Globe,
+  Loader2
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +36,8 @@ const COLORS = {
   RED: "#FF0000",
   SOFT_GRAY: "#F8F9FA"
 };
+
+const ITEMS_PER_PAGE = 20;
 
 interface ListingItem {
   id: string;
@@ -55,8 +58,11 @@ const ApprovedItems = () => {
   const [items, setItems] = useState<ListingItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<ListingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
   const getTableName = (type: string) => {
     if (type === "trip") return "trips";
@@ -88,15 +94,21 @@ const ApprovedItems = () => {
       navigate("/auth");
       return;
     }
-    fetchApprovedItems();
+    fetchApprovedItems(0);
   }, [user, navigate]);
 
-  const fetchApprovedItems = async () => {
+  const fetchApprovedItems = async (fetchOffset: number) => {
+    if (fetchOffset === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
       const [tripsRes, hotelsRes, adventuresRes] = await Promise.all([
-        supabase.from("trips").select("id, name, location, country, created_at, is_hidden, created_by").eq("approval_status", "approved"),
-        supabase.from("hotels").select("id, name, location, country, created_at, is_hidden, created_by").eq("approval_status", "approved"),
-        supabase.from("adventure_places").select("id, name, location, country, created_at, is_hidden, created_by").eq("approval_status", "approved"),
+        supabase.from("trips").select("id, name, location, country, created_at, is_hidden, created_by").eq("approval_status", "approved").range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1),
+        supabase.from("hotels").select("id, name, location, country, created_at, is_hidden, created_by").eq("approval_status", "approved").range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1),
+        supabase.from("adventure_places").select("id, name, location, country, created_at, is_hidden, created_by").eq("approval_status", "approved").range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1),
       ]);
 
       const allRawItems = [
@@ -120,12 +132,28 @@ const ApprovedItems = () => {
       }));
 
       const sortedItems = allItems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setItems(sortedItems);
-      setFilteredItems(sortedItems);
+      
+      if (fetchOffset === 0) {
+        setItems(sortedItems);
+        setFilteredItems(sortedItems);
+      } else {
+        setItems(prev => [...prev, ...sortedItems]);
+        setFilteredItems(prev => [...prev, ...sortedItems]);
+      }
+      
+      setOffset(fetchOffset + ITEMS_PER_PAGE);
+      setHasMore(allItems.length >= ITEMS_PER_PAGE);
     } catch (error) {
       console.error("Error fetching approved items:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchApprovedItems(offset);
     }
   };
 
@@ -202,92 +230,114 @@ const ApprovedItems = () => {
             </p>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="w-full group relative bg-white hover:bg-slate-50 border border-slate-100 rounded-3xl transition-all duration-300 shadow-sm hover:shadow-xl"
-              >
-                <button
-                  onClick={() => navigate(`/admin/review/${item.type}/${item.id}`)}
-                  className="w-full flex items-center justify-between p-5"
+          <>
+            <div className="space-y-3">
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="w-full group relative bg-white hover:bg-slate-50 border border-slate-100 rounded-3xl transition-all duration-300 shadow-sm hover:shadow-xl"
                 >
-                  <div className="flex items-center gap-5">
-                    <div 
-                      className="h-14 w-14 rounded-2xl flex items-center justify-center transition-colors group-hover:scale-110 duration-300"
-                      style={{ backgroundColor: `${COLORS.TEAL}10`, color: COLORS.TEAL }}
-                    >
-                      {getIcon(item.type)}
-                    </div>
-                    
-                    <div className="text-left space-y-1">
-                      <p className="font-black uppercase tracking-tight text-slate-800 leading-none">
-                        {item.name}
-                      </p>
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="h-3 w-3 text-[#FF7F50]" />
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          {item.location}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Globe className="h-3 w-3 text-[#008080]" />
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          {item.country}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="hidden sm:flex flex-col items-end gap-1">
-                      {item.is_hidden && (
-                        <Badge variant="outline" className="text-[9px] border-slate-200 text-slate-400 font-black uppercase tracking-tighter">
-                          <EyeOff className="h-3 w-3 mr-1" /> Hidden
-                        </Badge>
-                      )}
-                      <div className="flex items-center gap-1.5 bg-[#F0E68C]/20 px-3 py-1 rounded-full border border-[#F0E68C]/50">
-                        <CheckCircle2 className="h-3 w-3 text-[#857F3E]" />
-                        <span className="text-[9px] font-black text-[#857F3E] uppercase tracking-widest">Verified</span>
-                      </div>
-                    </div>
-                    <div className="h-10 w-10 rounded-full flex items-center justify-center bg-slate-50 group-hover:bg-[#008080] group-hover:text-white transition-colors">
-                      <ChevronRight className="h-5 w-5" />
-                    </div>
-                  </div>
-                </button>
-                
-                {/* Creator Info & Hide Toggle */}
-                <div className="px-5 pb-4 pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-50">
-                  <div className="flex flex-wrap gap-4 text-[10px] text-slate-500">
-                    {item.creator_email && (
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-3 w-3 text-[#008080]" />
-                        <span className="font-bold">{item.creator_email}</span>
-                      </div>
-                    )}
-                    {item.creator_phone && (
-                      <div className="flex items-center gap-1">
-                        <Phone className="h-3 w-3 text-[#008080]" />
-                        <span className="font-bold">{item.creator_phone}</span>
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant={item.is_hidden ? "default" : "outline"}
-                    onClick={(e) => handleToggleVisibility(item, e)}
-                    disabled={togglingId === item.id}
-                    className="text-[9px] font-black uppercase tracking-widest h-8 rounded-xl"
-                    style={item.is_hidden ? { background: COLORS.TEAL } : {}}
+                  <button
+                    onClick={() => navigate(`/admin/review/${item.type}/${item.id}`)}
+                    className="w-full flex items-center justify-between p-5"
                   >
-                    {item.is_hidden ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
-                    {item.is_hidden ? "Publish" : "Hide"}
-                  </Button>
+                    <div className="flex items-center gap-5">
+                      <div 
+                        className="h-14 w-14 rounded-2xl flex items-center justify-center transition-colors group-hover:scale-110 duration-300"
+                        style={{ backgroundColor: `${COLORS.TEAL}10`, color: COLORS.TEAL }}
+                      >
+                        {getIcon(item.type)}
+                      </div>
+                      
+                      <div className="text-left space-y-1">
+                        <p className="font-black uppercase tracking-tight text-slate-800 leading-none">
+                          {item.name}
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-3 w-3 text-[#FF7F50]" />
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            {item.location}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Globe className="h-3 w-3 text-[#008080]" />
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            {item.country}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="hidden sm:flex flex-col items-end gap-1">
+                        {item.is_hidden && (
+                          <Badge variant="outline" className="text-[9px] border-slate-200 text-slate-400 font-black uppercase tracking-tighter">
+                            <EyeOff className="h-3 w-3 mr-1" /> Hidden
+                          </Badge>
+                        )}
+                        <div className="flex items-center gap-1.5 bg-[#F0E68C]/20 px-3 py-1 rounded-full border border-[#F0E68C]/50">
+                          <CheckCircle2 className="h-3 w-3 text-[#857F3E]" />
+                          <span className="text-[9px] font-black text-[#857F3E] uppercase tracking-widest">Verified</span>
+                        </div>
+                      </div>
+                      <div className="h-10 w-10 rounded-full flex items-center justify-center bg-slate-50 group-hover:bg-[#008080] group-hover:text-white transition-colors">
+                        <ChevronRight className="h-5 w-5" />
+                      </div>
+                    </div>
+                  </button>
+                  
+                  {/* Creator Info & Hide Toggle */}
+                  <div className="px-5 pb-4 pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-50">
+                    <div className="flex flex-wrap gap-4 text-[10px] text-slate-500">
+                      {item.creator_email && (
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-3 w-3 text-[#008080]" />
+                          <span className="font-bold">{item.creator_email}</span>
+                        </div>
+                      )}
+                      {item.creator_phone && (
+                        <div className="flex items-center gap-1">
+                          <Phone className="h-3 w-3 text-[#008080]" />
+                          <span className="font-bold">{item.creator_phone}</span>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={item.is_hidden ? "default" : "outline"}
+                      onClick={(e) => handleToggleVisibility(item, e)}
+                      disabled={togglingId === item.id}
+                      className="text-[9px] font-black uppercase tracking-widest h-8 rounded-xl"
+                      style={item.is_hidden ? { background: COLORS.TEAL } : {}}
+                    >
+                      {item.is_hidden ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
+                      {item.is_hidden ? "Publish" : "Hide"}
+                    </Button>
+                  </div>
                 </div>
+              ))}
+            </div>
+            
+            {hasMore && !searchQuery && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                  style={{ background: COLORS.TEAL }}
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </main>
 

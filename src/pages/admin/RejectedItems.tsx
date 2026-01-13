@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
   ChevronRight, Plane, Building, Tent, MapPin, 
-  Search, ArrowLeft, XCircle, AlertCircle 
+  Search, ArrowLeft, XCircle, AlertCircle, Loader2 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,8 @@ const COLORS = {
   RED: "#FF0000",
   SOFT_GRAY: "#F8F9FA"
 };
+
+const ITEMS_PER_PAGE = 20;
 
 interface ListingItem {
   id: string;
@@ -35,22 +37,31 @@ const RejectedItems = () => {
   const [items, setItems] = useState<ListingItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<ListingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
-    fetchRejectedItems();
+    fetchRejectedItems(0);
   }, [user, navigate]);
 
-  const fetchRejectedItems = async () => {
+  const fetchRejectedItems = async (fetchOffset: number) => {
+    if (fetchOffset === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
       const [tripsRes, hotelsRes, adventuresRes] = await Promise.all([
-        supabase.from("trips").select("id, name, location, created_at").eq("approval_status", "rejected"),
-        supabase.from("hotels").select("id, name, location, created_at").eq("approval_status", "rejected"),
-        supabase.from("adventure_places").select("id, name, location, created_at").eq("approval_status", "rejected"),
+        supabase.from("trips").select("id, name, location, created_at").eq("approval_status", "rejected").range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1),
+        supabase.from("hotels").select("id, name, location, created_at").eq("approval_status", "rejected").range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1),
+        supabase.from("adventure_places").select("id, name, location, created_at").eq("approval_status", "rejected").range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1),
       ]);
 
       const allItems: ListingItem[] = [
@@ -60,12 +71,28 @@ const RejectedItems = () => {
       ];
 
       const sortedItems = allItems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setItems(sortedItems);
-      setFilteredItems(sortedItems);
+      
+      if (fetchOffset === 0) {
+        setItems(sortedItems);
+        setFilteredItems(sortedItems);
+      } else {
+        setItems(prev => [...prev, ...sortedItems]);
+        setFilteredItems(prev => [...prev, ...sortedItems]);
+      }
+      
+      setOffset(fetchOffset + ITEMS_PER_PAGE);
+      setHasMore(allItems.length >= ITEMS_PER_PAGE);
     } catch (error) {
       console.error("Error fetching rejected items:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchRejectedItems(offset);
     }
   };
 
@@ -143,56 +170,78 @@ const RejectedItems = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredItems.map((item) => {
-              const Icon = getIcon(item.type);
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => navigate(`/admin/review/${item.type}/${item.id}`)}
-                  className="w-full text-left bg-white rounded-[28px] p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:scale-[1.01] transition-all duration-300 group relative overflow-hidden"
-                >
-                  {/* Accent Border */}
-                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500" />
-                  
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-5">
-                      <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
-                        <Icon className="h-6 w-6 text-slate-400 group-hover:text-red-500" />
-                      </div>
-                      
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-red-500 bg-red-50 px-2 py-0.5 rounded">
-                            {item.type}
-                          </span>
-                          <span className="text-[9px] font-bold text-slate-300 uppercase">
-                            {new Date(item.created_at).toLocaleDateString()}
-                          </span>
+          <>
+            <div className="space-y-4">
+              {filteredItems.map((item) => {
+                const Icon = getIcon(item.type);
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => navigate(`/admin/review/${item.type}/${item.id}`)}
+                    className="w-full text-left bg-white rounded-[28px] p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:scale-[1.01] transition-all duration-300 group relative overflow-hidden"
+                  >
+                    {/* Accent Border */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500" />
+                    
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-5">
+                        <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                          <Icon className="h-6 w-6 text-slate-400 group-hover:text-red-500" />
                         </div>
-                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-800 leading-none mb-1">
-                          {item.name}
-                        </h3>
-                        <div className="flex items-center gap-1 text-slate-400">
-                          <MapPin className="h-3 w-3" />
-                          <span className="text-[10px] font-bold uppercase tracking-tight">{item.location}</span>
+                        
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-red-500 bg-red-50 px-2 py-0.5 rounded">
+                              {item.type}
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-300 uppercase">
+                              {new Date(item.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-black uppercase tracking-tight text-slate-800 leading-none mb-1">
+                            {item.name}
+                          </h3>
+                          <div className="flex items-center gap-1 text-slate-400">
+                            <MapPin className="h-3 w-3" />
+                            <span className="text-[10px] font-bold uppercase tracking-tight">{item.location}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-col items-end gap-3">
-                      <Badge className="bg-red-500 hover:bg-red-600 text-white border-none px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">
-                        Action Required
-                      </Badge>
-                      <div className="bg-slate-50 p-2 rounded-xl group-hover:bg-[#008080] transition-colors">
-                        <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-white" />
+                      <div className="flex flex-col items-end gap-3">
+                        <Badge className="bg-red-500 hover:bg-red-600 text-white border-none px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">
+                          Action Required
+                        </Badge>
+                        <div className="bg-slate-50 p-2 rounded-xl group-hover:bg-[#008080] transition-colors">
+                          <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-white" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                  </button>
+                );
+              })}
+            </div>
+            
+            {hasMore && !searchQuery && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                  style={{ background: COLORS.RED }}
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Footer Info */}

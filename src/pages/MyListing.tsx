@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Calendar, Edit3, EyeOff, LayoutDashboard, ReceiptText, Star } from "lucide-react";
+import { MapPin, Calendar, Edit3, EyeOff, LayoutDashboard, ReceiptText, Star, Loader2 } from "lucide-react";
 
 const COLORS = {
   TEAL: "#008080",
@@ -20,6 +20,8 @@ const COLORS = {
   RED: "#FF0000"
 };
 
+const ITEMS_PER_PAGE = 20;
+
 const MyListing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -27,50 +29,90 @@ const MyListing = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [myContent, setMyContent] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMoreListings, setLoadingMoreListings] = useState(false);
+  const [loadingMoreBookings, setLoadingMoreBookings] = useState(false);
+  const [listingsOffset, setListingsOffset] = useState(0);
+  const [bookingsOffset, setBookingsOffset] = useState(0);
+  const [hasMoreListings, setHasMoreListings] = useState(true);
+  const [hasMoreBookings, setHasMoreBookings] = useState(true);
 
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
-
-    const fetchData = async () => {
-      const userEmail = user?.email;
-
-      // Fetch all data in parallel with specific fields
-      const [tripsRes, hotelsRes, adventuresRes, hotelsAdminRes, adventuresAdminRes] = await Promise.all([
-        supabase.from("trips").select("id,name,location,country,image_url,price,approval_status,is_hidden,type").eq("created_by", user.id),
-        supabase.from("hotels").select("id,name,location,country,image_url,approval_status,is_hidden,created_by").eq("created_by", user.id),
-        supabase.from("adventure_places").select("id,name,location,country,image_url,entry_fee,approval_status,is_hidden,created_by").eq("created_by", user.id),
-        userEmail ? supabase.from("hotels").select("id,name,location,country,image_url,approval_status,is_hidden,created_by").contains("allowed_admin_emails", [userEmail]) : Promise.resolve({ data: [] }),
-        userEmail ? supabase.from("adventure_places").select("id,name,location,country,image_url,entry_fee,approval_status,is_hidden,created_by").contains("allowed_admin_emails", [userEmail]) : Promise.resolve({ data: [] })
-      ]);
-
-      const allContent = [
-        ...(tripsRes.data?.map(t => ({ ...t, type: "trip", isCreator: true })) || []),
-        ...(hotelsRes.data?.map(h => ({ ...h, type: "hotel", isCreator: true })) || []),
-        ...(adventuresRes.data?.map(a => ({ ...a, type: "adventure", isCreator: true })) || []),
-        ...(hotelsAdminRes.data?.filter(h => h.created_by !== user.id).map(h => ({ ...h, type: "hotel", isCreator: false })) || []),
-        ...(adventuresAdminRes.data?.filter(a => a.created_by !== user.id).map(a => ({ ...a, type: "adventure", isCreator: false })) || [])
-      ];
-
-      setMyContent(allContent);
-
-      const allIds = allContent.map(c => c.id);
-      if (allIds.length > 0) {
-        const { data } = await supabase
-          .from("creator_booking_summary")
-          .select("id,item_id,booking_type,status,payment_status,total_amount,created_at")
-          .in("item_id", allIds)
-          .order("created_at", { ascending: false });
-        setBookings(data || []);
-      }
-      
-      setLoading(false);
-    };
-
-    fetchData();
+    fetchData(0, 0);
   }, [user, navigate]);
+
+  const fetchData = async (listingsFetchOffset: number, bookingsFetchOffset: number) => {
+    if (listingsFetchOffset === 0 && bookingsFetchOffset === 0) {
+      setLoading(true);
+    }
+
+    const userEmail = user?.email;
+
+    // Fetch all data in parallel with specific fields
+    const [tripsRes, hotelsRes, adventuresRes, hotelsAdminRes, adventuresAdminRes] = await Promise.all([
+      supabase.from("trips").select("id,name,location,country,image_url,price,approval_status,is_hidden,type").eq("created_by", user.id).range(listingsFetchOffset, listingsFetchOffset + ITEMS_PER_PAGE - 1),
+      supabase.from("hotels").select("id,name,location,country,image_url,approval_status,is_hidden,created_by").eq("created_by", user.id).range(listingsFetchOffset, listingsFetchOffset + ITEMS_PER_PAGE - 1),
+      supabase.from("adventure_places").select("id,name,location,country,image_url,entry_fee,approval_status,is_hidden,created_by").eq("created_by", user.id).range(listingsFetchOffset, listingsFetchOffset + ITEMS_PER_PAGE - 1),
+      userEmail ? supabase.from("hotels").select("id,name,location,country,image_url,approval_status,is_hidden,created_by").contains("allowed_admin_emails", [userEmail]).range(listingsFetchOffset, listingsFetchOffset + ITEMS_PER_PAGE - 1) : Promise.resolve({ data: [] }),
+      userEmail ? supabase.from("adventure_places").select("id,name,location,country,image_url,entry_fee,approval_status,is_hidden,created_by").contains("allowed_admin_emails", [userEmail]).range(listingsFetchOffset, listingsFetchOffset + ITEMS_PER_PAGE - 1) : Promise.resolve({ data: [] })
+    ]);
+
+    const allContent = [
+      ...(tripsRes.data?.map(t => ({ ...t, type: "trip", isCreator: true })) || []),
+      ...(hotelsRes.data?.map(h => ({ ...h, type: "hotel", isCreator: true })) || []),
+      ...(adventuresRes.data?.map(a => ({ ...a, type: "adventure", isCreator: true })) || []),
+      ...(hotelsAdminRes.data?.filter(h => h.created_by !== user.id).map(h => ({ ...h, type: "hotel", isCreator: false })) || []),
+      ...(adventuresAdminRes.data?.filter(a => a.created_by !== user.id).map(a => ({ ...a, type: "adventure", isCreator: false })) || [])
+    ];
+
+    if (listingsFetchOffset === 0) {
+      setMyContent(allContent);
+    } else {
+      setMyContent(prev => [...prev, ...allContent]);
+    }
+    
+    setListingsOffset(listingsFetchOffset + ITEMS_PER_PAGE);
+    setHasMoreListings(allContent.length >= ITEMS_PER_PAGE);
+
+    const allIds = listingsFetchOffset === 0 ? allContent.map(c => c.id) : [...myContent, ...allContent].map(c => c.id);
+    if (allIds.length > 0) {
+      const { data } = await supabase
+        .from("creator_booking_summary")
+        .select("id,item_id,booking_type,status,payment_status,total_amount,created_at")
+        .in("item_id", allIds)
+        .order("created_at", { ascending: false })
+        .range(bookingsFetchOffset, bookingsFetchOffset + ITEMS_PER_PAGE - 1);
+      
+      if (bookingsFetchOffset === 0) {
+        setBookings(data || []);
+      } else {
+        setBookings(prev => [...prev, ...(data || [])]);
+      }
+      setBookingsOffset(bookingsFetchOffset + ITEMS_PER_PAGE);
+      setHasMoreBookings((data || []).length >= ITEMS_PER_PAGE);
+    }
+    
+    setLoading(false);
+    setLoadingMoreListings(false);
+    setLoadingMoreBookings(false);
+  };
+
+  const loadMoreListings = () => {
+    if (hasMoreListings && !loadingMoreListings) {
+      setLoadingMoreListings(true);
+      fetchData(listingsOffset, 0);
+    }
+  };
+
+  const loadMoreBookings = () => {
+    if (hasMoreBookings && !loadingMoreBookings) {
+      setLoadingMoreBookings(true);
+      fetchData(0, bookingsOffset);
+    }
+  };
 
   const getCategoryCount = (category: string) => myContent.filter(item => item.type === category).length;
   const getBookingCount = (category: string) => bookings.filter(b => b.booking_type === category).length;
@@ -268,6 +310,26 @@ const MyListing = () => {
               </div>
               {renderListings('adventure')}
             </section>
+            
+            {hasMoreListings && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  onClick={loadMoreListings}
+                  disabled={loadingMoreListings}
+                  className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                  style={{ background: COLORS.TEAL }}
+                >
+                  {loadingMoreListings ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More Listings"
+                  )}
+                </Button>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -294,6 +356,26 @@ const MyListing = () => {
                 </div>
                 {renderBookings('adventure_place')}
             </section>
+            
+            {hasMoreBookings && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  onClick={loadMoreBookings}
+                  disabled={loadingMoreBookings}
+                  className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                  style={{ background: COLORS.CORAL }}
+                >
+                  {loadingMoreBookings ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More Bookings"
+                  )}
+                </Button>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
