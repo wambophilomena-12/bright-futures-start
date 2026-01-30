@@ -216,6 +216,14 @@ const TripDetail = () => {
             <span className="text-xs font-bold uppercase tracking-tight">{trip.phone_number}</span>
           </a>
         )}
+        {trip.email && (
+          <a href={`mailto:${trip.email}`} className="flex items-center gap-3 text-slate-600 hover:text-[#008080] transition-colors">
+            <div className="p-2 rounded-lg bg-slate-50">
+              <Mail className="h-4 w-4 text-[#008080]" />
+            </div>
+            <span className="text-xs font-bold tracking-tight">{trip.email}</span>
+          </a>
+        )}
       </div>
     </div>
   );

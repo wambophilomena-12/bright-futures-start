@@ -23,6 +23,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           available_slots: number | null
+          child_entry_fee: number | null
           closing_hours: string | null
           country: string
           created_at: string
@@ -57,6 +58,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           available_slots?: number | null
+          child_entry_fee?: number | null
           closing_hours?: string | null
           country: string
           created_at?: string
@@ -91,6 +93,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           available_slots?: number | null
+          child_entry_fee?: number | null
           closing_hours?: string | null
           country?: string
           created_at?: string

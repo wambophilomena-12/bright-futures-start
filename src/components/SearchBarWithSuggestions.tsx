@@ -80,18 +80,20 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
   // Fetch most popular items to show on focus (before typing)
   const fetchMostPopular = async () => {
     try {
-      const [tripsData, hotelsData, adventuresData] = await Promise.all([
-        supabase.from("trips").select("id, name, location, place, country, date, image_url").eq("approval_status", "approved").eq("is_hidden", false).order("created_at", { ascending: false }).limit(3),
+      const [tripsData, eventsData, hotelsData, adventuresData] = await Promise.all([
+        supabase.from("trips").select("id, name, location, place, country, date, image_url, type").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "trip").order("created_at", { ascending: false }).limit(3),
+        supabase.from("trips").select("id, name, location, place, country, date, image_url, type").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "event").order("created_at", { ascending: false }).limit(3),
         supabase.from("hotels").select("id, name, location, place, country, image_url").eq("approval_status", "approved").eq("is_hidden", false).order("created_at", { ascending: false }).limit(3),
         supabase.from("adventure_places").select("id, name, location, place, country, image_url").eq("approval_status", "approved").eq("is_hidden", false).order("created_at", { ascending: false }).limit(3)
       ]);
 
       const popular: SearchResult[] = [
-        ...(tripsData.data || []).map((item) => ({ ...item, type: (item as any).type === 'event' ? "event" as const : "trip" as const })),
+        ...(tripsData.data || []).map((item) => ({ ...item, type: "trip" as const })),
+        ...(eventsData.data || []).map((item) => ({ ...item, type: "event" as const })),
         ...(hotelsData.data || []).map((item) => ({ ...item, type: "hotel" as const })),
         ...(adventuresData.data || []).map((item) => ({ ...item, type: "adventure" as const }))
       ];
-      setMostPopular(popular.slice(0, 6));
+      setMostPopular(popular.slice(0, 8));
     } catch (error) {
       console.error("Error fetching most popular:", error);
     }

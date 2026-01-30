@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   MapPin, Clock, ArrowLeft, 
-  Heart, Star, Circle, ShieldCheck, Tent, Zap, Calendar, Loader2, Share2, Copy, Navigation, AlertCircle
+  Heart, Star, Circle, ShieldCheck, Tent, Zap, Calendar, Loader2, Share2, Copy, Navigation, AlertCircle, Phone, Mail
 } from "lucide-react";
 import { SimilarItems } from "@/components/SimilarItems";
 import { useToast } from "@/hooks/use-toast";
@@ -384,6 +384,29 @@ const AdventurePlaceDetail = () => {
                      onClick={() => navigator.share && navigator.share({ title: place.name, url: window.location.href })} 
                   />
                 </div>
+
+                {/* Contact Section */}
+                {(place.phone_numbers?.length > 0 || place.email) && (
+                  <div className="space-y-3 pt-4 border-t border-slate-100">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact</h3>
+                    {place.phone_numbers?.map((phone: string, idx: number) => (
+                      <a key={idx} href={`tel:${phone}`} className="flex items-center gap-3 text-slate-600 hover:text-[#008080] transition-colors">
+                        <div className="p-2 rounded-lg bg-slate-50">
+                          <Phone className="h-4 w-4 text-[#008080]" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-tight">{phone}</span>
+                      </a>
+                    ))}
+                    {place.email && (
+                      <a href={`mailto:${place.email}`} className="flex items-center gap-3 text-slate-600 hover:text-[#008080] transition-colors">
+                        <div className="p-2 rounded-lg bg-slate-50">
+                          <Mail className="h-4 w-4 text-[#008080]" />
+                        </div>
+                        <span className="text-xs font-bold tracking-tight">{place.email}</span>
+                      </a>
+                    )}
+                  </div>
+                )}
             </div>
           </div>
         </div>

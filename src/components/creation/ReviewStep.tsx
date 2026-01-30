@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, MapPin, Clock, DollarSign, Phone, Mail, User, Calendar, Building, Users } from "lucide-react";
+import { CheckCircle2, MapPin, Clock, DollarSign, Phone, Mail, User, Calendar, Building, Users, Ticket } from "lucide-react";
 
 interface ReviewStepProps {
   type: 'hotel' | 'adventure' | 'trip' | 'event';
@@ -71,6 +71,9 @@ export const ReviewStep = ({ type, data, creatorName, creatorEmail, creatorPhone
     </div>
   );
 
+  const isHotelOrAdventure = type === 'hotel' || type === 'adventure';
+  const isTripOrEvent = type === 'trip' || type === 'event';
+
   return (
     <Card className="bg-white rounded-[28px] p-6 shadow-sm border border-slate-100 space-y-6 animate-in fade-in slide-in-from-right-4">
       <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
@@ -90,7 +93,7 @@ export const ReviewStep = ({ type, data, creatorName, creatorEmail, creatorPhone
       {/* Basic Info */}
       <Section title="Basic Information" icon={Building}>
         <InfoRow label="Name" value={data.name} fullWidth />
-        {(type === 'hotel' || type === 'adventure') && (
+        {isHotelOrAdventure && (
           <>
             <InfoRow label="Registration Name" value={data.registrationName} />
             <InfoRow label="Registration Number" value={data.registrationNumber} />
@@ -112,27 +115,26 @@ export const ReviewStep = ({ type, data, creatorName, creatorEmail, creatorPhone
       </Section>
 
       {/* Date & Time for Trip/Event */}
-      {(type === 'trip' || type === 'event') && (
+      {isTripOrEvent && (
         <Section title="Date & Schedule" icon={Calendar}>
           {data.isFlexibleDate ? (
-            <InfoRow label="Date Type" value="Flexible / Open Availability" fullWidth />
-          ) : (
-            <InfoRow label="Fixed Date" value={data.date ? new Date(data.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : undefined} />
-          )}
-          {(data.isFlexibleDate || type === 'event') && (
             <>
+              <InfoRow label="Date Type" value="Flexible / Open Availability" fullWidth />
               <InfoRow label="Opening Hours" value={data.openingHours} />
               <InfoRow label="Closing Hours" value={data.closingHours} />
+              <InfoRow label="Working Days" value={formatDays(data.workingDays)} fullWidth />
             </>
-          )}
-          {data.isFlexibleDate && (
-            <InfoRow label="Working Days" value={formatDays(data.workingDays)} fullWidth />
+          ) : (
+            <>
+              <InfoRow label="Fixed Date" value={data.date ? new Date(data.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : undefined} />
+              <InfoRow label="Event/Trip Hours" value={data.openingHours && data.closingHours ? `${data.openingHours} - ${data.closingHours}` : undefined} />
+            </>
           )}
         </Section>
       )}
 
       {/* Operating Hours for Hotel/Adventure */}
-      {(type === 'hotel' || type === 'adventure') && (
+      {isHotelOrAdventure && (
         <Section title="Operating Hours" icon={Clock}>
           <InfoRow label="Opening Hours" value={data.openingHours} />
           <InfoRow label="Closing Hours" value={data.closingHours} />
@@ -142,7 +144,7 @@ export const ReviewStep = ({ type, data, creatorName, creatorEmail, creatorPhone
 
       {/* Pricing */}
       <Section title="Pricing & Capacity" icon={DollarSign}>
-        {(type === 'trip' || type === 'event') && (
+        {isTripOrEvent && (
           <>
             <InfoRow label="Adult Price" value={formatPrice(data.priceAdult)} />
             <InfoRow label="Child Price" value={formatPrice(data.priceChild)} />
@@ -220,20 +222,18 @@ export const ReviewStep = ({ type, data, creatorName, creatorEmail, creatorPhone
         </Section>
       )}
 
-      {/* Contact Info */}
+      {/* Contact Info - Item Phone/Email */}
       <Section title="Contact Information" icon={Phone}>
-        <InfoRow label="Email" value={data.email} />
-        <InfoRow label="Phone" value={data.phoneNumber} />
+        <InfoRow label="Item Email" value={data.email} />
+        <InfoRow label="Item Phone" value={data.phoneNumber} />
       </Section>
 
       {/* Creator Info */}
-      {(creatorName || creatorEmail) && (
-        <Section title="Creator Profile" icon={User}>
-          <InfoRow label="Name" value={creatorName} />
-          <InfoRow label="Email" value={creatorEmail} />
-          {creatorPhone && <InfoRow label="Phone" value={creatorPhone} />}
-        </Section>
-      )}
+      <Section title="Creator Profile" icon={User}>
+        <InfoRow label="Name" value={creatorName || "Not available"} />
+        <InfoRow label="Email" value={creatorEmail || "Not available"} />
+        {creatorPhone && <InfoRow label="Phone" value={creatorPhone} />}
+      </Section>
 
       {/* Images */}
       {data.imageCount && data.imageCount > 0 && (

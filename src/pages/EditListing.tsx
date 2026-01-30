@@ -87,6 +87,7 @@ const EditListing = () => {
   const [priceChild, setPriceChild] = useState(0);
   const [entranceFeeType, setEntranceFeeType] = useState("free");
   const [entranceFee, setEntranceFee] = useState(0);
+  const [entranceFeeChild, setEntranceFeeChild] = useState(0);
   const [amenities, setAmenities] = useState<string[]>([]);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -201,6 +202,7 @@ const EditListing = () => {
       if (type === 'adventure') {
         setEntranceFeeType((data as any).entry_fee_type || "free");
         setEntranceFee((data as any).entry_fee || 0);
+        setEntranceFeeChild((data as any).child_entry_fee || 0);
         // Handle amenities - could be string[] or object array in jsonb
         const adventureAmenities = (data as any).amenities || [];
         setAmenities(Array.isArray(adventureAmenities) 
@@ -466,6 +468,7 @@ const EditListing = () => {
           if (type === "adventure") {
             updateData.entry_fee_type = entranceFeeType;
             updateData.entry_fee = entranceFee;
+            updateData.child_entry_fee = entranceFeeChild;
           } else if (type === "attraction") {
             updateData.entrance_type = entranceFeeType;
             updateData.price_adult = entranceFee;
@@ -967,18 +970,37 @@ const EditListing = () => {
                     </SelectContent>
                   </Select>
                   {entranceFeeType === "paid" && (
-                    <Input
-                      type="number"
-                      placeholder="Price (KSh)"
-                      value={entranceFee}
-                      onChange={(e) => setEntranceFee(parseFloat(e.target.value) || 0)}
-                      min={0}
-                      className="h-8 border-[#008080]/30"
-                    />
+                    <>
+                      <div>
+                        <Label className="text-xs text-slate-500">Adult (KSh)</Label>
+                        <Input
+                          type="number"
+                          placeholder="Adult Price"
+                          value={entranceFee}
+                          onChange={(e) => setEntranceFee(parseFloat(e.target.value) || 0)}
+                          min={0}
+                          className="h-8 border-[#008080]/30"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-500">Child (KSh)</Label>
+                        <Input
+                          type="number"
+                          placeholder="Child Price"
+                          value={entranceFeeChild}
+                          onChange={(e) => setEntranceFeeChild(parseFloat(e.target.value) || 0)}
+                          min={0}
+                          className="h-8 border-[#008080]/30"
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
               ) : (
-                <p className="font-bold text-[#008080] capitalize">{entranceFeeType === "free" ? "Free" : `KSh ${entranceFee}`}</p>
+                <>
+                  <p className="font-bold text-[#008080] capitalize">{entranceFeeType === "free" ? "Free" : `Adult: KSh ${entranceFee}`}</p>
+                  {entranceFeeType === "paid" && <p className="text-xs text-slate-500">Child: KSh {entranceFeeChild}</p>}
+                </>
               )}
             </div>
           )}
@@ -1049,13 +1071,11 @@ const EditListing = () => {
               </div>
               {editMode.facilities ? (
                 <div className="space-y-2">
-                  {facilities.map((facility, idx) => (
-                    <div key={idx} className="flex gap-1">
-                      <Input placeholder="Name" value={facility.name} onChange={(e) => updateFacility(idx, "name", e.target.value)} className="h-8 text-sm flex-1" />
-                      <Input type="number" placeholder="Price" value={facility.price} onChange={(e) => updateFacility(idx, "price", parseFloat(e.target.value) || 0)} className="h-8 text-sm w-16" />
-                      {(type === "hotel" || type === "attraction") && (
+                    {facilities.map((facility, idx) => (
+                      <div key={idx} className="flex gap-1">
+                        <Input placeholder="Name" value={facility.name} onChange={(e) => updateFacility(idx, "name", e.target.value)} className="h-8 text-sm flex-1" />
+                        <Input type="number" placeholder="Price" value={facility.price} onChange={(e) => updateFacility(idx, "price", parseFloat(e.target.value) || 0)} className="h-8 text-sm w-16" />
                         <Input type="number" placeholder="Cap" value={facility.capacity || 1} onChange={(e) => updateFacility(idx, "capacity", parseInt(e.target.value) || 1)} className="h-8 text-sm w-14" />
-                      )}
                       <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => removeFacility(idx)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
