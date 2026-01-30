@@ -18,6 +18,7 @@ import { compressImages } from "@/lib/imageCompression";
 import { DynamicItemList, DynamicItem } from "@/components/creation/DynamicItemList";
 import { OperatingHoursSection } from "@/components/creation/OperatingHoursSection";
 import { ReviewStep } from "@/components/creation/ReviewStep";
+import { cn } from "@/lib/utils";
 
 const TOTAL_STEPS = 7;
 
@@ -30,14 +31,13 @@ const COLORS = {
   SOFT_GRAY: "#F8F9FA"
 };
 
-
-
 const CreateAdventure = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [showErrors, setShowErrors] = useState(false);
   
   const [formData, setFormData] = useState({
     registrationName: "",
@@ -58,7 +58,6 @@ const CreateAdventure = () => {
   });
 
   const [creatorProfile, setCreatorProfile] = useState({ name: "", email: "", phone: "" });
-  
   const [workingDays, setWorkingDays] = useState({
     Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false
   });
@@ -85,6 +84,58 @@ const CreateAdventure = () => {
     fetchUserProfile();
   }, [user]);
 
+  // --- Validation Logic ---
+  const isFieldMissing = (value: any) => {
+    if (!showErrors) return false;
+    if (typeof value === "string") return !value.trim();
+    if (value === null || value === undefined) return true;
+    return false;
+  };
+
+  const validateStep = (step: number): boolean => {
+    setShowErrors(true);
+    switch (step) {
+      case 1:
+        return !!(formData.registrationName.trim() && formData.registrationNumber.trim() && formData.country);
+      case 2:
+        return !!(formData.locationName.trim() && formData.place.trim() && formData.latitude);
+      case 3:
+        return !!formData.description.trim();
+      case 5:
+        // Logic: If Name is filled, Capacity and Price MUST be filled
+        const hasInvalidFacility = facilities.some(f => 
+          f.name.trim() !== "" && (f.priceType === "paid" ? !f.price : false || !f.capacity)
+        );
+        if (hasInvalidFacility) {
+          toast({ 
+            title: "Facility Incomplete", 
+            description: "Please ensure all named facilities have a capacity and price.", 
+            variant: "destructive" 
+          });
+          return false;
+        }
+        return true;
+      case 6:
+        return galleryImages.length > 0;
+      default:
+        return true;
+    }
+  };
+
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setShowErrors(false);
+      setCurrentStep(prev => Math.min(prev + 1, TOTAL_STEPS));
+    } else {
+      toast({ title: "Action Required", description: "Please fill in all mandatory fields highlighted in red.", variant: "destructive" });
+    }
+  };
+
+  const handlePrevious = () => {
+    setShowErrors(false);
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
   const getCurrentLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -93,7 +144,7 @@ const CreateAdventure = () => {
           setFormData(prev => ({ ...prev, latitude, longitude }));
           toast({ title: "Coordinates captured", description: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` });
         },
-        () => toast({ title: "Location Error", variant: "destructive" })
+        () => toast({ title: "Location Error", description: "Could not retrieve GPS coordinates.", variant: "destructive" })
       );
     }
   };
@@ -105,73 +156,11 @@ const CreateAdventure = () => {
       const compressed = await compressImages(newFiles);
       setGalleryImages(prev => [...prev, ...compressed.map(c => c.file)].slice(0, 5));
     } catch (error) {
-      console.error("Error compressing images:", error);
       setGalleryImages(prev => [...prev, ...newFiles].slice(0, 5));
     }
   };
 
   const removeImage = (index: number) => setGalleryImages(prev => prev.filter((_, i) => i !== index));
-
-  const validateStep = (step: number): boolean => {
-    switch (step) {
-      case 1:
-        if (!formData.registrationName.trim()) {
-          toast({ title: "Required", description: "Registration name is required", variant: "destructive" });
-          return false;
-        }
-        if (!formData.registrationNumber.trim()) {
-          toast({ title: "Required", description: "Registration number is required", variant: "destructive" });
-          return false;
-        }
-        if (!formData.country) {
-          toast({ title: "Required", description: "Country is required", variant: "destructive" });
-          return false;
-        }
-        return true;
-      case 2:
-        if (!formData.locationName.trim()) {
-          toast({ title: "Required", description: "Location name is required", variant: "destructive" });
-          return false;
-        }
-        if (!formData.place.trim()) {
-          toast({ title: "Required", description: "Place/City is required", variant: "destructive" });
-          return false;
-        }
-        if (!formData.latitude) {
-          toast({ title: "Required", description: "GPS coordinates are required", variant: "destructive" });
-          return false;
-        }
-        return true;
-      case 3:
-        if (!formData.description.trim()) {
-          toast({ title: "Required", description: "Description is required", variant: "destructive" });
-          return false;
-        }
-        return true;
-      case 4:
-        return true; // Operating hours optional
-      case 5:
-        return true; // Amenities/facilities/activities optional
-      case 6:
-        if (galleryImages.length === 0) {
-          toast({ title: "Required", description: "At least one photo is required", variant: "destructive" });
-          return false;
-        }
-        return true;
-      default:
-        return true;
-    }
-  };
-
-  const handleNext = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, TOTAL_STEPS));
-    }
-  };
-
-  const handlePrevious = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
 
   const formatItemsForDB = (items: DynamicItem[]) => {
     return items.map(item => ({
@@ -250,7 +239,6 @@ const CreateAdventure = () => {
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
       <Header />
       
-      {/* Hero Header */}
       <div className="relative h-[30vh] w-full overflow-hidden bg-slate-900">
         <img src="/images/category-campsite.webp" 
           className="absolute inset-0 w-full h-full object-cover opacity-60" alt="Header"
@@ -275,9 +263,7 @@ const CreateAdventure = () => {
         {currentStep === 1 && (
           <Card className="bg-white rounded-[28px] p-8 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-xl bg-[#008080]/10 text-[#008080]">
-                <Info className="h-5 w-5" />
-              </div>
+              <div className="p-2 rounded-xl bg-[#008080]/10 text-[#008080]"><Info className="h-5 w-5" /></div>
               <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: COLORS.TEAL }}>Registration</h2>
             </div>
             
@@ -288,7 +274,7 @@ const CreateAdventure = () => {
                   value={formData.registrationName}
                   onChange={(e) => setFormData({...formData, registrationName: e.target.value})}
                   placeholder="Official Government Name"
-                  className="rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all h-12 font-bold"
+                  className={cn("rounded-xl h-12 font-bold", isFieldMissing(formData.registrationName) && "border-red-500 bg-red-50")}
                 />
               </div>
 
@@ -299,12 +285,14 @@ const CreateAdventure = () => {
                     value={formData.registrationNumber}
                     onChange={(e) => setFormData({...formData, registrationNumber: e.target.value})}
                     placeholder="e.g. BN-X12345"
-                    className="rounded-xl border-slate-100 bg-slate-50/50 h-12 font-bold"
+                    className={cn("rounded-xl h-12 font-bold", isFieldMissing(formData.registrationNumber) && "border-red-500 bg-red-50")}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Country *</Label>
-                  <CountrySelector value={formData.country} onChange={(value) => setFormData({...formData, country: value})} />
+                  <div className={cn("rounded-xl", isFieldMissing(formData.country) && "border-2 border-red-500 overflow-hidden")}>
+                    <CountrySelector value={formData.country} onChange={(value) => setFormData({...formData, country: value})} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -315,9 +303,7 @@ const CreateAdventure = () => {
         {currentStep === 2 && (
           <Card className="bg-white rounded-[28px] p-8 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-xl bg-[#FF7F50]/10 text-[#FF7F50]">
-                <MapPin className="h-5 w-5" />
-              </div>
+              <div className="p-2 rounded-xl bg-[#FF7F50]/10 text-[#FF7F50]"><MapPin className="h-5 w-5" /></div>
               <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: COLORS.TEAL }}>Location Details</h2>
             </div>
 
@@ -329,7 +315,7 @@ const CreateAdventure = () => {
                     value={formData.locationName}
                     onChange={(e) => setFormData({...formData, locationName: e.target.value})}
                     placeholder="Area / Forest / Beach"
-                    className="rounded-xl border-slate-100 bg-slate-50/50 h-12 font-bold"
+                    className={cn("rounded-xl h-12 font-bold", isFieldMissing(formData.locationName) && "border-red-500 bg-red-50")}
                   />
                 </div>
                 <div className="space-y-2">
@@ -338,12 +324,12 @@ const CreateAdventure = () => {
                     value={formData.place}
                     onChange={(e) => setFormData({...formData, place: e.target.value})}
                     placeholder="e.g. Nairobi"
-                    className="rounded-xl border-slate-100 bg-slate-50/50 h-12 font-bold"
+                    className={cn("rounded-xl h-12 font-bold", isFieldMissing(formData.place) && "border-red-500 bg-red-50")}
                   />
                 </div>
               </div>
 
-              <div className="p-6 rounded-2xl bg-[#F0E68C]/10 border border-[#F0E68C]/30 space-y-4">
+              <div className={cn("p-6 rounded-2xl border transition-all", isFieldMissing(formData.latitude) ? "border-red-500 bg-red-50" : "bg-[#F0E68C]/10 border-[#F0E68C]/30")}>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <h4 className="text-xs font-black uppercase tracking-widest text-[#857F3E]">GPS Coordinates *</h4>
@@ -357,12 +343,6 @@ const CreateAdventure = () => {
                     {formData.latitude ? '✓ Location Captured' : 'Auto-Capture GPS'}
                   </Button>
                 </div>
-                {formData.latitude && (
-                  <div className="flex items-center gap-2 text-[#857F3E] text-xs font-black bg-white/50 p-3 rounded-lg border border-[#F0E68C]">
-                    <CheckCircle2 className="h-4 w-4" /> 
-                    COORD: {formData.latitude.toFixed(6)}, {formData.longitude?.toFixed(6)}
-                  </div>
-                )}
               </div>
             </div>
           </Card>
@@ -372,9 +352,7 @@ const CreateAdventure = () => {
         {currentStep === 3 && (
           <Card className="bg-white rounded-[28px] p-8 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-xl bg-[#008080]/10 text-[#008080]">
-                <Mail className="h-5 w-5" />
-              </div>
+              <div className="p-2 rounded-xl bg-[#008080]/10 text-[#008080]"><Mail className="h-5 w-5" /></div>
               <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: COLORS.TEAL }}>Contact & About</h2>
             </div>
             
@@ -385,10 +363,9 @@ const CreateAdventure = () => {
                   <Input type="email" value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="contact@business.com"
-                    className="rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all h-12 font-bold"
+                    className="rounded-xl h-12 font-bold"
                   />
                 </div>
-                
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">WhatsApp / Phone</Label>
                   <PhoneInput value={formData.phoneNumber}
@@ -405,7 +382,7 @@ const CreateAdventure = () => {
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                   placeholder="Tell the community what makes this adventure special..."
                   rows={5}
-                  className="rounded-2xl border-slate-100 bg-slate-50/50 font-bold resize-none"
+                  className={cn("rounded-2xl font-bold resize-none", isFieldMissing(formData.description) && "border-red-500 bg-red-50")}
                 />
               </div>
             </div>
@@ -416,9 +393,7 @@ const CreateAdventure = () => {
         {currentStep === 4 && (
           <Card className="bg-white rounded-[28px] p-8 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-xl bg-[#FF7F50]/10 text-[#FF7F50]">
-                <Clock className="h-5 w-5" />
-              </div>
+              <div className="p-2 rounded-xl bg-[#FF7F50]/10 text-[#FF7F50]"><Clock className="h-5 w-5" /></div>
               <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: COLORS.TEAL }}>Access & Pricing</h2>
             </div>
 
@@ -437,9 +412,7 @@ const CreateAdventure = () => {
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Entrance Fee</Label>
                   <Select value={formData.entranceFeeType} onValueChange={(v) => setFormData({...formData, entranceFeeType: v})}>
-                    <SelectTrigger className="rounded-xl h-12 font-bold border-slate-100">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="rounded-xl h-12 font-bold border-slate-100"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-white rounded-xl font-bold">
                       <SelectItem value="free">FREE ACCESS</SelectItem>
                       <SelectItem value="paid">PAID ADMISSION</SelectItem>
@@ -450,17 +423,11 @@ const CreateAdventure = () => {
                   <>
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Adult Entry (KSh)</Label>
-                      <Input type="number" value={formData.adultPrice}
-                        onChange={(e) => setFormData({...formData, adultPrice: e.target.value})}
-                        className="rounded-xl h-12 border-slate-100 font-bold"
-                      />
+                      <Input type="number" value={formData.adultPrice} onChange={(e) => setFormData({...formData, adultPrice: e.target.value})} className="rounded-xl h-12 font-bold" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Child Entry (KSh)</Label>
-                      <Input type="number" value={formData.childPrice}
-                        onChange={(e) => setFormData({...formData, childPrice: e.target.value})}
-                        className="rounded-xl h-12 border-slate-100 font-bold"
-                      />
+                      <Input type="number" value={formData.childPrice} onChange={(e) => setFormData({...formData, childPrice: e.target.value})} className="rounded-xl h-12 font-bold" />
                     </div>
                   </>
                 )}
@@ -473,9 +440,7 @@ const CreateAdventure = () => {
         {currentStep === 5 && (
           <Card className="bg-white rounded-[28px] p-8 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-xl bg-[#008080]/10 text-[#008080]">
-                <DollarSign className="h-5 w-5" />
-              </div>
+              <div className="p-2 rounded-xl bg-[#008080]/10 text-[#008080]"><DollarSign className="h-5 w-5" /></div>
               <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: COLORS.TEAL }}>Amenities, Facilities & Activities</h2>
             </div>
             
@@ -484,7 +449,7 @@ const CreateAdventure = () => {
                 items={amenities}
                 onChange={setAmenities}
                 label="Amenities"
-                placeholder="e.g. Parking, Restrooms, Picnic Area"
+                placeholder="e.g. Parking, Restrooms"
                 showCapacity={false}
                 showPrice={false}
                 accentColor={COLORS.TEAL}
@@ -494,8 +459,10 @@ const CreateAdventure = () => {
                 items={facilities}
                 onChange={setFacilities}
                 label="Facilities"
-                placeholder="e.g. Campsite, Viewing Deck"
+                placeholder="e.g. Campsite"
                 showCapacity={true}
+                showPrice={true}
+                highlightErrors={showErrors}
                 accentColor={COLORS.CORAL}
               />
 
@@ -503,8 +470,9 @@ const CreateAdventure = () => {
                 items={activities}
                 onChange={setActivities}
                 label="Activities"
-                placeholder="e.g. Hiking, Bird Watching, Zip Lining"
+                placeholder="e.g. Hiking"
                 showCapacity={false}
+                showPrice={false}
                 accentColor="#6366f1"
               />
             </div>
@@ -515,21 +483,15 @@ const CreateAdventure = () => {
         {currentStep === 6 && (
           <Card className="bg-white rounded-[28px] p-8 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-xl bg-[#008080]/10 text-[#008080]">
-                <Camera className="h-5 w-5" />
-              </div>
+              <div className="p-2 rounded-xl bg-[#008080]/10 text-[#008080]"><Camera className="h-5 w-5" /></div>
               <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: COLORS.TEAL }}>Gallery (Max 5) *</h2>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className={cn("grid grid-cols-2 md:grid-cols-5 gap-4 p-4 rounded-2xl", isFieldMissing(galleryImages.length === 0 ? null : true) && "border-2 border-red-500 bg-red-50")}>
               {galleryImages.map((file, index) => (
                 <div key={index} className="relative aspect-square rounded-[20px] overflow-hidden border-2 border-slate-100">
                   <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="Preview" />
-                  <button type="button" onClick={() => removeImage(index)}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-lg"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                  <button type="button" onClick={() => removeImage(index)} className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-lg"><X className="h-3 w-3" /></button>
                 </div>
               ))}
               {galleryImages.length < 5 && (
@@ -549,21 +511,8 @@ const CreateAdventure = () => {
           <ReviewStep
             type="adventure"
             data={{
-              name: formData.registrationName,
-              registrationName: formData.registrationName,
-              registrationNumber: formData.registrationNumber,
-              location: formData.locationName,
-              place: formData.place,
-              country: formData.country,
-              description: formData.description,
-              email: formData.email,
-              phoneNumber: formData.phoneNumber,
-              openingHours: formData.openingHours,
-              closingHours: formData.closingHours,
+              ...formData,
               workingDays: Object.entries(workingDays).filter(([_, v]) => v).map(([d]) => d),
-              entranceFeeType: formData.entranceFeeType,
-              adultPrice: formData.adultPrice,
-              childPrice: formData.childPrice,
               amenities: amenities.map(a => ({ name: a.name })),
               facilities: formatItemsForDB(facilities),
               activities: formatItemsForDB(activities),
@@ -576,31 +525,19 @@ const CreateAdventure = () => {
           />
         )}
 
-        {/* Navigation Buttons */}
         <div className="flex gap-4 mt-8">
           {currentStep > 1 && (
-            <Button type="button" onClick={handlePrevious} variant="outline"
-              className="flex-1 py-6 rounded-2xl font-black uppercase tracking-widest text-sm"
-            >
+            <Button type="button" onClick={handlePrevious} variant="outline" className="flex-1 py-6 rounded-2xl font-black uppercase tracking-widest text-sm">
               <ArrowLeft className="h-4 w-4 mr-2" /> Previous
             </Button>
           )}
           
-          {currentStep < TOTAL_STEPS ? (
-            <Button type="button" onClick={handleNext}
-              className="flex-1 py-6 rounded-2xl font-black uppercase tracking-widest text-sm text-white"
-              style={{ background: `linear-gradient(135deg, ${COLORS.CORAL_LIGHT} 0%, ${COLORS.CORAL} 100%)` }}
-            >
-              Next <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          ) : (
-            <Button type="button" onClick={handleSubmit} disabled={loading}
-              className="flex-1 py-6 rounded-2xl font-black uppercase tracking-widest text-sm text-white"
-              style={{ background: `linear-gradient(135deg, ${COLORS.TEAL} 0%, #006666 100%)` }}
-            >
-              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...</> : "Submit for Approval"}
-            </Button>
-          )}
+          <Button type="button" onClick={currentStep < TOTAL_STEPS ? handleNext : handleSubmit} disabled={loading}
+            className="flex-1 py-6 rounded-2xl font-black uppercase tracking-widest text-sm text-white"
+            style={{ background: currentStep < TOTAL_STEPS ? COLORS.CORAL : COLORS.TEAL }}
+          >
+            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...</> : currentStep < TOTAL_STEPS ? "Next" : "Submit for Approval"}
+          </Button>
         </div>
       </main>
       
