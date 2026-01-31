@@ -49,7 +49,7 @@ interface ListingCardProps {
 }
 
 const ListingCardComponent = ({
-  id, type, name, imageUrl, location, price, date,
+  id, type, name, imageUrl, location, country, price, date,
   isOutdated = false, onSave, isSaved = false, activities, 
   hidePrice = false, availableTickets = 0, bookedTickets = 0, 
   priority = false, compact = false, avgRating, distance, place,
@@ -79,9 +79,11 @@ const ListingCardComponent = ({
   const fewSlotsRemaining = useMemo(() => tracksAvailability && remainingTickets > 0 && remainingTickets <= 10, [tracksAvailability, remainingTickets]);
   const isUnavailable = useMemo(() => isOutdated || isSoldOut, [isOutdated, isSoldOut]);
 
-  // Increased width/height for the larger card display
-  const optimizedImageUrl = useMemo(() => optimizeSupabaseImage(imageUrl, { width: 600, height: 450, quality: 85 }), [imageUrl]);
+  const optimizedImageUrl = useMemo(() => optimizeSupabaseImage(imageUrl, { width: 500, height: 350, quality: 80 }), [imageUrl]);
+  const thumbnailUrl = useMemo(() => optimizeSupabaseImage(imageUrl, { width: 32, height: 24, quality: 30 }), [imageUrl]);
   const displayType = useMemo(() => isEventOrSport ? "Event & Sports" : type.replace('_', ' '), [isEventOrSport, type]);
+  const formattedDistance = useMemo(() => distance?.toFixed(2), [distance]);
+  
   const locationString = useMemo(() => [place, location].filter(Boolean).join(', '), [place, location]);
 
   const handleCardClick = useCallback(() => {
@@ -98,24 +100,36 @@ const ListingCardComponent = ({
     onSave?.(id, type);
   }, [onSave, id, type, isSavedLocal]);
 
+  const handleImageLoad = useCallback(() => setImageLoaded(true), []);
+  const handleImageError = useCallback(() => setImageError(true), []);
+
   return (
     <Card 
       onClick={handleCardClick} 
       className={cn(
-        "group overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer border-slate-200 flex flex-col bg-white",
-        "rounded-sm", // Very small border radius
-        compact ? "h-auto" : "min-h-[440px] h-full", // Larger card height
-        isUnavailable && "opacity-95"
+        "group overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer border-slate-200 flex flex-col",
+        "rounded-sm bg-white w-full min-w-[320px]", // Increased width and small border radius
+        compact ? "h-auto" : "h-full",
+        isUnavailable && "opacity-90"
       )}
     >
-      {/* Image Section */}
+      {/* Image Section - Flat edges on radius */}
       <div 
         ref={imageContainerRef} 
-        className="relative overflow-hidden w-full bg-slate-100" 
+        className="relative overflow-hidden w-full rounded-t-sm bg-slate-100" 
         style={{ paddingBottom: '65%' }}
       >
         {!imageLoaded && !imageError && (
           <Skeleton className="absolute inset-0 w-full h-full rounded-none" />
+        )}
+        
+        {shouldLoadImage && !imageLoaded && !imageError && (
+          <img 
+            src={thumbnailUrl} 
+            alt="" 
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover blur-md scale-110"
+          />
         )}
         
         {shouldLoadImage && !imageError && (
@@ -123,36 +137,51 @@ const ListingCardComponent = ({
             src={optimizedImageUrl} 
             alt={name}
             loading={priority ? "eager" : "lazy"}
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setImageError(true)}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
             className={cn(
-                "absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105", 
+                "absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105", 
                 imageLoaded ? "opacity-100" : "opacity-0",
-                isUnavailable && "grayscale-[0.4]" 
+                isUnavailable && "grayscale-[0.6]" 
             )} 
           />
         )}
+        
+        {imageError && (
+          <div className="absolute inset-0 w-full h-full bg-slate-100 flex items-center justify-center">
+            <span className="text-slate-400 text-xs font-normal uppercase">No Image</span>
+          </div>
+        )}
 
         {isUnavailable && (
-          <div className="absolute inset-0 z-20 bg-black/30 flex items-center justify-center backdrop-blur-[1px]">
-            <Badge className="bg-white text-black font-medium border-none px-4 py-1.5 text-[10px] uppercase rounded-none tracking-widest">
-                {isSoldOut ? 'Sold Out' : 'Unavailable'}
+          <div className="absolute inset-0 z-20 bg-black/40 flex items-center justify-center backdrop-blur-[1px]">
+            <Badge className="bg-white text-black font-medium border-none px-4 py-1.5 text-[11px] uppercase rounded-none">
+                {isSoldOut ? 'Sold Out' : 'Not Available'}
             </Badge>
           </div>
         )}
         
         <Badge 
-          className="absolute top-4 left-4 z-10 px-2 py-0.5 border-none shadow-sm text-[8px] font-medium uppercase tracking-widest rounded-none"
+          className="absolute top-3 left-3 z-10 px-2 py-0.5 border-none text-[8px] font-normal uppercase tracking-wider rounded-none"
           style={{ background: isUnavailable ? '#64748b' : COLORS.TEAL, color: 'white' }}
         >
           {displayType}
         </Badge>
 
+        {distance !== undefined && distance > 0 && (
+          <Badge 
+            className="absolute bottom-3 right-3 z-10 px-2 py-1 border-none shadow-lg text-[9px] font-normal rounded-none"
+            style={{ background: COLORS.CORAL, color: 'white' }}
+          >
+            {formattedDistance} km
+          </Badge>
+        )}
+
         {onSave && (
           <button 
             onClick={handleSaveClick}
             className={cn(
-                "absolute top-4 right-4 z-20 h-9 w-9 flex items-center justify-center rounded-none backdrop-blur-md transition-all active:scale-95", 
+                "absolute top-3 right-3 z-20 h-8 w-8 flex items-center justify-center rounded-none backdrop-blur-md transition-all active:scale-95", 
                 isSavedLocal ? "bg-red-500" : "bg-black/20 hover:bg-black/40"
             )}
           >
@@ -162,44 +191,46 @@ const ListingCardComponent = ({
       </div>
       
       {/* Content Section */}
-      <div className="p-6 flex flex-col flex-1"> 
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="font-medium text-lg md:text-xl leading-tight uppercase tracking-tight line-clamp-2" 
+      <div className="p-4 flex flex-col flex-1"> 
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="font-medium text-base md:text-lg leading-snug uppercase tracking-tight line-clamp-2" 
               style={{ color: isUnavailable ? '#475569' : COLORS.TEAL }}>
             {name}
           </h3>
           {avgRating && (
-            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 border border-slate-100">
+            <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-none border border-slate-100 shadow-sm">
               <Star className="h-3 w-3 fill-[#FF7F50] text-[#FF7F50]" />
-              <span className="text-[12px] font-medium text-slate-700">{avgRating.toFixed(1)}</span>
+              <span className="text-[11px] font-normal text-slate-700">{avgRating.toFixed(1)}</span>
             </div>
           )}
         </div>
         
-        <div className="flex items-center gap-1.5 mb-4">
-            <MapPin className="h-4 w-4 flex-shrink-0" style={{ color: isUnavailable ? '#94a3b8' : COLORS.CORAL }} />
-            <p className="text-xs md:text-sm font-normal text-slate-500 capitalize tracking-wide">
+        <div className="flex items-center gap-1.5 mb-3">
+            <MapPin className="h-3.5 w-3.5 flex-shrink-0" style={{ color: isUnavailable ? '#94a3b8' : COLORS.CORAL }} />
+            <p className="text-[11px] font-normal text-slate-500 capitalize tracking-normal line-clamp-1">
                 {locationString.toLowerCase()}
             </p>
         </div>
 
         {activities && activities.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-1 mb-4">
             {activities.slice(0, 3).map((act, i) => (
-              <span key={i} className="text-[10px] font-normal px-2.5 py-1 bg-slate-100 text-slate-600 uppercase tracking-wider">
+              <span key={i} className={cn(
+                "text-[10px] font-normal px-2 py-0.5 rounded-none capitalize border",
+                isUnavailable ? "border-slate-200 text-slate-400" : "border-[#F0E68C] text-[#5c5829] bg-[#F0E68C]/10"
+              )}>
                 {typeof act === 'string' ? act : act.name}
               </span>
             ))}
           </div>
         )}
         
-        {/* Bottom Metadata */}
-        <div className="mt-auto pt-5 border-t border-slate-100 flex items-center justify-between">
+        <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
             <div className="flex flex-col">
                 {!hidePrice && price !== undefined && (
                   <>
-                    <span className="text-[10px] font-normal text-slate-400 uppercase tracking-widest mb-0.5">Starts at</span>
-                    <span className={cn("text-xl font-normal", isUnavailable ? "text-slate-300 line-through" : "text-red-600")}>
+                    <span className="text-[9px] font-normal text-slate-400 uppercase tracking-widest">Starts at</span>
+                    <span className={cn("text-lg font-normal", isUnavailable ? "text-slate-300 line-through" : "text-[#FF0000]")}>
                         KSh {price.toLocaleString()}
                     </span>
                   </>
@@ -208,27 +239,27 @@ const ListingCardComponent = ({
 
             <div className="flex flex-col items-end">
                 {(date || isFlexibleDate) && (
-                  <div className="flex items-center gap-1.5 text-slate-500">
-                      <Calendar className="h-4 w-4" />
-                      <span className={`text-[11px] font-medium uppercase ${isFlexibleDate ? 'text-emerald-600' : ''}`}>
-                          {isFlexibleDate ? 'Flexible' : new Date(date!).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  <div className="flex items-center gap-1 text-slate-500">
+                      <Calendar className="h-3 w-3" />
+                      <span className={`text-[10px] font-normal uppercase ${isFlexibleDate ? 'text-emerald-600' : ''}`}>
+                          {isFlexibleDate ? 'Flexible' : new Date(date!).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                       </span>
                   </div>
                 )}
                 
-                <div className="mt-1.5">
+                <div className="mt-1">
                   {isOutdated ? (
-                    <span className="text-[10px] font-medium text-slate-400 uppercase">Event Passed</span>
+                    <span className="text-[9px] font-normal text-slate-400 uppercase">Passed</span>
                   ) : isSoldOut ? (
-                    <span className="text-[10px] font-medium text-red-600 uppercase">Sold Out</span>
+                    <span className="text-[9px] font-normal text-red-600 uppercase">Sold Out</span>
                   ) : fewSlotsRemaining ? (
-                    <span className="text-[10px] font-medium text-red-500 uppercase flex items-center gap-1">
-                        <Ticket className="h-3 w-3" />
+                    <span className="text-[9px] font-normal text-red-500 uppercase flex items-center gap-1">
+                        <Ticket className="h-2.5 w-2.5" />
                         {remainingTickets} left
                     </span>
                   ) : (tracksAvailability && availableTickets > 0) && (
-                    <span className="text-[10px] font-medium text-teal-600 uppercase">
-                        {remainingTickets} Slots left
+                    <span className="text-[9px] font-normal text-teal-600 uppercase">
+                        {remainingTickets} Available
                     </span>
                   )}
                 </div>
