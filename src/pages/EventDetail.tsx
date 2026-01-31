@@ -162,79 +162,106 @@ const EventDetail = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
-      {/* 1. STICKY TOP ACTION BAR */}
+
+      {/*
+        1. STICKY TOP ACTION BAR
+        ─────────────────────────
+        • Outer div: full-width fixed strip — the backdrop blur / border
+          spans edge-to-edge when scrolled.
+        • Inner div: max-w-6xl mx-auto px-4 — matches <main> below so the
+          back-arrow and heart buttons align with the content grid edges
+          on large screens. On mobile max-w-6xl exceeds the viewport so
+          it has no effect and buttons stay flush as before.
+      */}
       <div 
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 px-4 py-3 flex justify-between items-center ${
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
           scrolled 
             ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100" 
             : "bg-transparent"
         }`}
       >
-        <div className="flex items-center gap-4">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={() => navigate(-1)} 
+              className={`rounded-full transition-all duration-300 w-10 h-10 p-0 border-none ${
+                scrolled ? "bg-slate-100 text-slate-900 shadow-sm" : "bg-black/30 text-white backdrop-blur-md"
+              }`}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            
+            {scrolled && (
+              <h2 className="text-sm font-black uppercase tracking-tighter text-slate-900 truncate max-w-[180px] md:max-w-md animate-in fade-in slide-in-from-left-2">
+                {event.name}
+              </h2>
+            )}
+          </div>
+
           <Button 
-            onClick={() => navigate(-1)} 
-            className={`rounded-full transition-all duration-300 w-10 h-10 p-0 border-none ${
-              scrolled ? "bg-slate-100 text-slate-900 shadow-sm" : "bg-black/30 text-white backdrop-blur-md"
+            onClick={handleSave} 
+            className={`rounded-full transition-all duration-300 w-10 h-10 p-0 border-none shadow-lg ${
+              isSaved ? "bg-red-500" : scrolled ? "bg-slate-100 text-slate-900" : "bg-black/30 text-white backdrop-blur-md"
             }`}
           >
-            <ArrowLeft className="h-5 w-5" />
+            <Heart className={`h-5 w-5 ${isSaved ? "fill-white text-white" : scrolled ? "text-slate-900" : "text-white"}`} />
           </Button>
-          
-          {scrolled && (
-            <h2 className="text-sm font-black uppercase tracking-tighter text-slate-900 truncate max-w-[180px] md:max-w-md animate-in fade-in slide-in-from-left-2">
-              {event.name}
-            </h2>
-          )}
         </div>
-
-        <Button 
-          onClick={handleSave} 
-          className={`rounded-full transition-all duration-300 w-10 h-10 p-0 border-none shadow-lg ${
-            isSaved ? "bg-red-500" : scrolled ? "bg-slate-100 text-slate-900" : "bg-black/30 text-white backdrop-blur-md"
-          }`}
-        >
-          <Heart className={`h-5 w-5 ${isSaved ? "fill-white text-white" : scrolled ? "text-slate-900" : "text-white"}`} />
-        </Button>
       </div>
 
-      {/* 2. HERO SECTION (Main site header removed) */}
-      <div className="relative w-full overflow-hidden h-[55vh] md:h-[70vh] bg-slate-900">
-        <Carousel plugins={[Autoplay({ delay: 4000 })]} className="w-full h-full">
-          <CarouselContent className="h-full ml-0">
-            {allImages.map((img, idx) => (
-              <CarouselItem key={idx} className="h-full pl-0 basis-full">
-                <div className="relative h-full w-full">
-                  <img src={img} alt={event.name} className="w-full h-full object-cover object-center" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
+      {/*
+        2. HERO / IMAGE GALLERY
+        ─────────────────────────
+        • On mobile: full-bleed, no max-width, no padding, no rounding —
+          identical to the original behaviour.
+        • On lg+: the outer wrapper applies max-w-6xl mx-auto px-4 (same
+          as <main>) so the gallery's left and right edges line up exactly
+          with the About card and the Sidebar booking card below.
+        • lg:rounded-b-3xl rounds the bottom corners on desktop so it
+          visually connects to the cards underneath.
+      */}
+      <div className="lg:max-w-6xl lg:mx-auto lg:px-4">
+        <div className="relative w-full overflow-hidden h-[55vh] md:h-[70vh] bg-slate-900 lg:rounded-b-3xl">
+          <Carousel plugins={[Autoplay({ delay: 4000 })]} className="w-full h-full">
+            <CarouselContent className="h-full ml-0">
+              {allImages.map((img, idx) => (
+                <CarouselItem key={idx} className="h-full pl-0 basis-full">
+                  <div className="relative h-full w-full">
+                    <img src={img} alt={event.name} className="w-full h-full object-cover object-center" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
 
-        <div className="absolute bottom-6 left-0 z-40 w-full px-4 md:px-8 pointer-events-none">
-          <div className="relative z-10 space-y-2 pointer-events-auto bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-2xl p-4 max-w-xl">
-            <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-3 py-1 h-auto uppercase font-black tracking-[0.1em] text-[9px] rounded-full shadow-lg">Experience</Button>
-            <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">{event.name}</h1>
-            <div className="flex items-center gap-2 cursor-pointer group w-fit" onClick={openInMaps}>
-                <MapPin className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white uppercase tracking-wide">
-                  {[event.place, event.location, event.country].filter(Boolean).join(', ')}
-                </span>
+          <div className="absolute bottom-6 left-0 z-40 w-full px-4 md:px-8 pointer-events-none">
+            <div className="relative z-10 space-y-2 pointer-events-auto bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-2xl p-4 max-w-xl">
+              <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-3 py-1 h-auto uppercase font-black tracking-[0.1em] text-[9px] rounded-full shadow-lg">Experience</Button>
+              <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">{event.name}</h1>
+              <div className="flex items-center gap-2 cursor-pointer group w-fit" onClick={openInMaps}>
+                  <MapPin className="h-4 w-4 text-white" />
+                  <span className="text-xs font-bold text-white uppercase tracking-wide">
+                    {[event.place, event.location, event.country].filter(Boolean).join(', ')}
+                  </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* 3. MAIN BODY */}
       <main className="container px-4 max-w-6xl mx-auto -mt-10 relative z-50">
         <div className="grid lg:grid-cols-[1.7fr,1fr] gap-6">
           
           <div className="space-y-6">
+            {/* About */}
             <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
               <h2 className="text-xl font-black uppercase tracking-tight mb-4" style={{ color: COLORS.TEAL }}>About</h2>
               <p className="text-slate-500 text-sm leading-relaxed whitespace-pre-line">{event.description}</p>
             </div>
 
+            {/* Event Hours */}
             {(event.opening_hours || event.days_opened?.length > 0) && (
               <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
                 <div className="flex items-center gap-3 mb-6">
@@ -266,6 +293,7 @@ const EventDetail = () => {
               </div>
             )}
 
+            {/* Highlights */}
             {event.activities?.length > 0 && (
               <div className="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
                 <h2 className="text-xl font-black uppercase tracking-tight mb-5" style={{ color: COLORS.TEAL }}>Highlights</h2>
@@ -280,14 +308,17 @@ const EventDetail = () => {
               </div>
             )}
 
+            {/* Reviews — desktop */}
             <div className="hidden lg:block bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
               <ReviewHeader event={event} />
               <ReviewSection itemId={event.id} itemType="event" />
             </div>
           </div>
 
+          {/* Sidebar */}
           <div className="space-y-6">
             <div className="bg-white rounded-[32px] p-8 shadow-2xl border border-slate-100 lg:sticky lg:top-24">
+              {/* Price + availability badge */}
               <div className="flex justify-between items-end mb-8">
                 <div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ticket Price</p>
@@ -304,6 +335,7 @@ const EventDetail = () => {
                 </div>
               </div>
 
+              {/* Availability bar */}
               <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
@@ -321,6 +353,7 @@ const EventDetail = () => {
                 </div>
               </div>
 
+              {/* Date + child price */}
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
                   <span className="text-slate-400">Scheduled Date</span>
@@ -341,6 +374,7 @@ const EventDetail = () => {
                 </div>
               </div>
 
+              {/* CTA */}
               <Button 
                 onClick={() => navigate(`/booking/event/${event.id}`)}
                 disabled={!canBook}
@@ -355,12 +389,14 @@ const EventDetail = () => {
                 {isSoldOut ? "Fully Booked" : isExpired ? "Event Expired" : "Reserve Spot"}
               </Button>
 
+              {/* Utility buttons */}
               <div className="grid grid-cols-3 gap-3 mt-8 mb-8">
                 <UtilityButton icon={<MapPin className="h-5 w-5" />} label="Map" onClick={openInMaps} />
                 <UtilityButton icon={<Copy className="h-5 w-5" />} label="Copy" onClick={handleCopyLink} />
                 <UtilityButton icon={<Share2 className="h-5 w-5" />} label="Share" onClick={handleShare} />
               </div>
 
+              {/* Contact */}
               <div className="space-y-4 pt-6 border-t border-slate-50">
                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact</h3>
                 {event.phone_number && (
@@ -378,6 +414,7 @@ const EventDetail = () => {
               </div>
             </div>
 
+            {/* Reviews — mobile */}
             <div className="lg:hidden bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
               <ReviewHeader event={event} />
               <ReviewSection itemId={event.id} itemType="event" />
@@ -385,6 +422,7 @@ const EventDetail = () => {
           </div>
         </div>
 
+        {/* Similar Items */}
         <div className="mt-16">
            <SimilarItems currentItemId={event.id} itemType="trip" location={event.location} country={event.country} />
         </div>
