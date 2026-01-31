@@ -35,12 +35,11 @@ const HotelDetail = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [isOpenNow, setIsOpenNow] = useState(false);
   const [liveRating, setLiveRating] = useState({ avg: 0, count: 0 });
-  const [scrolled, setScrolled] = useState(false); // Track scroll for sticky bar
+  const [scrolled, setScrolled] = useState(false);
 
   const { savedItems, handleSave: handleSaveItem } = useSavedItems();
   const isSaved = savedItems.has(id || "");
 
-  // Scroll logic for sticky behavior
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 60);
@@ -195,80 +194,106 @@ const HotelDetail = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
-      {/* 1. DYNAMIC STICKY ACTION BAR (Replacing Main Header) */}
+
+      {/*
+        1. STICKY ACTION BAR
+        ─────────────────────
+        • Outer div: full-width fixed strip — the backdrop blur / border
+          spans edge-to-edge when scrolled.
+        • Inner div: max-w-6xl mx-auto px-4 — matches <main> below so the
+          back-arrow and heart buttons align with the content grid edges
+          on large screens. On mobile max-w-6xl exceeds the viewport so
+          it has no effect and buttons stay flush as before.
+      */}
       <div 
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 px-4 py-3 flex justify-between items-center ${
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
           scrolled 
             ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100" 
             : "bg-transparent"
         }`}
       >
-        <div className="flex items-center gap-4">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={() => navigate(-1)} 
+              className={`rounded-full transition-all duration-300 w-10 h-10 p-0 border-none ${
+                scrolled ? "bg-slate-100 text-slate-900 shadow-sm" : "bg-black/30 text-white backdrop-blur-md"
+              }`}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            
+            {scrolled && (
+              <h2 className="text-sm font-black uppercase tracking-tighter text-slate-900 truncate max-w-[180px] md:max-w-md animate-in fade-in slide-in-from-left-2">
+                {hotel.name}
+              </h2>
+            )}
+          </div>
+
           <Button 
-            onClick={() => navigate(-1)} 
-            className={`rounded-full transition-all duration-300 w-10 h-10 p-0 border-none ${
-              scrolled ? "bg-slate-100 text-slate-900 shadow-sm" : "bg-black/30 text-white backdrop-blur-md"
+            onClick={() => id && handleSaveItem(id, "hotel")} 
+            className={`rounded-full transition-all duration-300 w-10 h-10 p-0 border-none shadow-lg ${
+              isSaved ? "bg-red-500" : scrolled ? "bg-slate-100 text-slate-900" : "bg-black/30 text-white backdrop-blur-md"
             }`}
           >
-            <ArrowLeft className="h-5 w-5" />
+            <Heart className={`h-5 w-5 ${isSaved ? "fill-white text-white" : scrolled ? "text-slate-900" : "text-white"}`} />
           </Button>
-          
-          {scrolled && (
-            <h2 className="text-sm font-black uppercase tracking-tighter text-slate-900 truncate max-w-[180px] md:max-w-md animate-in fade-in slide-in-from-left-2">
-              {hotel.name}
-            </h2>
-          )}
         </div>
-
-        <Button 
-          onClick={() => id && handleSaveItem(id, "hotel")} 
-          className={`rounded-full transition-all duration-300 w-10 h-10 p-0 border-none shadow-lg ${
-            isSaved ? "bg-red-500" : scrolled ? "bg-slate-100 text-slate-900" : "bg-black/30 text-white backdrop-blur-md"
-          }`}
-        >
-          <Heart className={`h-5 w-5 ${isSaved ? "fill-white text-white" : scrolled ? "text-slate-900" : "text-white"}`} />
-        </Button>
       </div>
 
-      {/* 2. HERO SECTION (Starts at the very top) */}
-      <div className="relative w-full h-[45vh] md:h-[65vh] bg-slate-900 overflow-hidden">
-        <Carousel plugins={[Autoplay({ delay: 3500 })]} className="w-full h-full">
-          <CarouselContent className="h-full ml-0">
-            {allImages.map((img, idx) => (
-              <CarouselItem key={idx} className="h-full pl-0 basis-full">
-                <img src={img} alt={hotel.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent z-10" />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
+      {/*
+        2. HERO / IMAGE GALLERY
+        ────────────────────────
+        • On mobile: full-bleed, no max-width, no padding, no rounding —
+          identical to the original behaviour.
+        • On lg+: outer wrapper applies max-w-6xl mx-auto px-4 (same as
+          <main>) so the gallery left/right edges line up exactly with the
+          Description card and the Sidebar booking card below.
+        • lg:rounded-b-3xl rounds the bottom corners on desktop so it
+          visually connects to the cards underneath.
+      */}
+      <div className="lg:max-w-6xl lg:mx-auto lg:px-4">
+        <div className="relative w-full h-[45vh] md:h-[65vh] bg-slate-900 overflow-hidden lg:rounded-b-3xl">
+          <Carousel plugins={[Autoplay({ delay: 3500 })]} className="w-full h-full">
+            <CarouselContent className="h-full ml-0">
+              {allImages.map((img, idx) => (
+                <CarouselItem key={idx} className="h-full pl-0 basis-full">
+                  <img src={img} alt={hotel.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent z-10" />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
 
-        <div className="absolute bottom-6 left-0 w-full px-4 z-20">
-          <div className="bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-2xl p-4 max-w-xl">
-            <div className="flex flex-wrap gap-2 mb-2">
-                 <Badge className="bg-amber-400 text-black border-none px-2 py-0.5 text-[9px] font-black uppercase rounded-full flex items-center gap-1 shadow-lg">
-                   <Star className="h-3 w-3 fill-current" />
-                   {liveRating.avg > 0 ? liveRating.avg : "New"}
-                 </Badge>
-                 <Badge className={`${isOpenNow ? "bg-emerald-500" : "bg-red-500"} text-white border-none px-2 py-0.5 text-[9px] font-black uppercase rounded-full flex items-center gap-1`}>
-                   <Circle className={`h-2 w-2 fill-current ${isOpenNow ? "animate-pulse" : ""}`} />
-                   {isOpenNow ? "open" : "closed"}
-                 </Badge>
-            </div>
-            <h1 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-2">{hotel.name}</h1>
-            <div className="flex items-center gap-1 text-white">
-              <MapPin className="h-3.5 w-3.5" />
-              <span className="text-xs font-bold uppercase truncate">
-                {[hotel.place, hotel.location, hotel.country].filter(Boolean).join(', ')}
-              </span>
+          <div className="absolute bottom-6 left-0 w-full px-4 z-20">
+            <div className="bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-2xl p-4 max-w-xl">
+              <div className="flex flex-wrap gap-2 mb-2">
+                   <Badge className="bg-amber-400 text-black border-none px-2 py-0.5 text-[9px] font-black uppercase rounded-full flex items-center gap-1 shadow-lg">
+                     <Star className="h-3 w-3 fill-current" />
+                     {liveRating.avg > 0 ? liveRating.avg : "New"}
+                   </Badge>
+                   <Badge className={`${isOpenNow ? "bg-emerald-500" : "bg-red-500"} text-white border-none px-2 py-0.5 text-[9px] font-black uppercase rounded-full flex items-center gap-1`}>
+                     <Circle className={`h-2 w-2 fill-current ${isOpenNow ? "animate-pulse" : ""}`} />
+                     {isOpenNow ? "open" : "closed"}
+                   </Badge>
+              </div>
+              <h1 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-2">{hotel.name}</h1>
+              <div className="flex items-center gap-1 text-white">
+                <MapPin className="h-3.5 w-3.5" />
+                <span className="text-xs font-bold uppercase truncate">
+                  {[hotel.place, hotel.location, hotel.country].filter(Boolean).join(', ')}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* 3. MAIN BODY */}
       <main className="container px-4 -mt-4 relative z-30 max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-[1.8fr,1fr] gap-4">
           <div className="space-y-4">
+            {/* Description */}
             <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
               <h2 className="text-[11px] font-black uppercase tracking-widest mb-3 text-slate-400">Description</h2>
               <p className="text-slate-500 text-sm leading-relaxed">{hotel.description}</p>
@@ -295,7 +320,7 @@ const HotelDetail = () => {
                 <UtilityButton 
                    icon={<Navigation className="h-5 w-5" />} 
                    label="Map" 
-                   onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=$?q=${encodeURIComponent(`${hotel.name}, ${hotel.location}`)}`, "_blank")} 
+                   onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotel.name}, ${hotel.location}`)}`, "_blank")} 
                 />
                 <UtilityButton 
                    icon={<Copy className="h-5 w-5" />} 
@@ -314,6 +339,7 @@ const HotelDetail = () => {
               </div>
             </div>
 
+            {/* Amenities */}
             <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
               <div className="flex items-center gap-2 mb-4">
                 <ShieldCheck className="h-5 w-5 text-red-600" />
@@ -329,6 +355,7 @@ const HotelDetail = () => {
               </div>
             </section>
 
+            {/* Facilities & Pricing */}
             {hotel.facilities?.length > 0 && (
               <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                 <div className="flex items-center gap-2 mb-4">
@@ -346,6 +373,7 @@ const HotelDetail = () => {
               </section>
             )}
 
+            {/* Activities */}
             {hotel.activities?.length > 0 && (
               <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                 <div className="flex items-center gap-2 mb-4">
@@ -375,12 +403,31 @@ const HotelDetail = () => {
                     <span className="text-lg">{liveRating.avg || "0"}</span>
                   </div>
                 </div>
+
                 <OperatingHoursInfo />
+
                 <Button onClick={() => setBookingOpen(true)} className="w-full py-8 rounded-3xl text-lg font-black uppercase tracking-widest bg-gradient-to-r from-[#FF7F50] to-[#FF4E50] border-none shadow-xl hover:scale-[1.02] transition-transform active:scale-95">Reserve Now</Button>
+
                 <div className="grid grid-cols-3 gap-3">
-                  <UtilityButton icon={<Navigation className="h-5 w-5" />} label="Map" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=$?q=${encodeURIComponent(`${hotel.name}, ${hotel.location}`)}`, "_blank")} />
-                  <UtilityButton icon={<Copy className="h-5 w-5" />} label="Copy" onClick={async () => { const link = await generateReferralLink(id!, "hotel", id!); await navigator.clipboard.writeText(link); toast({title: "Copied!"}); }} />
-                  <UtilityButton icon={<Share2 className="h-5 w-5" />} label="Share" onClick={() => navigator.share && navigator.share({title: hotel.name, url: window.location.href})} />
+                  <UtilityButton 
+                     icon={<Navigation className="h-5 w-5" />} 
+                     label="Map" 
+                     onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotel.name}, ${hotel.location}`)}`, "_blank")} 
+                  />
+                  <UtilityButton 
+                     icon={<Copy className="h-5 w-5" />} 
+                     label="Copy" 
+                     onClick={async () => {
+                       const link = await generateReferralLink(id!, "hotel", id!);
+                       await navigator.clipboard.writeText(link);
+                       toast({ title: "Copied!" });
+                     }} 
+                  />
+                  <UtilityButton 
+                     icon={<Share2 className="h-5 w-5" />} 
+                     label="Share" 
+                     onClick={() => navigator.share && navigator.share({ title: hotel.name, url: window.location.href })} 
+                  />
                 </div>
 
                 {/* Contact Section */}
@@ -409,7 +456,12 @@ const HotelDetail = () => {
           </div>
         </div>
 
-        <div className="mt-8"><ReviewSection itemId={hotel.id} itemType="hotel" /></div>
+        {/* Reviews */}
+        <div className="mt-8">
+          <ReviewSection itemId={hotel.id} itemType="hotel" />
+        </div>
+
+        {/* Similar Items */}
         <div className="mt-12">
           <h2 className="text-xl font-black uppercase tracking-tighter mb-6">Explore Similar Stays</h2>
           <SimilarItems currentItemId={hotel.id} itemType="hotel" country={hotel.country} />
@@ -426,6 +478,7 @@ const HotelDetail = () => {
           />
         </DialogContent>
       </Dialog>
+
       <MobileBottomBar />
     </div>
   );
