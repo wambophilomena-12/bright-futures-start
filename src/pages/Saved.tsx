@@ -92,12 +92,10 @@ const Saved = () => {
       return [];
     }
 
-    // Group items by type for batch fetching
     const tripIds = savedData.filter(s => s.item_type === "trip" || s.item_type === "event").map(s => s.item_id);
     const hotelIds = savedData.filter(s => s.item_type === "hotel").map(s => s.item_id);
     const adventureIds = savedData.filter(s => s.item_type === "adventure_place").map(s => s.item_id);
 
-    // Fetch all items in parallel with optimized field selection
     const [tripsRes, hotelsRes, adventuresRes] = await Promise.all([
       tripIds.length > 0 
         ? supabase.from("trips").select("id,name,location,country,image_url,date,price,available_tickets,type").in("id", tripIds)
@@ -110,7 +108,6 @@ const Saved = () => {
         : Promise.resolve({ data: [] }),
     ]);
 
-    // Create lookup maps
     const itemMap = new Map<string, any>();
     (tripsRes.data || []).forEach((item: any) => {
       const savedType = savedData.find(s => s.item_id === item.id)?.item_type || "trip";
@@ -119,7 +116,6 @@ const Saved = () => {
     (hotelsRes.data || []).forEach((item: any) => itemMap.set(item.id, { ...item, savedType: "hotel" }));
     (adventuresRes.data || []).forEach((item: any) => itemMap.set(item.id, { ...item, savedType: "adventure_place" }));
 
-    // Preserve order from savedData
     const items = savedData
       .map(saved => itemMap.get(saved.item_id))
       .filter(Boolean);
@@ -136,12 +132,6 @@ const Saved = () => {
     setIsLoading(false);
     setLoadingMore(false);
     return items;
-  };
-
-  const loadMore = () => {
-    if (userId && hasMore && !loadingMore) {
-      fetchSavedItems(userId, offset);
-    }
   };
 
   const toggleItemSelection = (itemId: string) => {
@@ -179,7 +169,6 @@ const Saved = () => {
       <Header />
       
       <main className="container px-4 py-10 max-w-7xl mx-auto">
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -243,7 +232,8 @@ const Saved = () => {
         </div>
         
         {isLoading || authLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          /* UPDATED SKELETON GRID: Adjusted to match real grid */
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {[...Array(10)].map((_, i) => (
               <div key={i} className="space-y-4">
                 <Skeleton className="h-64 w-full rounded-[28px]" />
@@ -286,16 +276,17 @@ const Saved = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {/* UPDATED MAIN GRID: Added grid-cols-1 for mobile, gap-6, and centering */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {savedListings.map((item) => (
                 <div
                   key={item.id}
-                  className={`relative transition-all duration-300 ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                  className={`relative transition-all duration-300 flex justify-center ${isSelectionMode ? 'cursor-pointer' : ''}`}
                   onClick={() => isSelectionMode && toggleItemSelection(item.id)}
                 >
                   {isSelectionMode && (
                     <div
-                      className={`absolute top-4 left-4 z-50 h-8 w-8 rounded-xl border-2 flex items-center justify-center backdrop-blur-md transition-all ${
+                      className={`absolute top-4 left-8 z-50 h-8 w-8 rounded-xl border-2 flex items-center justify-center backdrop-blur-md transition-all ${
                         selectedItems.has(item.id)
                           ? "bg-[#008080] border-[#008080]"
                           : "bg-black/20 border-white"
@@ -308,7 +299,7 @@ const Saved = () => {
                   )}
                   
                   {isSelectionMode && selectedItems.has(item.id) && (
-                      <div className="absolute inset-0 bg-[#008080]/10 z-40 rounded-[32px] pointer-events-none border-2 border-[#008080]" />
+                      <div className="absolute inset-x-0 inset-y-0 bg-[#008080]/10 z-40 rounded-[32px] pointer-events-none border-2 border-[#008080] max-w-[380px] mx-auto w-full" />
                   )}
 
                   <ListingCard
@@ -329,7 +320,7 @@ const Saved = () => {
             {hasMore && (
               <div className="flex justify-center mt-10">
                 <Button
-                  onClick={loadMore}
+                  onClick={() => fetchSavedItems(userId!, offset)}
                   disabled={loadingMore}
                   className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
                   style={{ background: COLORS.TEAL }}
@@ -349,6 +340,7 @@ const Saved = () => {
         )}
       </main>
 
+      {/* Alert Dialogs... */}
       <AlertDialog open={showClearAllDialog} onOpenChange={setShowClearAllDialog}>
         <AlertDialogContent className="rounded-[32px] border-none p-8">
           <AlertDialogHeader>
