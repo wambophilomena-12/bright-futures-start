@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 const COLORS = {
   TEAL: "#008080",
@@ -169,6 +170,7 @@ const Saved = () => {
       <Header />
       
       <main className="container px-4 py-10 max-w-7xl mx-auto">
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -232,8 +234,7 @@ const Saved = () => {
         </div>
         
         {isLoading || authLoading ? (
-          /* UPDATED SKELETON GRID: Adjusted to match real grid */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
             {[...Array(10)].map((_, i) => (
               <div key={i} className="space-y-4">
                 <Skeleton className="h-64 w-full rounded-[28px]" />
@@ -276,21 +277,28 @@ const Saved = () => {
           </div>
         ) : (
           <>
-            {/* UPDATED MAIN GRID: Added grid-cols-1 for mobile, gap-6, and centering */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {/* THE FIX: 
+                1. Using grid-cols-1 by default (mobile). 
+                2. Using gap-8 to ensure enough margin between cards.
+            */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
               {savedListings.map((item) => (
                 <div
                   key={item.id}
-                  className={`relative transition-all duration-300 flex justify-center ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                  className={cn(
+                    "relative transition-all duration-300 flex justify-center",
+                    isSelectionMode ? 'cursor-pointer' : ''
+                  )}
                   onClick={() => isSelectionMode && toggleItemSelection(item.id)}
                 >
                   {isSelectionMode && (
                     <div
-                      className={`absolute top-4 left-8 z-50 h-8 w-8 rounded-xl border-2 flex items-center justify-center backdrop-blur-md transition-all ${
+                      className={cn(
+                        "absolute top-4 left-4 z-50 h-8 w-8 rounded-xl border-2 flex items-center justify-center backdrop-blur-md transition-all",
                         selectedItems.has(item.id)
                           ? "bg-[#008080] border-[#008080]"
                           : "bg-black/20 border-white"
-                      }`}
+                      )}
                     >
                       {selectedItems.has(item.id) && (
                         <CheckCircle className="h-5 w-5 text-white" />
@@ -299,20 +307,23 @@ const Saved = () => {
                   )}
                   
                   {isSelectionMode && selectedItems.has(item.id) && (
-                      <div className="absolute inset-x-0 inset-y-0 bg-[#008080]/10 z-40 rounded-[32px] pointer-events-none border-2 border-[#008080] max-w-[380px] mx-auto w-full" />
+                      <div className="absolute inset-0 bg-[#008080]/10 z-40 rounded-[32px] pointer-events-none border-2 border-[#008080] w-full max-w-[400px] mx-auto" />
                   )}
 
-                  <ListingCard
-                    id={item.id}
-                    type={item.savedType.replace("_", " ").toUpperCase() as any}
-                    name={item.name || item.local_name || item.location_name}
-                    imageUrl={item.image_url || item.photo_urls?.[0] || ""}
-                    location={item.location || item.location_name}
-                    country={item.country}
-                    onSave={() => handleSave(item.id, item.savedType)}
-                    isSaved={true}
-                    showBadge={true}
-                  />
+                  {/* Wrapper to control card width and prevent horizontal bleeding */}
+                  <div className="w-full max-w-[380px]">
+                    <ListingCard
+                      id={item.id}
+                      type={item.savedType.replace("_", " ").toUpperCase() as any}
+                      name={item.name || item.local_name || item.location_name}
+                      imageUrl={item.image_url || item.photo_urls?.[0] || ""}
+                      location={item.location || item.location_name}
+                      country={item.country}
+                      onSave={() => handleSave(item.id, item.savedType)}
+                      isSaved={true}
+                      showBadge={true}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -320,7 +331,7 @@ const Saved = () => {
             {hasMore && (
               <div className="flex justify-center mt-10">
                 <Button
-                  onClick={() => fetchSavedItems(userId!, offset)}
+                  onClick={loadMore}
                   disabled={loadingMore}
                   className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
                   style={{ background: COLORS.TEAL }}
@@ -340,7 +351,7 @@ const Saved = () => {
         )}
       </main>
 
-      {/* Alert Dialogs... */}
+      {/* Dialogs and Modals ... */}
       <AlertDialog open={showClearAllDialog} onOpenChange={setShowClearAllDialog}>
         <AlertDialogContent className="rounded-[32px] border-none p-8">
           <AlertDialogHeader>
