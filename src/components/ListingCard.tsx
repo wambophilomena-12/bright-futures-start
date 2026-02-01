@@ -84,6 +84,15 @@ const ListingCardComponent = ({
   const displayType = useMemo(() => isEventOrSport ? "Event & Sports" : type.replace('_', ' '), [isEventOrSport, type]);
   const formattedDistance = useMemo(() => distance?.toFixed(2), [distance]);
   
+  // Capitalize first letter of each word for name
+  const formattedName = useMemo(() => {
+    return name
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }, [name]);
+  
   const locationString = useMemo(() => [place, location].filter(Boolean).join(', '), [place, location]);
 
   const handleCardClick = useCallback(() => {
@@ -193,9 +202,9 @@ const ListingCardComponent = ({
       {/* Content Section */}
       <div className="p-4 flex flex-col flex-1"> 
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-medium text-base md:text-lg leading-snug uppercase tracking-tight line-clamp-2" 
+          <h3 className="font-bold text-base md:text-lg leading-snug tracking-tight line-clamp-2" 
               style={{ color: isUnavailable ? '#475569' : COLORS.TEAL }}>
-            {name}
+            {formattedName}
           </h3>
           {avgRating && (
             <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-none border border-slate-100 shadow-sm">
@@ -207,7 +216,7 @@ const ListingCardComponent = ({
         
         <div className="flex items-center gap-1.5 mb-3">
             <MapPin className="h-3.5 w-3.5 flex-shrink-0" style={{ color: isUnavailable ? '#94a3b8' : COLORS.CORAL }} />
-            <p className="text-[11px] font-normal text-slate-500 capitalize tracking-normal line-clamp-1">
+            <p className="text-[11px] font-bold text-black capitalize tracking-normal line-clamp-1">
                 {locationString.toLowerCase()}
             </p>
         </div>
