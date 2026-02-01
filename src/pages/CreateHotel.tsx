@@ -251,11 +251,32 @@ const CreateHotel = () => {
                 </div>
               </div>
 
-              <div className={`p-6 rounded-[24px] border-2 border-dashed flex flex-col items-center text-center gap-4 transition-colors ${errors.latitude ? "border-red-500 bg-red-50" : "border-slate-200 bg-slate-50/50"}`}>
-                <Navigation className="h-6 w-6" style={{ color: errors.latitude ? "#ef4444" : COLORS.CORAL }} />
-                <Button type="button" onClick={() => { /* navigator logic */ }} className="rounded-full px-8 font-black uppercase tracking-widest text-[10px] h-11" style={{ background: formData.latitude ? COLORS.TEAL : COLORS.CORAL }}>
-                  {formData.latitude ? "✓ Location Captured" : "Capture My Location *"}
-                </Button>
+              <div className={`p-4 rounded-[24px] border-2 transition-colors ${errors.latitude ? "border-red-500 bg-red-50" : "border-dashed border-slate-200 bg-slate-50/50"}`}>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-full" style={{ backgroundColor: errors.latitude ? "#fee2e2" : `${COLORS.CORAL}15` }}>
+                      <Navigation className="h-6 w-6" style={{ color: errors.latitude ? "#ef4444" : COLORS.CORAL }} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-xs font-black uppercase tracking-widest" style={{ color: errors.latitude ? "#ef4444" : COLORS.CORAL }}>GPS Location *</h4>
+                      <p className="text-[10px] text-slate-400 font-bold">Tap the button to capture your current location</p>
+                    </div>
+                  </div>
+                  <Button 
+                    type="button" 
+                    onClick={() => {
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => setFormData({...formData, latitude: pos.coords.latitude, longitude: pos.coords.longitude}),
+                        () => toast({ title: "Location Error", description: "Unable to get location. Please enable GPS.", variant: "destructive" })
+                      );
+                    }} 
+                    className="w-full rounded-2xl px-6 h-14 font-black uppercase text-[11px] tracking-widest text-white shadow-lg active:scale-95 transition-all"
+                    style={{ background: formData.latitude ? COLORS.TEAL : COLORS.CORAL }}
+                  >
+                    <Navigation className="h-5 w-5 mr-3" />
+                    {formData.latitude ? '✓ Location Captured Successfully' : 'Tap to Capture GPS Location'}
+                  </Button>
+                </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">

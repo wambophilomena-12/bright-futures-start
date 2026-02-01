@@ -389,11 +389,28 @@ const CreateTripEvent = () => {
             </div>
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">GPS Location *</Label>
-              <div className="flex gap-2">
-                <StyledInput isInvalid={validationErrors.includes("map_link")} className="bg-slate-50 flex-1" readOnly value={formData.map_link} placeholder="Tap icon to pin location" />
-                <Button type="button" onClick={getCurrentLocation} className="h-12 w-12 rounded-2xl shadow-lg" style={{ background: formData.map_link ? COLORS.TEAL : COLORS.CORAL }}>
-                  <Navigation className="h-5 w-5 text-white" />
-                </Button>
+              <div className={`p-4 rounded-2xl border-2 transition-all ${validationErrors.includes("map_link") ? "border-red-500 bg-red-50" : "border-dashed border-slate-200 bg-slate-50/50"}`}>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-full" style={{ backgroundColor: validationErrors.includes("map_link") ? "#fee2e2" : `${COLORS.CORAL}15` }}>
+                      <Navigation className="h-6 w-6" style={{ color: validationErrors.includes("map_link") ? "#ef4444" : COLORS.CORAL }} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[10px] text-slate-400 font-bold">
+                        {formData.map_link ? "Location captured successfully!" : "Tap below to pin your location on the map"}
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    type="button" 
+                    onClick={getCurrentLocation} 
+                    className="w-full h-14 rounded-2xl shadow-lg font-black uppercase text-[11px] tracking-widest text-white active:scale-95 transition-all" 
+                    style={{ background: formData.map_link ? COLORS.TEAL : COLORS.CORAL }}
+                  >
+                    <Navigation className="h-5 w-5 mr-3" />
+                    {formData.map_link ? '✓ Location Captured Successfully' : 'Tap to Capture GPS Location'}
+                  </Button>
+                </div>
               </div>
             </div>
             {/* Gallery */}

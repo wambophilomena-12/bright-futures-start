@@ -329,18 +329,25 @@ const CreateAdventure = () => {
                 </div>
               </div>
 
-              <div className={cn("p-6 rounded-2xl border transition-all", isFieldMissing(formData.latitude) ? "border-red-500 bg-red-50" : "bg-[#F0E68C]/10 border-[#F0E68C]/30")}>
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <h4 className="text-xs font-black uppercase tracking-widest text-[#857F3E]">GPS Coordinates *</h4>
-                    <p className="text-[10px] text-[#857F3E]/80 font-bold uppercase mt-1">Capture precise location for maps</p>
+              <div className={cn("p-4 rounded-2xl border-2 transition-all", isFieldMissing(formData.latitude) ? "border-red-500 bg-red-50" : "bg-[#F0E68C]/10 border-[#F0E68C]/30")}>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-full" style={{ backgroundColor: isFieldMissing(formData.latitude) ? "#fee2e2" : `${COLORS.KHAKI}30` }}>
+                      <Navigation className="h-6 w-6" style={{ color: isFieldMissing(formData.latitude) ? "#ef4444" : COLORS.KHAKI_DARK }} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-xs font-black uppercase tracking-widest" style={{ color: isFieldMissing(formData.latitude) ? "#ef4444" : COLORS.KHAKI_DARK }}>GPS Coordinates *</h4>
+                      <p className="text-[10px] text-slate-400 font-bold">Tap below to capture precise location for maps</p>
+                    </div>
                   </div>
-                  <Button type="button" onClick={getCurrentLocation}
-                    className="text-white rounded-xl px-6 h-12 font-black uppercase text-[10px] tracking-widest"
+                  <Button 
+                    type="button" 
+                    onClick={getCurrentLocation}
+                    className="w-full text-white rounded-2xl px-6 h-14 font-black uppercase text-[11px] tracking-widest shadow-lg active:scale-95 transition-all"
                     style={{ background: formData.latitude ? COLORS.TEAL : COLORS.KHAKI_DARK }}
                   >
-                    <Navigation className="h-4 w-4 mr-2" />
-                    {formData.latitude ? '✓ Location Captured' : 'Auto-Capture GPS'}
+                    <Navigation className="h-5 w-5 mr-3" />
+                    {formData.latitude ? '✓ Location Captured Successfully' : 'Tap to Auto-Capture GPS'}
                   </Button>
                 </div>
               </div>

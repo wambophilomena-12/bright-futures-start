@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { 
   Home, Ticket, Heart, Phone, Info, LogIn, LogOut, User, 
-  FileText, Shield, ChevronRight, Trophy, Map, Mountain, Bed 
+  FileText, Shield, ChevronRight, Trophy, Map, Mountain, Bed, Building2 
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -133,10 +133,11 @@ export const NavigationDrawer = ({ onClose }: NavigationDrawerProps) => {
           <div className="h-4" />
           {/* NEW CATEGORIES SECTION */}
           <p className="px-4 text-[9px] font-black text-[#008080] uppercase tracking-[0.2em] mb-2">Explore Categories</p>
-          <NavItem icon={Trophy} label="Events & Sports" path="/events" />
-          <NavItem icon={Map} label="Trips & Tours" path="/trips" />
-          <NavItem icon={Mountain} label="Adventure Places" path="/adventures" />
-          <NavItem icon={Bed} label="Hotels & Stays" path="/hotels" />
+          <NavItem icon={Trophy} label="Events & Sports" path="/category/events" />
+          <NavItem icon={Map} label="Trips & Tours" path="/category/trips" />
+          <NavItem icon={Mountain} label="Adventure Places" path="/category/campsite" />
+          <NavItem icon={Building2} label="Accommodation" path="/category/accommodation" />
+          <NavItem icon={Bed} label="Hotels & Stays" path="/category/hotels" />
 
           <div className="h-4" />
           <p className="px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Support & Legal</p>

@@ -5,7 +5,7 @@ import { Header } from "@/components/Header";
 import { SearchBarWithSuggestions } from "@/components/SearchBarWithSuggestions";
 import { ListingCard } from "@/components/ListingCard";
 import { Card } from "@/components/ui/card";
-import { Calendar, Hotel, Tent, Compass, Map, Grid, MapPin, ChevronLeft, ChevronRight, Loader2, Navigation } from "lucide-react";
+import { Calendar, Hotel, Tent, Compass, Map, Grid, MapPin, ChevronLeft, ChevronRight, Loader2, Navigation, Home } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -533,7 +533,7 @@ const Index = () => {
 
   const categories = [{
     icon: Tent,
-    title: "Campsite & Experience",
+    title: "Adventures",
     path: "/category/campsite",
     bgImage: "/images/category-campsite.webp",
     description: "Adventure camping spots"
@@ -545,26 +545,23 @@ const Index = () => {
     description: "Find comfortable stays"
   }, {
     icon: Calendar,
-    title: "Trips & tours",
+    title: "Trips",
     path: "/category/trips",
     bgImage: "/images/category-trips.webp",
     description: "Explore guided tours and day trips"
   }, {
     icon: Compass,
-    title: "Sports & events",
+    title: "Events",
     path: "/category/events",
     bgImage: "/images/category-events.webp",
     description: "Discover exciting events"
-  }];
-  
-  // Separate accommodation category for the dedicated section
-  const accommodationCategory = {
-    icon: Hotel,
-    title: "Accommodation",
+  }, {
+    icon: Home,
+    title: "Stays",
     path: "/category/accommodation",
     bgImage: "/images/category-hotels.webp",
-    description: "Rooms & stays only"
-  };
+    description: "Rooms & accommodation only"
+  }];
 
   // Handle My Location tap - request location and switch view mode
   const handleMyLocationTap = useCallback(() => {
@@ -730,25 +727,25 @@ const Index = () => {
                 background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)'
               }}
             >
-              <div className="flex flex-row justify-around items-start">
+              <div className="flex flex-row justify-between items-start gap-1 px-2">
                 {categories.map((cat, index) => {
-                  // Eye-catching category colors
-                  const categoryColors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF7F50'];
+                  // Eye-catching category colors for 5 items
+                  const categoryColors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF7F50', '#9B59B6'];
                   const bgColor = categoryColors[index % categoryColors.length];
                   return (
                     <div 
                       key={cat.title} 
                       onClick={() => navigate(cat.path)} 
-                      className="flex flex-col items-center cursor-pointer group"
+                      className="flex flex-col items-center cursor-pointer group flex-1 min-w-0"
                     >
                       <div 
-                        className="w-12 h-12 rounded-full backdrop-blur-sm flex items-center justify-center border border-white/30 transition-all group-hover:scale-110"
+                        className="w-11 h-11 rounded-full backdrop-blur-sm flex items-center justify-center border border-white/30 transition-all group-hover:scale-110"
                         style={{ backgroundColor: `${bgColor}CC` }}
                       >
-                        <cat.icon className="h-5 w-5 text-white" />
+                        <cat.icon className="h-4 w-4 text-white" />
                       </div>
                       <span 
-                        className="text-[9px] font-bold uppercase tracking-tight mt-2 text-center leading-tight max-w-[70px]"
+                        className="text-[8px] font-bold uppercase tracking-tight mt-1.5 text-center leading-tight max-w-[60px] truncate"
                         style={{ color: bgColor }}
                       >
                         {cat.title}
@@ -797,10 +794,10 @@ const Index = () => {
         {/* Desktop Category Cards - same style as mobile (icon + title only) */}
         {!isSearchFocused && (
           <div className="hidden md:block w-full px-4 md:px-6 lg:px-8 py-4 md:py-6 overflow-hidden">
-            <div className="grid grid-cols-4 gap-4 w-full">
+          <div className="grid grid-cols-5 gap-4 w-full">
               {categories.map((cat, index) => {
-                // Eye-catching category colors matching mobile
-                const categoryColors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF7F50'];
+                // Eye-catching category colors matching mobile (5 colors now)
+                const categoryColors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF7F50', '#9B59B6'];
                 const bgColor = categoryColors[index % categoryColors.length];
                 return (
                   <div 

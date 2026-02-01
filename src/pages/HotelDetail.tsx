@@ -268,6 +268,11 @@ const HotelDetail = () => {
           <div className="absolute bottom-6 left-0 w-full px-4 z-20">
             <div className="bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-2xl p-4 max-w-xl">
               <div className="flex flex-wrap gap-2 mb-2">
+                   {hotel.establishment_type === 'accommodation_only' && (
+                     <Badge className="bg-purple-500 text-white border-none px-2 py-0.5 text-[9px] font-black uppercase rounded-full flex items-center gap-1 shadow-lg">
+                       Accommodation Only
+                     </Badge>
+                   )}
                    <Badge className="bg-amber-400 text-black border-none px-2 py-0.5 text-[9px] font-black uppercase rounded-full flex items-center gap-1 shadow-lg">
                      <Star className="h-3 w-3 fill-current" />
                      {liveRating.avg > 0 ? liveRating.avg : "New"}
