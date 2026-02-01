@@ -831,7 +831,7 @@ const Index = () => {
               {searchQuery ? 'Search Results' : 'All Listings'}
             </h2>
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="w-full">
                     <ListingSkeleton />
@@ -839,7 +839,7 @@ const Index = () => {
                 ))}
               </div>
             ) : sortedListings.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {sortedListings.map((listing, index) => {
                   const itemDistance = position && listing.latitude && listing.longitude ? calculateDistance(position.latitude, position.longitude, listing.latitude, listing.longitude) : undefined;
                   const ratingData = ratings.get(listing.id);

@@ -221,7 +221,7 @@ const CategoryDetail = () => {
           On 'sm' (640px+) it goes to 2 columns.
           This prevents cards with min-width: 320px from overlapping.
         */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {loading ? (
             <ListingGridSkeleton count={8} />
           ) : (
@@ -230,7 +230,7 @@ const CategoryDetail = () => {
               const isTripsOrEvents = category === 'trips' || category === 'events';
               
               return (
-                <div key={item.id} className="w-full flex justify-center">
+                <div key={item.id} className="w-full">
                   <ListingCard 
                     id={item.id} 
                     type={item.itemType || config.type} 

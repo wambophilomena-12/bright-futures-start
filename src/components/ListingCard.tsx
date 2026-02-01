@@ -117,7 +117,7 @@ const ListingCardComponent = ({
       onClick={handleCardClick} 
       className={cn(
         "group overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer border-slate-200 flex flex-col",
-        "rounded-sm bg-white w-full min-w-[320px]", // Increased width and small border radius
+        "rounded-sm bg-white w-full max-w-full", // Removed min-w to prevent overlap
         compact ? "h-auto" : "h-full",
         isUnavailable && "opacity-90"
       )}
