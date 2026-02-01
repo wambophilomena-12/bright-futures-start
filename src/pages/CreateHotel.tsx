@@ -190,39 +190,46 @@ const CreateHotel = () => {
       for (const image of compressedImages) {
         const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('hotel-images')
-          .upload(fileName, image);
+          .from('listing-images')
+          .upload(fileName, image.file);
         
         if (uploadError) throw uploadError;
         
         const { data: { publicUrl } } = supabase.storage
-          .from('hotel-images')
+          .from('listing-images')
           .getPublicUrl(fileName);
         
         imageUrls.push(publicUrl);
       }
 
+      // Get the selected working days as an array
+      const selectedDays = Object.entries(workingDays)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([day]) => day);
+
       // Prepare data for submission
       const hotelData = {
-        user_id: user.id,
-        registration_name: formData.registrationName,
-        registration_number: formData.registrationNumber,
+        created_by: user.id,
+        name: formData.registrationName,
+        location: formData.place,
         place: formData.place,
         country: formData.country,
         description: formData.description,
         email: formData.email,
-        phone_number: formData.phoneNumber,
+        phone_numbers: formData.phoneNumber ? [formData.phoneNumber] : [],
         establishment_type: formData.establishmentType,
         latitude: formData.latitude,
         longitude: formData.longitude,
         opening_hours: formData.openingHours,
         closing_hours: formData.closingHours,
-        working_days: workingDays,
-        amenities: amenities.filter(a => a.name.trim() !== ""),
-        facilities: facilities.filter(f => f.name.trim() !== ""),
-        activities: activities.filter(a => a.name.trim() !== ""),
+        days_opened: selectedDays,
+        amenities: amenities.filter(a => a.name.trim() !== "").map(a => a.name),
+        facilities: facilities.filter(f => f.name.trim() !== "").map(f => ({ name: f.name, price: f.price || 0 })),
+        activities: activities.filter(a => a.name.trim() !== "").map(a => ({ name: a.name, price: a.price || 0 })),
+        image_url: imageUrls[0] || '',
         gallery_images: imageUrls,
-        status: 'pending'
+        registration_number: formData.registrationNumber,
+        approval_status: 'pending'
       };
 
       const { error } = await supabase.from('hotels').insert([hotelData]);
