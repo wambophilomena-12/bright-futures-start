@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -10,13 +9,10 @@ import {
 } from "lucide-react";
 import { SimilarItems } from "@/components/SimilarItems";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { ReviewSection } from "@/components/ReviewSection";
 import { useSavedItems } from "@/hooks/useSavedItems";
-import { MultiStepBooking, BookingFormData } from "@/components/booking/MultiStepBooking";
-import { useBookingSubmit } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 import { trackReferralClick, generateReferralLink } from "@/lib/referralUtils";
@@ -31,9 +27,6 @@ const HotelDetail = () => {
   
   const [hotel, setHotel] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
   const [isOpenNow, setIsOpenNow] = useState(false);
   const [liveRating, setLiveRating] = useState({ avg: 0, count: 0 });
 
@@ -130,23 +123,6 @@ const HotelDetail = () => {
     }
   };
 
-  const { submitBooking } = useBookingSubmit();
-
-  const handleBookingSubmit = async (data: BookingFormData) => {
-    if (!hotel) return;
-    setIsProcessing(true);
-    try {
-      await submitBooking({
-        itemId: hotel.id, itemName: hotel.name, bookingType: 'hotel', totalAmount: startingPrice, 
-        slotsBooked: data.num_adults + data.num_children, visitDate: data.visit_date,
-        guestName: data.guest_name, guestEmail: data.guest_email, guestPhone: data.guest_phone,
-        hostId: hotel.created_by, bookingDetails: { ...data, hotel_name: hotel.name }
-      });
-      setIsCompleted(true);
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally { setIsProcessing(false); }
-  };
 
   if (loading) {
     return (
@@ -383,7 +359,7 @@ const HotelDetail = () => {
 
                 <OperatingHoursInfo />
 
-                <Button onClick={() => setBookingOpen(true)} className="w-full py-8 rounded-3xl text-lg font-black uppercase tracking-widest bg-gradient-to-r from-[#FF7F50] to-[#FF4E50] border-none shadow-xl hover:scale-[1.02] transition-transform active:scale-95">Reserve Now</Button>
+                <Button onClick={() => navigate(`/booking/hotel/${hotel.id}`)} className="w-full py-8 rounded-3xl text-lg font-black uppercase tracking-widest bg-gradient-to-r from-[#FF7F50] to-[#FF4E50] border-none shadow-xl hover:scale-[1.02] transition-transform active:scale-95">Reserve Now</Button>
 
                 <div className="grid grid-cols-3 gap-3">
                   <UtilityButton 
@@ -445,18 +421,6 @@ const HotelDetail = () => {
         </div>
       </main>
 
-      <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[95vh] p-0 overflow-hidden rounded-[32px] border-none shadow-2xl">
-          <MultiStepBooking 
-            onSubmit={handleBookingSubmit} itemName={hotel.name} itemId={hotel.id} bookingType="hotel"
-            priceAdult={startingPrice} isProcessing={isProcessing} isCompleted={isCompleted} 
-            hostId={hotel.created_by} facilities={hotel.facilities || []} activities={hotel.activities || []}
-            onPaymentSuccess={() => setIsCompleted(true)} primaryColor="#008080" accentColor="#FF7F50"
-          />
-        </DialogContent>
-      </Dialog>
-
-      <MobileBottomBar />
     </div>
   );
 };

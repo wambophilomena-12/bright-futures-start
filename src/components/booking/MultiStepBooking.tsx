@@ -8,7 +8,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentStatusDialog } from "./PaymentStatusDialog";
-import { useMpesaPayment } from "@/hooks/useMpesaPayment";
 import { usePaystackPayment } from "@/hooks/usePaystackPayment";
 import { cn } from "@/lib/utils";
 import { useRealtimeItemAvailability } from "@/hooks/useRealtimeBookings";
@@ -141,28 +140,9 @@ export const MultiStepBooking = ({
         mpesa_phone: "",
     });
 
-    const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
     const [paymentSucceeded, setPaymentSucceeded] = useState(false);
     const [isCardPaymentLoading, setIsCardPaymentLoading] = useState(false);
-
-    const { paymentStatus, errorMessage, initiatePayment, resetPayment, isPaymentInProgress } = useMpesaPayment({
-        onSuccess: (bookingId) => {
-            console.log('✅ Payment succeeded for booking:', bookingId);
-            setPaymentSucceeded(true);
-            
-            setTimeout(() => {
-                resetPayment();
-                setPaymentSucceeded(false);
-                if (onPaymentSuccess) {
-                    onPaymentSuccess();
-                }
-            }, 2000);
-        },
-        onError: (error) => {
-            console.log('❌ Payment failed:', error);
-            setPaymentSucceeded(false);
-        },
-    });
+    const [paymentError, setPaymentError] = useState<string | null>(null);
 
     const { 
         initiatePayment: initiateCardPayment, 
@@ -179,6 +159,7 @@ export const MultiStepBooking = ({
         onError: (error) => {
             console.log('❌ Card payment failed:', error);
             setIsCardPaymentLoading(false);
+            setPaymentError(error);
         },
     });
 
@@ -277,24 +258,19 @@ export const MultiStepBooking = ({
             guest_phone: formData.guest_phone || undefined,
             visit_date: formData.visit_date,
             slots_booked: formData.num_adults + formData.num_children,
-            payment_method: paymentMethod,
-            payment_phone: formData.mpesa_phone,
             host_id: hostId,
             emailData: {
                 itemName,
             },
         };
 
-        if (paymentMethod === 'mpesa') {
-            await initiatePayment(formData.mpesa_phone, totalAmount, bookingData);
-        } else if (paymentMethod === 'card') {
-            setIsCardPaymentLoading(true);
-            await initiateCardPayment(
-                formData.guest_email || user?.email || '',
-                totalAmount,
-                bookingData
-            );
-        }
+        // Always use Paystack for payment
+        setIsCardPaymentLoading(true);
+        await initiateCardPayment(
+            formData.guest_email || user?.email || '',
+            totalAmount,
+            bookingData
+        );
     };
 
     const toggleFacility = (facility: Facility) => {
@@ -407,9 +383,6 @@ export const MultiStepBooking = ({
         );
     }
 
-    const isMpesaSelected = calculateTotal() > 0 && paymentMethod === 'mpesa';
-    const isCardSelected = calculateTotal() > 0 && paymentMethod === 'card';
-    
     const total = calculateTotal();
 
     // Check if requested slots exceed remaining - only for inventory-based items
@@ -846,50 +819,18 @@ export const MultiStepBooking = ({
                             </div>
                         </div>
 
-                        {/* Payment Method Selection */}
+                        {/* Payment Info */}
                         {total > 0 && (
-                            <div className="space-y-4">
-                                <h3 className="text-sm font-black uppercase tracking-wider" style={{ color: primaryColor }}>Payment Method</h3>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => setPaymentMethod('mpesa')}
-                                        className={cn(
-                                            "p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2",
-                                            paymentMethod === 'mpesa' 
-                                                ? "border-[#008080] bg-[#008080]/5" 
-                                                : "border-slate-200 hover:border-slate-300"
-                                        )}
-                                    >
-                                        <Phone className="h-6 w-6" style={{ color: paymentMethod === 'mpesa' ? primaryColor : '#94a3b8' }} />
-                                        <span className={cn("text-sm font-bold", paymentMethod === 'mpesa' ? "text-[#008080]" : "text-slate-500")}>M-Pesa</span>
-                                    </button>
-                                    <button
-                                        onClick={() => setPaymentMethod('card')}
-                                        className={cn(
-                                            "p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2",
-                                            paymentMethod === 'card' 
-                                                ? "border-[#008080] bg-[#008080]/5" 
-                                                : "border-slate-200 hover:border-slate-300"
-                                        )}
-                                    >
-                                        <CreditCard className="h-6 w-6" style={{ color: paymentMethod === 'card' ? primaryColor : '#94a3b8' }} />
-                                        <span className={cn("text-sm font-bold", paymentMethod === 'card' ? "text-[#008080]" : "text-slate-500")}>Card</span>
-                                    </button>
-                                </div>
-
-                                {isMpesaSelected && (
-                                    <div className="p-4 rounded-2xl border-2 border-[#008080]">
-                                        <Label className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2 block">M-Pesa Phone Number</Label>
-                                        <Input
-                                            type="tel"
-                                            placeholder="e.g. 0712345678"
-                                            value={formData.mpesa_phone}
-                                            onChange={(e) => setFormData({ ...formData, mpesa_phone: e.target.value })}
-                                            className="border-none bg-white rounded-xl h-12"
-                                        />
-                                        <p className="text-xs text-slate-400 mt-2">You will receive an STK push to complete payment</p>
+                            <div className="p-4 rounded-2xl bg-gradient-to-r from-[#008080]/10 to-[#FF7F50]/10 border border-slate-200">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-xl bg-white shadow-sm">
+                                        <CreditCard className="h-5 w-5" style={{ color: primaryColor }} />
                                     </div>
-                                )}
+                                    <div>
+                                        <p className="text-sm font-black uppercase tracking-tight" style={{ color: primaryColor }}>Secure Payment</p>
+                                        <p className="text-xs text-slate-500">You'll be redirected to Paystack to complete payment</p>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -928,34 +869,26 @@ export const MultiStepBooking = ({
                         <Button
                             onClick={handleSubmit}
                             disabled={
-                                isPaymentInProgress || 
+                                isPaystackLoading || 
+                                isCardPaymentLoading ||
                                 isGloballySoldOut ||
                                 insufficientSlots ||
-                                (total > 0 && paymentMethod === 'mpesa' && !formData.mpesa_phone) ||
                                 (!user && (!formData.guest_name || !formData.guest_email))
                             }
                             className="flex-1 h-14 rounded-2xl font-black uppercase tracking-wider text-white"
                             style={{ backgroundColor: accentColor }}
                         >
-                            {isPaymentInProgress ? (
+                            {(isPaystackLoading || isCardPaymentLoading) ? (
                                 <Loader2 className="h-5 w-5 animate-spin" />
                             ) : total === 0 ? (
                                 "Confirm Booking"
                             ) : (
-                                `Pay KES ${total.toLocaleString()}`
+                                `Proceed to Payment`
                             )}
                         </Button>
                     )}
                 </div>
             </div>
-
-            {/* Payment Status Dialog */}
-            <PaymentStatusDialog
-                open={paymentStatus !== 'idle'}
-                status={paymentStatus}
-                errorMessage={errorMessage || undefined}
-                onClose={resetPayment}
-            />
         </div>
     );
 };

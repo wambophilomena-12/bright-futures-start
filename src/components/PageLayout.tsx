@@ -24,7 +24,8 @@ export const PageLayout = ({ children }: PageLayoutProps) => {
 
   // Pages where MobileBottomBar should be hidden
   const shouldHideMobileBar = 
-    pathname === "/host-verification";
+    pathname === "/host-verification" ||
+    pathname.startsWith("/booking/");
 
   return (
     <div className="w-full min-h-screen flex flex-col">
