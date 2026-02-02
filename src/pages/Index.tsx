@@ -793,30 +793,32 @@ const Index = () => {
       <main className="w-full">
         {/* Desktop Category Cards - same style as mobile (icon + title only) */}
         {!isSearchFocused && (
-          <div className="hidden md:block w-full px-4 md:px-6 lg:px-8 py-4 md:py-6 overflow-hidden">
-          <div className="grid grid-cols-5 gap-4 w-full">
-              {categories.map((cat, index) => {
-                // Eye-catching category colors matching mobile (5 colors now)
-                const categoryColors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF7F50', '#9B59B6'];
-                const bgColor = categoryColors[index % categoryColors.length];
-                return (
-                  <div 
-                    key={cat.title} 
-                    onClick={() => navigate(cat.path)} 
-                    className="flex flex-col items-center cursor-pointer group border-2 border-slate-200 hover:border-primary rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-background"
-                  >
+          <div className="hidden md:block w-full overflow-hidden">
+            <div className="container mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6">
+              <div className="grid grid-cols-5 gap-4 w-full">
+                {categories.map((cat, index) => {
+                  // Eye-catching category colors matching mobile (5 colors now)
+                  const categoryColors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF7F50', '#9B59B6'];
+                  const bgColor = categoryColors[index % categoryColors.length];
+                  return (
                     <div 
-                      className="h-10 w-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                      style={{ backgroundColor: `${bgColor}CC` }}
+                      key={cat.title} 
+                      onClick={() => navigate(cat.path)} 
+                      className="flex flex-col items-center cursor-pointer group border-2 border-slate-200 hover:border-primary rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-background"
                     >
-                      <cat.icon className="h-5 w-5 text-white" />
+                      <div 
+                        className="h-10 w-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                        style={{ backgroundColor: `${bgColor}CC` }}
+                      >
+                        <cat.icon className="h-5 w-5 text-white" />
+                      </div>
+                      <span className="font-bold text-sm text-foreground mt-2 text-center" role="heading" aria-level={3}>
+                        {cat.title}
+                      </span>
                     </div>
-                    <span className="font-bold text-sm text-foreground mt-2 text-center" role="heading" aria-level={3}>
-                      {cat.title}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -874,42 +876,44 @@ const Index = () => {
           </div>
         )}
                 
-        <div className={`w-full px-0 md:px-6 lg:px-8 ${isSearchFocused ? 'hidden' : ''}`}>
+        <div className={`w-full ${isSearchFocused ? 'hidden' : ''}`}>
           {/* Top Destinations / My Location Toggle Bar */}
           <section className="mb-1 md:mb-6">
-            <div className="mb-1 md:mb-3 mt-1 md:mt-0 px-0 mx-0 md:mx-[10px] items-center justify-between flex flex-row my-[5px] gap-6">
-              {/* Top Destinations Text */}
-              <span
-                onClick={() => setListingViewMode('top_destinations')}
-                className={`cursor-pointer text-xs md:text-sm font-bold whitespace-nowrap transition-all ${
-                  listingViewMode === 'top_destinations'
-                    ? 'text-[#DC2626] underline underline-offset-4'
-                    : 'text-muted-foreground hover:text-[#DC2626]'
-                }`}
-              >
-                Top Destinations
-              </span>
+            <div className="container mx-auto px-4 md:px-6 lg:px-8">
+              <div className="mb-1 md:mb-3 mt-1 md:mt-0 items-center justify-between flex flex-row my-[5px] gap-6">
+                {/* Top Destinations Text */}
+                <span
+                  onClick={() => setListingViewMode('top_destinations')}
+                  className={`cursor-pointer text-xs md:text-sm font-bold whitespace-nowrap transition-all ${
+                    listingViewMode === 'top_destinations'
+                      ? 'text-[#DC2626] underline underline-offset-4'
+                      : 'text-muted-foreground hover:text-[#DC2626]'
+                  }`}
+                >
+                  Top Destinations
+                </span>
 
-              {/* My Location Text */}
-              <div
-                onClick={!locationLoading ? handleMyLocationTap : undefined}
-                className={`flex items-center gap-1.5 cursor-pointer text-xs md:text-sm font-bold whitespace-nowrap transition-all ${
-                  listingViewMode === 'my_location'
-                    ? 'text-[#DC2626] underline underline-offset-4'
-                    : 'text-muted-foreground hover:text-[#DC2626]'
-                } ${locationLoading ? 'opacity-70 cursor-wait' : ''}`}
-              >
-                {locationLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <MapPin className="h-3.5 w-3.5" />
-                )}
-                <span>{locationLoading ? 'Finding...' : 'My Location'}</span>
+                {/* My Location Text */}
+                <div
+                  onClick={!locationLoading ? handleMyLocationTap : undefined}
+                  className={`flex items-center gap-1.5 cursor-pointer text-xs md:text-sm font-bold whitespace-nowrap transition-all ${
+                    listingViewMode === 'my_location'
+                      ? 'text-[#DC2626] underline underline-offset-4'
+                      : 'text-muted-foreground hover:text-[#DC2626]'
+                  } ${locationLoading ? 'opacity-70 cursor-wait' : ''}`}
+                >
+                  {locationLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MapPin className="h-3.5 w-3.5" />
+                  )}
+                  <span>{locationLoading ? 'Finding...' : 'My Location'}</span>
+                </div>
               </div>
             </div>
           </section>
 
-          <div className="container mx-auto px-0 md:px-4 py-6">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 py-6">
             
             {/* Campsite & Experience (Adventure Places) - First */}
             <section className="mb-2 md:mb-6">
