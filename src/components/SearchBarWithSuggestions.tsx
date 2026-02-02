@@ -152,7 +152,7 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
         );
       }
       combined.sort((a, b) => a.name.localeCompare(b.name));
-      setSuggestions(combined.slice(0, 15));
+      setSuggestions(combined.slice(0, 10));
     } catch (error) {
       console.error("Error fetching suggestions:", error);
     } finally {

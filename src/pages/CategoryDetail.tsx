@@ -6,6 +6,8 @@ import { SearchBarWithSuggestions } from "@/components/SearchBarWithSuggestions"
 import { ListingCard } from "@/components/ListingCard";
 import { FilterBar, FilterValues } from "@/components/FilterBar";
 import { ListingGridSkeleton } from "@/components/ui/listing-skeleton";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserId } from "@/lib/sessionManager";
 import { cn } from "@/lib/utils";
@@ -13,6 +15,8 @@ import { useSavedItems } from "@/hooks/useSavedItems";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 import { useRatings, sortByRating } from "@/hooks/useRatings";
 import { useRealtimeBookings } from "@/hooks/useRealtimeBookings";
+
+const ITEMS_PER_PAGE = 20;
 
 const CategoryDetail = () => {
   const { category } = useParams<{ category: string }>();
@@ -22,6 +26,9 @@ const CategoryDetail = () => {
   const [activeFilters, setActiveFilters] = useState<FilterValues>({});
   const { savedItems, handleSave } = useSavedItems();
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   
   const { position } = useGeolocation();
@@ -62,9 +69,27 @@ const CategoryDetail = () => {
 
   const loadInitialData = async () => {
     setLoading(true);
-    const data = await fetchData(0, 40);
+    setOffset(0);
+    setHasMore(true);
+    const data = await fetchData(0, ITEMS_PER_PAGE);
     setItems(data);
+    setOffset(ITEMS_PER_PAGE);
+    setHasMore(data.length >= ITEMS_PER_PAGE);
     setLoading(false);
+  };
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const data = await fetchData(offset, ITEMS_PER_PAGE);
+    if (data.length === 0) {
+      setHasMore(false);
+    } else {
+      setItems(prev => [...prev, ...data]);
+      setOffset(prev => prev + ITEMS_PER_PAGE);
+      setHasMore(data.length >= ITEMS_PER_PAGE);
+    }
+    setLoadingMore(false);
   };
 
   const tripEventIds = useMemo(() => {
@@ -256,6 +281,25 @@ const CategoryDetail = () => {
             })
           )}
         </div>
+
+        {!loading && hasMore && filteredItems.length > 0 && (
+          <div className="flex justify-center mt-10">
+            <Button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8 bg-primary"
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                "Load More"
+              )}
+            </Button>
+          </div>
+        )}
 
         {!loading && filteredItems.length === 0 && (
           <div className="text-center py-20 text-muted-foreground italic">

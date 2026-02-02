@@ -242,7 +242,7 @@ const CreateHotel = () => {
         variant: "default"
       });
       
-      navigate('/my-listings');
+      navigate('/become-host');
     } catch (error) {
       console.error('Submission error:', error);
       toast({ 
