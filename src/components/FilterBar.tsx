@@ -73,7 +73,7 @@ export const FilterBar = ({ type = "trips-events", onApplyFilters }: FilterBarPr
             .select("id, name, location, place, country")
             .eq("approval_status", "approved")
             .or(`location.ilike.%${locationQuery}%,place.ilike.%${locationQuery}%,country.ilike.%${locationQuery}%`)
-            .limit(6);
+            .limit(10);
 
           if (!error && data) {
             allSuggestions = data.map(item => ({
@@ -90,7 +90,7 @@ export const FilterBar = ({ type = "trips-events", onApplyFilters }: FilterBarPr
             .select("id, name, location, place, country")
             .eq("approval_status", "approved")
             .or(`location.ilike.%${locationQuery}%,place.ilike.%${locationQuery}%,country.ilike.%${locationQuery}%`)
-            .limit(6);
+            .limit(10);
 
           if (!error && data) {
             allSuggestions = data.map(item => ({
@@ -108,7 +108,7 @@ export const FilterBar = ({ type = "trips-events", onApplyFilters }: FilterBarPr
             .eq("approval_status", "approved")
             .eq("establishment_type", "accommodation_only")
             .or(`location.ilike.%${locationQuery}%,place.ilike.%${locationQuery}%,country.ilike.%${locationQuery}%`)
-            .limit(6);
+            .limit(10);
 
           if (!error && data) {
             allSuggestions = data.map(item => ({
@@ -125,7 +125,7 @@ export const FilterBar = ({ type = "trips-events", onApplyFilters }: FilterBarPr
             .select("id, name, location, place, country")
             .eq("approval_status", "approved")
             .or(`location.ilike.%${locationQuery}%,place.ilike.%${locationQuery}%,country.ilike.%${locationQuery}%`)
-            .limit(6);
+            .limit(10);
 
           if (!error && data) {
             allSuggestions = data.map(item => ({
