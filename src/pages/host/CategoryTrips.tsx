@@ -5,7 +5,7 @@ import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Plane, Plus, ArrowLeft, MapPin, Calendar, LayoutGrid } from "lucide-react";
+import { ChevronRight, Plane, Plus, ArrowLeft, MapPin, Calendar, LayoutGrid, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -18,6 +18,8 @@ const COLORS = {
   RED: "#FF0000",
   SOFT_GRAY: "#F8F9FA"
 };
+
+const ITEMS_PER_PAGE = 20;
 
 interface Trip {
   id: string;
@@ -33,29 +35,54 @@ const CategoryTrips = () => {
   const { user } = useAuth();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
-    fetchTrips();
+    fetchTrips(0);
   }, [user, navigate]);
 
-  const fetchTrips = async () => {
+  const fetchTrips = async (fetchOffset: number) => {
+    if (fetchOffset === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
       const { data, error } = await supabase
         .from("trips")
         .select("id, name, location, approval_status, is_hidden, created_at")
         .eq("created_by", user?.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1);
 
       if (error) throw error;
-      setTrips(data || []);
+      
+      if (fetchOffset === 0) {
+        setTrips(data || []);
+      } else {
+        setTrips(prev => [...prev, ...(data || [])]);
+      }
+      
+      setOffset(fetchOffset + ITEMS_PER_PAGE);
+      setHasMore((data || []).length >= ITEMS_PER_PAGE);
     } catch (error) {
       console.error("Error fetching trips:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchTrips(offset);
     }
   };
 
@@ -147,47 +174,69 @@ const CategoryTrips = () => {
             </Button>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {trips.map((trip) => (
-              <button
-                key={trip.id}
-                onClick={() => navigate(`/edit-listing/trip/${trip.id}`)}
-                className="group w-full flex items-center justify-between p-6 bg-white rounded-[28px] shadow-sm border border-slate-100 hover:shadow-xl hover:border-[#008080]/20 transition-all duration-300 text-left"
-              >
-                <div className="flex items-center gap-5">
-                  <div className="bg-[#F0E68C]/20 p-4 rounded-2xl group-hover:bg-[#008080] transition-colors duration-300">
-                    <Plane className="h-6 w-6 text-[#857F3E] group-hover:text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black uppercase tracking-tight text-slate-800 group-hover:text-[#008080] transition-colors">
-                      {trip.name}
-                    </h3>
-                    <div className="flex items-center gap-3 mt-1 text-slate-400">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">{trip.location}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">
-                          {new Date(trip.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                        </span>
+          <>
+            <div className="space-y-4">
+              {trips.map((trip) => (
+                <button
+                  key={trip.id}
+                  onClick={() => navigate(`/edit-listing/trip/${trip.id}`)}
+                  className="group w-full flex items-center justify-between p-6 bg-white rounded-[28px] shadow-sm border border-slate-100 hover:shadow-xl hover:border-[#008080]/20 transition-all duration-300 text-left"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="bg-[#F0E68C]/20 p-4 rounded-2xl group-hover:bg-[#008080] transition-colors duration-300">
+                      <Plane className="h-6 w-6 text-[#857F3E] group-hover:text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black uppercase tracking-tight text-slate-800 group-hover:text-[#008080] transition-colors">
+                        {trip.name}
+                      </h3>
+                      <div className="flex items-center gap-3 mt-1 text-slate-400">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">{trip.location}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">
+                            {new Date(trip.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="hidden sm:block">
-                    {getStatusBadge(trip.approval_status, trip.is_hidden)}
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="hidden sm:block">
+                      {getStatusBadge(trip.approval_status, trip.is_hidden)}
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-[#FF7F50] group-hover:text-white transition-all">
+                      <ChevronRight className="h-5 w-5" />
+                    </div>
                   </div>
-                  <div className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-[#FF7F50] group-hover:text-white transition-all">
-                    <ChevronRight className="h-5 w-5" />
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
+            
+            {hasMore && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                  style={{ background: COLORS.TEAL }}
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
 

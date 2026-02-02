@@ -5,7 +5,7 @@ import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Building, Plus, ArrowLeft, Hotel as HotelIcon, MapPin } from "lucide-react";
+import { ChevronRight, Building, Plus, ArrowLeft, Hotel as HotelIcon, MapPin, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -18,6 +18,8 @@ const COLORS = {
   RED: "#FF0000",
   SOFT_GRAY: "#F8F9FA"
 };
+
+const ITEMS_PER_PAGE = 20;
 
 interface Hotel {
   id: string;
@@ -33,29 +35,54 @@ const CategoryHotels = () => {
   const { user } = useAuth();
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
-    fetchHotels();
+    fetchHotels(0);
   }, [user, navigate]);
 
-  const fetchHotels = async () => {
+  const fetchHotels = async (fetchOffset: number) => {
+    if (fetchOffset === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
       const { data, error } = await supabase
         .from("hotels")
         .select("id, name, location, approval_status, is_hidden, created_at")
         .eq("created_by", user?.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1);
 
       if (error) throw error;
-      setHotels(data || []);
+      
+      if (fetchOffset === 0) {
+        setHotels(data || []);
+      } else {
+        setHotels(prev => [...prev, ...(data || [])]);
+      }
+      
+      setOffset(fetchOffset + ITEMS_PER_PAGE);
+      setHasMore((data || []).length >= ITEMS_PER_PAGE);
     } catch (error) {
       console.error("Error fetching hotels:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchHotels(offset);
     }
   };
 
@@ -144,43 +171,65 @@ const CategoryHotels = () => {
             </Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {hotels.map((hotel) => (
-              <button
-                key={hotel.id}
-                onClick={() => navigate(`/edit-listing/hotel/${hotel.id}`)}
-                className="w-full text-left group transition-all duration-300 transform hover:-translate-y-1"
-              >
-                <div className="bg-white rounded-[28px] p-6 shadow-sm border border-slate-100 group-hover:shadow-xl group-hover:border-[#008080]/20 flex items-center justify-between">
-                  <div className="flex items-center gap-5">
-                    <div className="bg-slate-50 p-4 rounded-2xl group-hover:bg-[#008080]/10 transition-colors">
-                      <HotelIcon className="h-6 w-6 text-slate-400 group-hover:text-[#008080]" />
+          <>
+            <div className="space-y-4">
+              {hotels.map((hotel) => (
+                <button
+                  key={hotel.id}
+                  onClick={() => navigate(`/edit-listing/hotel/${hotel.id}`)}
+                  className="w-full text-left group transition-all duration-300 transform hover:-translate-y-1"
+                >
+                  <div className="bg-white rounded-[28px] p-6 shadow-sm border border-slate-100 group-hover:shadow-xl group-hover:border-[#008080]/20 flex items-center justify-between">
+                    <div className="flex items-center gap-5">
+                      <div className="bg-slate-50 p-4 rounded-2xl group-hover:bg-[#008080]/10 transition-colors">
+                        <HotelIcon className="h-6 w-6 text-slate-400 group-hover:text-[#008080]" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-800 mb-1">
+                          {hotel.name}
+                        </h3>
+                        <div className="flex items-center gap-1.5 text-slate-400 group-hover:text-[#FF7F50] transition-colors">
+                          <MapPin className="h-3 w-3" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">
+                            {hotel.location}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-black uppercase tracking-tight text-slate-800 mb-1">
-                        {hotel.name}
-                      </h3>
-                      <div className="flex items-center gap-1.5 text-slate-400 group-hover:text-[#FF7F50] transition-colors">
-                        <MapPin className="h-3 w-3" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">
-                          {hotel.location}
-                        </span>
+
+                    <div className="flex items-center gap-4">
+                      <div className="hidden sm:block">
+                        {getStatusBadge(hotel.approval_status, hotel.is_hidden)}
+                      </div>
+                      <div className="bg-slate-50 p-2 rounded-xl group-hover:bg-[#FF7F50] transition-colors">
+                        <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-white" />
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="hidden sm:block">
-                      {getStatusBadge(hotel.approval_status, hotel.is_hidden)}
-                    </div>
-                    <div className="bg-slate-50 p-2 rounded-xl group-hover:bg-[#FF7F50] transition-colors">
-                      <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-white" />
-                    </div>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
+            
+            {hasMore && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                  style={{ background: COLORS.TEAL }}
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Support Section Styled like Utility Buttons */}

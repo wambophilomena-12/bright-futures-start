@@ -177,14 +177,6 @@ const ListingCardComponent = ({
           {displayType}
         </Badge>
 
-        {distance !== undefined && distance > 0 && (
-          <Badge 
-            className="absolute bottom-3 right-3 z-10 px-2 py-1 border-none shadow-lg text-[9px] font-normal rounded-none"
-            style={{ background: COLORS.CORAL, color: 'white' }}
-          >
-            {formattedDistance} km
-          </Badge>
-        )}
 
         {onSave && (
           <button 

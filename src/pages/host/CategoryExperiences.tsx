@@ -12,7 +12,8 @@ import {
   Clock, 
   CheckCircle2, 
   XCircle, 
-  EyeOff 
+  EyeOff,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +27,8 @@ const COLORS = {
   SOFT_GRAY: "#F8F9FA",
   RED: "#FF0000"
 };
+
+const ITEMS_PER_PAGE = 20;
 
 interface Experience {
   id: string;
@@ -42,29 +45,54 @@ const CategoryExperiences = () => {
   const { user } = useAuth();
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
-    fetchExperiences();
+    fetchExperiences(0);
   }, [user, navigate]);
 
-  const fetchExperiences = async () => {
+  const fetchExperiences = async (fetchOffset: number) => {
+    if (fetchOffset === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
       const { data, error } = await supabase
         .from("adventure_places")
         .select("id, name, location, approval_status, is_hidden, created_at, image_url")
         .eq("created_by", user?.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(fetchOffset, fetchOffset + ITEMS_PER_PAGE - 1);
 
       if (error) throw error;
-      setExperiences(data || []);
+      
+      if (fetchOffset === 0) {
+        setExperiences(data || []);
+      } else {
+        setExperiences(prev => [...prev, ...(data || [])]);
+      }
+      
+      setOffset(fetchOffset + ITEMS_PER_PAGE);
+      setHasMore((data || []).length >= ITEMS_PER_PAGE);
     } catch (error) {
       console.error("Error fetching experiences:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchExperiences(offset);
     }
   };
 
@@ -162,50 +190,72 @@ const CategoryExperiences = () => {
             </Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {experiences.map((experience) => (
-              <button
-                key={experience.id}
-                onClick={() => navigate(`/edit-listing/adventure/${experience.id}`)}
-                className="w-full group bg-white rounded-[28px] p-4 flex items-center gap-4 border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#008080]/20 transition-all text-left relative overflow-hidden"
-              >
-                {/* Image/Icon Thumbnail */}
-                <div className="h-20 w-20 rounded-2xl overflow-hidden bg-slate-100 flex-shrink-0 relative">
-                    {experience.image_url ? (
-                        <img src={experience.image_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <Tent className="h-8 w-8 text-slate-300" />
-                        </div>
-                    )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0 pr-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <StatusDisplay status={experience.approval_status} isHidden={experience.is_hidden} />
-                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                        ID: {experience.id.slice(0, 8)}
-                    </span>
+          <>
+            <div className="space-y-4">
+              {experiences.map((experience) => (
+                <button
+                  key={experience.id}
+                  onClick={() => navigate(`/edit-listing/adventure/${experience.id}`)}
+                  className="w-full group bg-white rounded-[28px] p-4 flex items-center gap-4 border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#008080]/20 transition-all text-left relative overflow-hidden"
+                >
+                  {/* Image/Icon Thumbnail */}
+                  <div className="h-20 w-20 rounded-2xl overflow-hidden bg-slate-100 flex-shrink-0 relative">
+                      {experience.image_url ? (
+                          <img src={experience.image_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                      ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                              <Tent className="h-8 w-8 text-slate-300" />
+                          </div>
+                      )}
                   </div>
-                  <h3 className="text-lg font-black uppercase tracking-tight text-slate-800 truncate mb-1">
-                    {experience.name}
-                  </h3>
-                  <div className="flex items-center text-slate-400 gap-1">
-                    <MapPin className="h-3 w-3" />
-                    <span className="text-[10px] font-bold uppercase tracking-tight truncate">
-                        {experience.location}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Action Icon */}
-                <div className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-[#008080] group-hover:text-white transition-colors">
-                  <ChevronRight className="h-5 w-5" />
-                </div>
-              </button>
-            ))}
-          </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0 pr-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <StatusDisplay status={experience.approval_status} isHidden={experience.is_hidden} />
+                      <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                          ID: {experience.id.slice(0, 8)}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-black uppercase tracking-tight text-slate-800 truncate mb-1">
+                      {experience.name}
+                    </h3>
+                    <div className="flex items-center text-slate-400 gap-1">
+                      <MapPin className="h-3 w-3" />
+                      <span className="text-[10px] font-bold uppercase tracking-tight truncate">
+                          {experience.location}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Icon */}
+                  <div className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-[#008080] group-hover:text-white transition-colors">
+                    <ChevronRight className="h-5 w-5" />
+                  </div>
+                </button>
+              ))}
+            </div>
+            
+            {hasMore && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="rounded-2xl font-black uppercase text-[10px] tracking-widest h-12 px-8"
+                  style={{ background: COLORS.TEAL }}
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
 
