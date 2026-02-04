@@ -158,7 +158,8 @@ const EventDetail = () => {
 
       {/* HERO / IMAGE GALLERY */}
       <div className="max-w-6xl mx-auto px-4 pt-3">
-        <div className="relative w-full overflow-hidden h-[55vh] md:h-[70vh] bg-slate-900 rounded-3xl">
+        {/* Mobile Carousel View */}
+        <div className="relative w-full overflow-hidden h-[55vh] bg-slate-900 rounded-3xl md:hidden">
           {/* Action Buttons - Overlaid on Gallery */}
           <div className="absolute top-4 left-4 right-4 z-50 flex justify-between items-center">
             <Button 
@@ -182,7 +183,7 @@ const EventDetail = () => {
               {allImages.map((img, idx) => (
                 <CarouselItem key={idx} className="h-full pl-0 basis-full">
                   <div className="relative h-full w-full">
-                    <img src={img} alt={event.name} className="w-full h-full object-cover object-center" />
+                    <img src={img} alt={`${event.name} - ${idx + 1}`} className="w-full h-full object-cover object-center" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
                   </div>
                 </CarouselItem>
@@ -190,10 +191,10 @@ const EventDetail = () => {
             </CarouselContent>
           </Carousel>
 
-          <div className="absolute bottom-6 left-0 z-40 w-full px-4 md:px-8 pointer-events-none">
+          <div className="absolute bottom-6 left-0 z-40 w-full px-4 pointer-events-none">
             <div className="relative z-10 space-y-2 pointer-events-auto bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-2xl p-4 max-w-xl">
               <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-3 py-1 h-auto uppercase font-black tracking-[0.1em] text-[9px] rounded-full shadow-lg">Experience</Button>
-              <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">{event.name}</h1>
+              <h1 className="text-2xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">{event.name}</h1>
               <div className="flex items-center gap-2 cursor-pointer group w-fit" onClick={openInMaps}>
                   <MapPin className="h-4 w-4 text-white" />
                   <span className="text-xs font-bold text-white uppercase tracking-wide">
@@ -203,10 +204,103 @@ const EventDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Desktop Grid View */}
+        <div className="hidden md:block relative">
+          {/* Action Buttons - Overlaid on Gallery */}
+          <div className="absolute top-6 left-6 right-6 z-50 flex justify-between items-center">
+            <Button 
+              onClick={() => navigate(-1)} 
+              className="rounded-full w-12 h-12 p-0 border-none bg-white/90 backdrop-blur-sm text-slate-900 hover:bg-white shadow-lg transition-all"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+
+            <Button 
+              onClick={handleSave} 
+              className={`rounded-full w-12 h-12 p-0 border-none shadow-lg backdrop-blur-sm transition-all ${
+                isSaved ? "bg-red-500 hover:bg-red-600" : "bg-white/90 text-slate-900 hover:bg-white"
+              }`}
+            >
+              <Heart className={`h-6 w-6 ${isSaved ? "fill-white text-white" : "text-slate-900"}`} />
+            </Button>
+          </div>
+
+          {/* Image Grid Layout */}
+          <div className="grid grid-cols-4 gap-2 h-[550px]">
+            {allImages.length > 0 ? (
+              <>
+                {/* Main Large Image - Takes 2 columns and full height */}
+                <div className="col-span-2 row-span-2 rounded-3xl overflow-hidden relative group">
+                  <img 
+                    src={allImages[0]} 
+                    alt={event.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  
+                  {/* Event Info Overlay */}
+                  <div className="absolute bottom-6 left-6 right-6 z-20">
+                    <div className="space-y-3">
+                      <Button className="bg-[#FF7F50] hover:bg-[#FF7F50] border-none px-4 py-1.5 h-auto uppercase font-black tracking-[0.1em] text-[10px] rounded-full shadow-lg">
+                        Experience
+                      </Button>
+                      <h1 className="text-3xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">
+                        {event.name}
+                      </h1>
+                      <div className="flex items-center gap-2 cursor-pointer group/map w-fit" onClick={openInMaps}>
+                        <MapPin className="h-4 w-4 text-white" />
+                        <span className="text-sm font-bold text-white uppercase tracking-wide">
+                          {[event.place, event.location, event.country].filter(Boolean).join(', ')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top Right Image */}
+                {allImages[1] && (
+                  <div className="col-span-2 rounded-3xl overflow-hidden relative group">
+                    <img 
+                      src={allImages[1]} 
+                      alt={`${event.name} - Gallery 2`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                )}
+
+                {/* Bottom Right - 3 Small Images */}
+                <div className="col-span-2 grid grid-cols-3 gap-2">
+                  {allImages.slice(2, 5).map((img, idx) => (
+                    <div key={idx} className="rounded-2xl overflow-hidden relative group">
+                      <img 
+                        src={img} 
+                        alt={`${event.name} - Gallery ${idx + 3}`}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      {idx === 2 && allImages.length > 5 && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                          <div className="text-center">
+                            <span className="text-white text-2xl font-black">+{allImages.length - 5}</span>
+                            <p className="text-white text-xs font-bold uppercase mt-1">More</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="col-span-4 rounded-3xl bg-slate-200 flex items-center justify-center">
+                <p className="text-slate-400 font-black uppercase text-sm">No Images Available</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 3. MAIN BODY */}
-      <main className="container px-4 max-w-6xl mx-auto -mt-10 relative z-50">
+      <main className="container px-4 max-w-6xl mx-auto mt-6 relative z-50">
         <div className="grid lg:grid-cols-[1.7fr,1fr] gap-6">
           
           <div className="space-y-6">
