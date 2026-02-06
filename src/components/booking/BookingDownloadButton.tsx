@@ -71,7 +71,7 @@ export const BookingDownloadButton = ({
         ) : (
           <>
             <Download className="h-4 w-4 mr-2" />
-            Download PDF
+            Download Bookig mow!
           </>
         )}
       </Button>
