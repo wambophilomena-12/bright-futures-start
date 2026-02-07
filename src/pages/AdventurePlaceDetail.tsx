@@ -21,6 +21,7 @@ import { Header } from "@/components/Header";
 import { ImageGalleryModal } from "@/components/detail/ImageGalleryModal";
 import { QuickNavigationBar } from "@/components/detail/QuickNavigationBar";
 import { AmenitiesSection } from "@/components/detail/AmenitiesSection";
+import { DetailMapSection } from "@/components/detail/DetailMapSection";
 
 const AdventurePlaceDetail = () => {
   const { slug } = useParams();
@@ -555,6 +556,21 @@ const AdventurePlaceDetail = () => {
         <div className="mt-12 bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
           <ReviewSection itemId={place.id} itemType="adventure_place" />
         </div>
+
+        {/* Map Section */}
+        <DetailMapSection
+          currentItem={{
+            id: place.id,
+            name: place.name,
+            latitude: place.latitude,
+            longitude: place.longitude,
+            location: place.location,
+            country: place.country,
+            image_url: place.image_url,
+            entry_fee: place.entry_fee,
+          }}
+          itemType="adventure"
+        />
 
         <SimilarItems currentItemId={place.id} itemType="adventure" country={place.country} />
       </main>

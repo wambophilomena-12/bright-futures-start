@@ -19,6 +19,7 @@ import { extractIdFromSlug } from "@/lib/slugUtils";
 import { useRealtimeItemAvailability } from "@/hooks/useRealtimeBookings";
 import { Header } from "@/components/Header";
 import { ImageGalleryModal } from "@/components/detail/ImageGalleryModal";
+import { DetailMapSection } from "@/components/detail/DetailMapSection";
 
 const COLORS = {
   TEAL: "#008080",
@@ -357,6 +358,21 @@ const TripDetail = () => {
             <BookingCard />
           </div>
         </div>
+
+        {/* Map Section */}
+        <DetailMapSection
+          currentItem={{
+            id: trip.id,
+            name: trip.name,
+            latitude: null,
+            longitude: null,
+            location: trip.location,
+            country: trip.country,
+            image_url: trip.image_url,
+            price: trip.price,
+          }}
+          itemType="trip"
+        />
 
         {/* Similar Items */}
         <div className="mt-12 lg:mt-16">

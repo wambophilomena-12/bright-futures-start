@@ -21,6 +21,7 @@ import { Header } from "@/components/Header";
 import { ImageGalleryModal } from "@/components/detail/ImageGalleryModal";
 import { QuickNavigationBar } from "@/components/detail/QuickNavigationBar";
 import { AmenitiesSection } from "@/components/detail/AmenitiesSection";
+import { DetailMapSection } from "@/components/detail/DetailMapSection";
 
 const HotelDetail = () => {
   const { slug } = useParams();
@@ -550,6 +551,20 @@ const HotelDetail = () => {
         <div className="mt-8">
           <ReviewSection itemId={hotel.id} itemType="hotel" />
         </div>
+
+        {/* Map Section */}
+        <DetailMapSection
+          currentItem={{
+            id: hotel.id,
+            name: hotel.name,
+            latitude: hotel.latitude,
+            longitude: hotel.longitude,
+            location: hotel.location,
+            country: hotel.country,
+            image_url: hotel.image_url,
+          }}
+          itemType="hotel"
+        />
 
         {/* Similar Items */}
         <div className="mt-12">

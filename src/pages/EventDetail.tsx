@@ -17,6 +17,7 @@ import { useBookingSubmit, BookingFormData } from "@/hooks/useBookingSubmit";
 import { extractIdFromSlug } from "@/lib/slugUtils";
 import { useRealtimeItemAvailability } from "@/hooks/useRealtimeBookings";
 import { Header } from "@/components/Header";
+import { DetailMapSection } from "@/components/detail/DetailMapSection";
 
 const COLORS = {
   TEAL: "#008080",
@@ -475,6 +476,21 @@ const EventDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Map Section */}
+        <DetailMapSection
+          currentItem={{
+            id: event.id,
+            name: event.name,
+            latitude: null,
+            longitude: null,
+            location: event.location,
+            country: event.country,
+            image_url: event.image_url,
+            price: event.price,
+          }}
+          itemType="event"
+        />
 
         {/* Similar Items */}
         <div className="mt-16">
