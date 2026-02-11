@@ -32,7 +32,7 @@ const HostBookings = lazy(() => import("./pages/HostBookings"));
 const HostBookingDetails = lazy(() => import("./pages/HostBookingDetails"));
 const HostItemDetail = lazy(() => import("./pages/HostItemDetail"));
 const MyListing = lazy(() => import("./pages/MyListing"));
-const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
+
 const AdminReviewDetail = lazy(() => import("./pages/AdminReviewDetail"));
 const AdminBookings = lazy(() => import("./pages/AdminBookings"));
 const AdminVerification = lazy(() => import("./pages/AdminVerification"));
@@ -140,7 +140,7 @@ const App = () => {
                     <Route path="/host/hotels" element={<CategoryHotels />} />
                     <Route path="/host/experiences" element={<CategoryExperiences />} />
                     <Route path="/my-listing" element={<MyListing />} />
-                    <Route path="/creator-dashboard" element={<CreatorDashboard />} />
+                    
                     <Route path="/edit-listing/:itemType/:id" element={<EditListing />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/verify-email" element={<VerifyEmail />} />

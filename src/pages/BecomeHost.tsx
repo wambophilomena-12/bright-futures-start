@@ -130,7 +130,7 @@ const BecomeHost = () => {
                <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={() => navigate("/account")} 
+                onClick={() => navigate("/")} 
                 className="rounded-full bg-white shadow-sm border border-slate-100 hover:bg-slate-50"
               >
                 <ArrowLeft className="h-5 w-5 text-slate-600" />

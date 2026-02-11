@@ -424,7 +424,7 @@ const HotelDetail = () => {
                 }} 
                 className="w-full py-7 rounded-2xl text-md font-black uppercase tracking-widest bg-gradient-to-r from-[#FF7F50] to-[#FF4E50] border-none shadow-lg transition-all active:scale-95"
               >
-                {isAccommodationOnly ? "Reserve on " + (hotel.link_source_name || "External Site") : "Book Now"}
+                {isAccommodationOnly ? "Reserve Now" : "Book Now"}
               </Button>
               <div className="grid grid-cols-3 gap-3 mt-4">
                 <UtilityButton 
@@ -518,7 +518,7 @@ const HotelDetail = () => {
                   }} 
                   className="w-full py-8 rounded-3xl text-lg font-black uppercase tracking-widest bg-gradient-to-r from-[#FF7F50] to-[#FF4E50] border-none shadow-xl hover:scale-[1.02] transition-transform active:scale-95"
                 >
-                  {isAccommodationOnly ? "Reserve on " + (hotel.link_source_name || "External Site") : "Reserve Now"}
+                  {isAccommodationOnly ? "Reserve Now" : "Reserve Now"}
                 </Button>
 
                 <div className="grid grid-cols-3 gap-3">

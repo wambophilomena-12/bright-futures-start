@@ -29,7 +29,7 @@ const ROUTE_PARENTS: Record<string, string> = {
   "/create-adventure": "/become-host",
   "/create-attraction": "/become-host",
   "/edit-listing/": "/my-listing",
-  "/creator-dashboard": "/become-host",
+  
   "/my-listing": "/become-host",
   "/host-verification": "/become-host",
   "/verification-status": "/become-host",

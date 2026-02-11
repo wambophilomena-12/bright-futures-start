@@ -81,10 +81,10 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
   const fetchMostPopular = async () => {
     try {
       const [tripsData, eventsData, hotelsData, adventuresData] = await Promise.all([
-        supabase.from("trips").select("id, name, location, place, country, date, image_url, type").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "trip").order("created_at", { ascending: false }).limit(3),
-        supabase.from("trips").select("id, name, location, place, country, date, image_url, type").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "event").order("created_at", { ascending: false }).limit(3),
-        supabase.from("hotels").select("id, name, location, place, country, image_url").eq("approval_status", "approved").eq("is_hidden", false).order("created_at", { ascending: false }).limit(3),
-        supabase.from("adventure_places").select("id, name, location, place, country, image_url").eq("approval_status", "approved").eq("is_hidden", false).order("created_at", { ascending: false }).limit(3)
+        supabase.from("trips").select("id, name, location, place, country, date, type").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "trip").order("created_at", { ascending: false }).limit(3),
+        supabase.from("trips").select("id, name, location, place, country, date, type").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "event").order("created_at", { ascending: false }).limit(3),
+        supabase.from("hotels").select("id, name, location, place, country").eq("approval_status", "approved").eq("is_hidden", false).order("created_at", { ascending: false }).limit(3),
+        supabase.from("adventure_places").select("id, name, location, place, country").eq("approval_status", "approved").eq("is_hidden", false).order("created_at", { ascending: false }).limit(3)
       ]);
 
       const popular: SearchResult[] = [
@@ -128,10 +128,10 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
     const queryValue = value.trim().toLowerCase();
     try {
       const [tripsData, eventsData, hotelsData, adventuresData] = await Promise.all([
-        supabase.from("trips").select("id, name, location, place, country, activities, date, image_url").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "trip").limit(20),
-        supabase.from("trips").select("id, name, location, place, country, activities, date, image_url").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "event").limit(20),
-        supabase.from("hotels").select("id, name, location, place, country, activities, facilities, image_url").eq("approval_status", "approved").eq("is_hidden", false).limit(20),
-        supabase.from("adventure_places").select("id, name, location, place, country, activities, facilities, image_url").eq("approval_status", "approved").eq("is_hidden", false).limit(20)
+        supabase.from("trips").select("id, name, location, place, country, activities, date").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "trip").limit(20),
+        supabase.from("trips").select("id, name, location, place, country, activities, date").eq("approval_status", "approved").eq("is_hidden", false).eq("type", "event").limit(20),
+        supabase.from("hotels").select("id, name, location, place, country, activities, facilities").eq("approval_status", "approved").eq("is_hidden", false).limit(20),
+        supabase.from("adventure_places").select("id, name, location, place, country, activities, facilities").eq("approval_status", "approved").eq("is_hidden", false).limit(20)
       ]);
 
       let combined: SearchResult[] = [
@@ -260,9 +260,6 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
                             onClick={() => handleSuggestionClick(item)}
                             className="w-full p-3 flex gap-4 hover:bg-slate-50 transition-all group text-left rounded-[24px]"
                           >
-                            <div className="relative w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden shadow-sm">
-                              <img src={item.image_url || "/placeholder.svg"} alt="" className="w-full h-full object-cover" />
-                            </div>
                             <div className="flex-1 flex flex-col justify-center min-w-0">
                               <h4 className="font-black text-slate-800 uppercase tracking-tight text-sm truncate">{item.name}</h4>
                               <div className="flex items-center gap-1 text-slate-400">
@@ -341,11 +338,6 @@ export const SearchBarWithSuggestions = ({ value, onChange, onSubmit, onSuggesti
                           onClick={() => handleSuggestionClick(result)}
                           className="w-full p-3 flex gap-4 hover:bg-slate-50 transition-all group text-left rounded-[24px]"
                         >
-                          <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden shadow-md">
-                            <img src={result.image_url || "/placeholder.svg"} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
-                          </div>
-
                           <div className="flex-1 flex flex-col justify-center min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                                <span className="text-[9px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-widest" style={{ background: COLORS.TEAL }}>
