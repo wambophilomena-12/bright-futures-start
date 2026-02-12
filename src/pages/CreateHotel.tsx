@@ -749,4 +749,4 @@ const CreateHotel = () => {
   );
 };
 
-export default CreateHotel;
+export default CreateHotel; 
