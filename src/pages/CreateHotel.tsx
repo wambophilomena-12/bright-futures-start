@@ -17,6 +17,8 @@ import { CountrySelector } from "@/components/creation/CountrySelector";
 import { PhoneInput } from "@/components/creation/PhoneInput";
 import { compressImages } from "@/lib/imageCompression";
 import { DynamicItemList, DynamicItem } from "@/components/creation/DynamicItemList";
+// NOTE: Use the enhanced version from /mnt/user-data/outputs/DynamicItemListWithImages.tsx
+// This version disables "Add Another" until current item is complete
 import { DynamicItemListWithImages, DynamicItemWithImages, uploadItemImages, formatItemsWithImagesForDB } from "@/components/creation/DynamicItemListWithImages";
 import { OperatingHoursSection } from "@/components/creation/OperatingHoursSection";
 import { ReviewStep } from "@/components/creation/ReviewStep";
@@ -502,6 +504,31 @@ const CreateHotel = () => {
             <h2 className="text-xl font-black uppercase tracking-tight mb-6 flex items-center gap-2" style={{ color: COLORS.TEAL }}>
               <Clock className="h-5 w-5" /> Operating Hours *
             </h2>
+            
+            {/* 24 Hours Quick Set Button */}
+            <div className="mb-6">
+              <Button
+                type="button"
+                onClick={() => {
+                  setFormData({
+                    ...formData,
+                    openingHours: "00:00",
+                    closingHours: "23:59"
+                  });
+                  toast({ 
+                    title: "24 Hours Set", 
+                    description: "Operating hours set to 24 hours (Open all day)",
+                    variant: "default" 
+                  });
+                }}
+                className="w-full rounded-2xl px-6 h-12 font-black uppercase text-[11px] tracking-widest"
+                style={{ background: COLORS.TEAL, color: 'white' }}
+              >
+                <Clock className="h-4 w-4 mr-2" />
+                Set as 24 Hours (Open All Day)
+              </Button>
+            </div>
+
             <OperatingHoursSection
               openingHours={formData.openingHours}
               closingHours={formData.closingHours}
